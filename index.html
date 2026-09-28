@@ -542,7 +542,7 @@ function inPitZone(i) {
 function pitWallGap(i) {
   const r=pitRelM(i);
   // Rail et panneaux absents UNIQUEMENT là où passent les bretelles ; le long de la voie, le rail sépare piste et stands.
-  return (r>PIT_ENTRY_REL-6 && r<PIT_LANE_A+2) || (!pitTunnelOn() && r>PIT_LANE_B-2 && r<PIT_EXIT_REL+6);
+  return (r>PIT_ENTRY_REL-6 && r<PIT_LANE_A+2) || (r>PIT_LANE_B-2 && r<PIT_EXIT_REL+6);
 }
 /* ---------------------------------------------------------------------
    DÉPLACEMENT DANS LA VOIE DES STANDS
@@ -559,44 +559,11 @@ function hermiteSeg(x0, z0, a0, x1, z1, a1, k0, k1) {
   return { x0, z0, x1, z1, m0x: Math.cos(a0) * m0, m0z: Math.sin(a0) * m0, m1x: Math.cos(a1) * m1, m1z: Math.sin(a1) * m1 };
 }
 function hermiteAt(s, u) {
-  if (s.pts) {   // trajectoire en polyligne (sortie des stands en tunnel) : position, altitude et cap interpolés
-    const P = s.pts, t = clamp(u, 0, 1) * s.total; let lo = 0, hi = P.length - 1;
-    while (hi - lo > 1) { const m = (lo + hi) >> 1; if (P[m].s < t) lo = m; else hi = m; }
-    const a = P[lo], b = P[hi], f = clamp((t - a.s) / ((b.s - a.s) || 1), 0, 1);
-    let da = b.a - a.a; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
-    return { x: a.x + (b.x - a.x) * f, z: a.z + (b.z - a.z) * f, y: a.y + (b.y - a.y) * f, a: a.a + da * f, d: s.total };
-  }
   const u2 = u * u, u3 = u2 * u;
   const h00 = 2 * u3 - 3 * u2 + 1, h10 = u3 - 2 * u2 + u, h01 = -2 * u3 + 3 * u2, h11 = u3 - u2;
   const d00 = 6 * u2 - 6 * u, d10 = 3 * u2 - 4 * u + 1, d01 = -6 * u2 + 6 * u, d11 = 3 * u2 - 2 * u;
   const dx = d00 * s.x0 + d10 * s.m0x + d01 * s.x1 + d11 * s.m1x, dz = d00 * s.z0 + d10 * s.m0z + d01 * s.z1 + d11 * s.m1z;
   return { x: h00 * s.x0 + h10 * s.m0x + h01 * s.x1 + h11 * s.m1x, z: h00 * s.z0 + h10 * s.m0z + h01 * s.z1 + h11 * s.m1z, a: Math.atan2(dz, dx), d: Math.hypot(dx, dz) };
-}
-/* ---------------------------------------------------------------------
-   YAS MARINA : SORTIE DES STANDS EN TUNNEL
-   Réel : la voie des stands est à droite ; à son extrémité elle plonge, passe SOUS la piste juste avant le
-   virage 1 (côté extérieur -> côté intérieur), puis remonte et rejoint la piste après le virage 1.
-   Ici : la voie continue à droite derrière le rail (rel 70 -> 195 m) en descendant, entre dans le tunnel
-   (portail droit, 198 m), passe sous la piste (dos d'âne herbeux au-dessus), ressort à gauche (portail, 292 m),
-   remonte jusqu'au niveau de la piste (425 m) puis s'y insère par la gauche (jusqu'à 505 m).
-   --------------------------------------------------------------------- */
-function pitTunnelOn() { return !!(TRACKS[trackKey] && TRACKS[trackKey].pitTunnel); }
-const PT = { floor: -1.3, roof: 2.75, dive0: 95, dive1: 195, in0: 198, out0: 292, rise1: 425, merge1: 505, latL: 25 };
-function pitTunGapL(i) { if (!pitTunnelOn()) return false; const r = pitRelM(i); return r > PT.rise1 - 15 && r < PT.merge1 + 15; }
-function tunnelExitSeg() {
-  const ss = t => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
-  const y70 = trackElevationRel(PIT_LANE_B), yM = trackElevationRel(PT.rise1);
-  const lat = r => r < 200 ? PIT_LAT : r < 290 ? PIT_LAT + (-PT.latL - PIT_LAT) * ss((r - 200) / 90) : r < 400 ? -PT.latL : -PT.latL + (PT.latL - 5) * ss((r - 400) / (PT.merge1 - 400));
-  const yy = r => r < PT.dive0 ? y70 : r < PT.dive1 ? y70 + (PT.floor - y70) * ss((r - PT.dive0) / (PT.dive1 - PT.dive0))
-    : r < 290 ? PT.floor : r < PT.rise1 ? PT.floor + (yM - PT.floor) * ss((r - 290) / (PT.rise1 - 290)) : trackElevationRel(r);
-  const pts = []; let s = 0, pv = null;
-  for (let r = PIT_LANE_B; r <= PT.merge1 + 1; r += 4) {
-    const t = trackPoseRel(r), n = pitNormalAt(r), l = lat(r), q = { x: t.x + n.rx * l, z: t.z + n.rz * l, y: yy(r), r };
-    if (pv) s += Math.hypot(q.x - pv.x, q.z - pv.z);
-    q.s = s; pts.push(q); pv = q;
-  }
-  for (let i = 0; i < pts.length; i++) { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)]; pts[i].a = Math.atan2(b.z - a.z, b.x - a.x); }
-  return { pts, total: s };
 }
 let pitCache = null;
 function pitGeo() {                        // trajectoires fixes, recalculées si le circuit ou le nombre de garages change
@@ -607,7 +574,7 @@ function pitGeo() {                        // trajectoires fixes, recalculées s
   pitCache = {
     path: pitPath, n: pitBoxCount, arcs: [],
     entry: hermiteSeg(e.x + e.rx * PIT_RAMP_LAT, e.z + e.rz * PIT_RAMP_LAT, e.a, p0.x, p0.z, p0.a, 0.9, 0.9),
-    exit: pitTunnelOn() ? tunnelExitSeg() : hermiteSeg(p3.x, p3.z, p3.a, x.x + x.rx * PIT_RAMP_LAT, x.z + x.rz * PIT_RAMP_LAT, x.a, 0.9, 0.9)
+    exit: hermiteSeg(p3.x, p3.z, p3.a, x.x + x.rx * PIT_RAMP_LAT, x.z + x.rz * PIT_RAMP_LAT, x.a, 0.9, 0.9)
   };
   return pitCache;
 }
@@ -703,7 +670,7 @@ function pitMove(c, h, vOut) {
       // La bretelle monte/descend réellement entre la voie et la piste.
       // Sans cette interpolation, la voiture gardait l'altitude finale pendant toute la rampe
       // et s'enfonçait visuellement dans le revêtement.
-      if (rp.y == null) rp.y = pitPose(PIT_TOTAL,0).y + (trackElevationRel(PIT_EXIT_REL) - pitPose(PIT_TOTAL,0).y) * c.pitU;
+      rp.y = pitPose(PIT_TOTAL,0).y + (trackElevationRel(PIT_EXIT_REL) - pitPose(PIT_TOTAL,0).y) * c.pitU;
       pitPlace(c, rp, vOut, true);
       if (c.pitU >= 1) ev = "done";
     }
@@ -737,13 +704,12 @@ function buildPitLaneRoad() {
   geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2)); geo.setIndex(idx); scene.add(new THREE.Mesh(geo,mat));
 
   const addRamp=(seg,y0,y1,hwA,hwB)=>{   // hwA/hwB = demi-largeur côté piste au début/à la fin ; côté extérieur toujours pleine largeur
-    const pos=[],uv=[],idx=[],n=seg.pts?170:48; let d=0,pv=null;
+    const pos=[],uv=[],idx=[],n=48; let d=0,pv=null;
     for(let k=0;k<=n;k++){
-      const u=k/n,p=hermiteAt(seg,u),rx=-Math.sin(p.a),rz=Math.cos(p.a),gy=(p.y!=null?p.y:y0+(y1-y0)*u)+.12;
-      const tp=seg.pts?clamp((u-.8)/.2,0,1):0, sm=tp*tp*(3-2*tp), hR=PIT_HALF_W*(1-.9*sm);   // tunnel : la voie s'effile en rejoignant la piste
-      const hw=seg.pts?hR:hwA+(hwB-hwA)*(u*u*(3-2*u));
+      const u=k/n,p=hermiteAt(seg,u),rx=-Math.sin(p.a),rz=Math.cos(p.a),gy=y0+(y1-y0)*u+.12;
+      const hw=hwA+(hwB-hwA)*(u*u*(3-2*u));
       if(pv)d+=Math.hypot(p.x-pv.x,p.z-pv.z); pv=p;
-      pos.push(p.x-rx*hw,gy,p.z-rz*hw,p.x+rx*(seg.pts?hR:PIT_HALF_W),gy,p.z+rz*(seg.pts?hR:PIT_HALF_W));uv.push(0,d/6,1,d/6);
+      pos.push(p.x-rx*hw,gy,p.z-rz*hw,p.x+rx*PIT_HALF_W,gy,p.z+rz*PIT_HALF_W);uv.push(0,d/6,1,d/6);
     }
     for(let i=0;i<n;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}
     const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
@@ -1975,7 +1941,7 @@ function buildScene() {
   const wallMat = new THREE.MeshBasicMaterial({ map: wallTex, side: THREE.DoubleSide });
   tintMats.push(wallMat);
   // Le rail habituel s'arrête là où le tunnel prend le relais (ses propres murs, plus hauts et fermés).
-  scene.add(wallStrip(k => -(WDL[k] + 0.2), 1.3, wallMat, 8, k => inTunnel(k) || pitTunGapL(k)), wallStrip(k => WDR[k] + 0.2, 1.3, wallMat, 8, k => pitWallGap(k) || inTunnel(k)));
+  scene.add(wallStrip(k => -(WDL[k] + 0.2), 1.3, wallMat, 8, inTunnel), wallStrip(k => WDR[k] + 0.2, 1.3, wallMat, 8, k => pitWallGap(k) || inTunnel(k)));
 
   // Ligne de départ en damier
   const checker = makeTexture(64, 64, (g, w, h) => {
@@ -2944,44 +2910,41 @@ function buildHotel() {
 // Tunnel de sortie des stands (à Yas Marina, la sortie plonge dans un tunnel). Ici : un tunnel couvert avec portails,
 // sur la bretelle de sortie ; la voiture le traverse comme toute la bretelle (pas de collision en mode stand).
 function buildPitTunnel() {
-  if (!pitTunnelOn()) return;
-  const P = pitRamps().exit.pts, hw = PIT_HALF_W + 0.6, ROOF = PT.roof;
-  const rng = (r0, r1) => { const o = []; P.forEach(p => { if (p.r >= r0 && p.r <= r1) o.push(p); }); return o; };
-  const at = (p, lat, y) => [p.x - Math.sin(p.a) * lat, y, p.z + Math.cos(p.a) * lat];
-  const strip = (pp, fa, fb, mat) => {
-    const pos = [], idx = [], n = pp.length - 1;
-    pp.forEach(p => { pos.push(...fa(p), ...fb(p)); });
+  if (!(TRACKS[trackKey] && TRACKS[trackKey].pitTunnel)) return;
+  const seg = pitRamps().exit, y0 = pitPose(PIT_TOTAL, 0).y, y1 = trackElevationRel(PIT_EXIT_REL);
+  const U0 = -0.05, U1 = 0.46, n = 24, hw = PIT_HALF_W + 0.5, H = 7.4, P = [];   // commence juste après le panneau PIT EXIT, s'arrête avant de se rapprocher de la piste
+  for (let k = 0; k <= n; k++) {
+    const u = U0 + (U1 - U0) * k / n, q = hermiteAt(seg, u);
+    P.push({ x: q.x, z: q.z, y: y0 + (y1 - y0) * Math.max(0, u), a: q.a, rx: -Math.sin(q.a), rz: Math.cos(q.a) });
+  }
+  const strip = (fa, fb, mat) => {
+    const pos = [], idx = [];
+    P.forEach(p => { pos.push(...fa(p), ...fb(p)); });
     for (let i = 0; i < n; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
     const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
-    scene.add(new THREE.Mesh(geo, mat));
+    const m = new THREE.Mesh(geo, mat); scene.add(m); return m;
   };
+  const at = (p, lat, dy) => [p.x + p.rx * lat, p.y + dy, p.z + p.rz * lat];
   const concrete = makeTexture(128, 128, (g, w, h) => { g.fillStyle = "#9599a0"; g.fillRect(0, 0, w, h); noise(g, w, h, 260, 0.05, 0.08, 3); }, true);
   const wallM = new THREE.MeshBasicMaterial({ map: concrete, color: 0xc7cbd1, side: THREE.DoubleSide }); tintMats.push(wallM);
   const earthM = new THREE.MeshBasicMaterial({ color: 0x5b8a3d, side: THREE.DoubleSide }); tintMats.push(earthM);
-  // 1) rampe de descente (r 95-198) et de remontée (r 292-425) : murs de soutènement de chaque côté
-  [[PT.dive0, PT.in0], [PT.out0, PT.rise1]].forEach(([r0, r1]) => {
-    const pp = rng(r0, r1);
-    for (const sd of [-1, 1]) strip(pp, p => at(p, sd * (hw + 0.3), GROUND_Y), p => at(p, sd * (hw + 0.3), p.y + 0.9), wallM);
-  });
-  // 2) tunnel couvert (r 198-292) : murs, plafond, et terre herbeuse par-dessus (la piste passe au-dessus)
-  const T = rng(PT.in0, PT.out0);
-  for (const sd of [-1, 1]) {
-    strip(T, p => at(p, sd * hw, p.y - 0.2), p => at(p, sd * hw, ROOF), wallM);
-    strip(T, p => at(p, sd * (hw + 3.2), GROUND_Y), p => at(p, sd * (hw + 0.3), ROOF + 0.2), earthM);
-  }
-  strip(T, p => at(p, -hw, ROOF), p => at(p, hw, ROOF), wallM);
-  strip(T, p => at(p, -(hw + 0.3), ROOF + 0.2), p => at(p, hw + 0.3, ROOF + 0.2), earthM);
-  // 3) portails (entrée à droite, sortie à gauche) + éclairage
+  strip(p => at(p, -hw, 0), p => at(p, -hw, H), wallM);                 // murs
+  strip(p => at(p, hw, 0), p => at(p, hw, H), wallM);
+  strip(p => at(p, -hw, H), p => at(p, hw, H), wallM);                  // plafond
+  strip(p => at(p, -(hw + 2.5), -0.3), p => at(p, -(hw + 0.6), H + 0.7), earthM);   // talus herbeux par-dessus (étroits : ils ne débordent pas sur la piste)
+  strip(p => at(p, -(hw + 0.6), H + 0.7), p => at(p, hw + 0.6, H + 0.7), earthM);
+  strip(p => at(p, hw + 0.6, H + 0.7), p => at(p, hw + 2.5, -0.3), earthM);
+  // portails d'entrée et de sortie + éclairage
   const conc2 = new THREE.MeshLambertMaterial({ color: 0x9aa0a8 }), yel = new THREE.MeshBasicMaterial({ color: 0xffcf00 }), lamp = new THREE.MeshBasicMaterial({ color: 0xfff4d0 });
-  [T[0], T[T.length - 1]].forEach(p => {
-    const H = ROOF - p.y, g = new THREE.Group(); g.position.set(p.x, p.y, p.z); g.rotation.y = -p.a; scene.add(g);   // z local = à droite
-    for (const sz of [-1, 1]) { const m = new THREE.Mesh(new THREE.BoxGeometry(1.6, H + 1.4, 1.6), conc2); m.position.set(0, (H + 1.4) / 2, sz * (hw + 0.8)); g.add(m); }
-    const lin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.4, 2 * hw + 3.2), conc2); lin.position.set(0, H + 0.7, 0); g.add(lin);
+  [P[0], P[n]].forEach(p => {
+    const g = new THREE.Group(); g.position.set(p.x, p.y, p.z); g.rotation.y = -p.a; scene.add(g);   // z local = à droite
+    for (const sz of [-1, 1]) { const m = new THREE.Mesh(new THREE.BoxGeometry(1.6, H + 1.2, 1.6), conc2); m.position.set(0, (H + 1.2) / 2, sz * (hw + 0.8)); g.add(m); }
+    const lin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 2 * hw + 3.2), conc2); lin.position.set(0, H + 0.6, 0); g.add(lin);
     const band = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.4, 2 * hw + 3.22), yel); band.position.set(0, H - 0.05, 0); g.add(band);
   });
-  for (let k = 2; k < T.length - 1; k += 3) {
-    const p = T[k], m = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.1, 0.7), lamp);
-    m.position.set(p.x, ROOF - 0.08, p.z); m.rotation.y = -p.a; scene.add(m);
+  for (let k = 2; k < n - 1; k += 3) {
+    const p = P[k], m = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.1, 0.7), lamp);
+    m.position.set(p.x, p.y + H - 0.08, p.z); m.rotation.y = -p.a; scene.add(m);
   }
 }
 function buildExtras() {
@@ -3406,10 +3369,8 @@ function placeCar(o, x, z, a, speed, steer, braking, dt, mine, entity) {
       const u = clamp(entity.pitU,0,1);
       const slope = (y1-y0); yBack = pitY-slope*0.06; yFront = pitY+slope*0.06;
     } else if (entity.pitMode === 3 && entity.pitSub === 2) {
-      if (pitTunnelOn()) { const e = pitRamps().exit, du = 3 / Math.max(e.total, 1); yBack = hermiteAt(e, clamp(entity.pitU - du, 0, 1)).y; yFront = hermiteAt(e, clamp(entity.pitU + du, 0, 1)).y; }
-      else {
       const y0 = pitPose(PIT_TOTAL,0).y, y1 = trackElevationRel(PIT_EXIT_REL);
-      const slope = y1-y0; yBack = pitY-slope*0.06; yFront = pitY+slope*0.06; }
+      const slope = y1-y0; yBack = pitY-slope*0.06; yFront = pitY+slope*0.06;
     } else if ((entity.pitMode === 1 || entity.pitMode === 3) && entity.pitSub === 1) {
       const p0 = pitPose(Math.max(0,entity.pitProgress-probe),0);
       const p1 = pitPose(Math.min(PIT_TOTAL,entity.pitProgress+probe),0);
