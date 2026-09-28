@@ -3501,15 +3501,15 @@ function makeCarPro(color, name, mine) {
   }
 
   // Cockpit intérieur uniquement.
-  const cockpit = new THREE.Group();
-  cockpit.position.set(0.55,0.82,0);
-  root.add(cockpit);
+  const cockpitControls = new THREE.Group();
+  cockpitControls.position.set(0.55,0.82,0);
+  root.add(cockpitControls);
   const dark = new THREE.MeshStandardMaterial({color:0x090a0b,roughness:0.38,metalness:0.7});
   const accent = new THREE.MeshStandardMaterial({color:color,roughness:0.3,metalness:0.55});
   const displayMat = new THREE.MeshStandardMaterial({color:0x020304,roughness:0.15,metalness:0.2,emissive:0x071018,emissiveIntensity:0.5});
   const steeringWheel = new THREE.Group();
   steeringWheel.rotation.y=-Math.PI/2;
-  cockpit.add(steeringWheel);
+  cockpitControls.add(steeringWheel);
   steeringWheel.add(new THREE.Mesh(new THREE.TorusGeometry(0.29,0.043,10,36),dark));
   const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.075,0.05,16),accent); hub.rotation.x=Math.PI/2; steeringWheel.add(hub);
   const display=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.075,0.025),displayMat); display.position.set(0,0.045,0.035); steeringWheel.add(display);
@@ -3517,7 +3517,7 @@ function makeCarPro(color, name, mine) {
     const sp=new THREE.Mesh(new THREE.BoxGeometry(0.235,0.025,0.025),dark); sp.position.set(0,s*0.075,0); sp.rotation.z=s*0.20; steeringWheel.add(sp);
     const paddle=new THREE.Mesh(new THREE.BoxGeometry(0.025,0.12,0.018),accent); paddle.position.set(0,s*0.225,0.055); steeringWheel.add(paddle);
   }
-  const dash=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.11,0.30),dark); dash.position.set(-0.10,0.76,0); dash.rotation.z=-0.08; cockpit.add(dash);
+  const dash=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.11,0.30),dark); dash.position.set(-0.10,0.76,0); dash.rotation.z=-0.08; cockpitControls.add(dash);
 
   return {root,body,wheels,brake:rearLight,brakeGlow:glowM,flame:flameM,beam,refl:[[paint,.18]],spin:0,pitch:0,roll:0,lastSpeed:0,steeringWheel};
 }
