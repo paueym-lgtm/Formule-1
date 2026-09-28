@@ -3500,39 +3500,77 @@ function makeCarPro(color, name, mine) {
     sprite.scale.set(8,2,1);sprite.position.set(0,3.4,0);root.add(sprite);
   }
 
-  /* Cockpit TV : élément interne, masqué sur les caméras extérieures. */
+  /* Cockpit TV : vue embarquée réaliste, séparée de la carrosserie extérieure. */
   const cockpitControls = new THREE.Group();
   cockpitControls.visible = false;
   root.add(cockpitControls);
-  const cw = new THREE.MeshStandardMaterial({color:0x080909,roughness:0.34,metalness:0.72});
-  const cg = new THREE.MeshStandardMaterial({color:0x151617,roughness:0.72,metalness:0.12});
-  const ca = new THREE.MeshStandardMaterial({color:color,roughness:0.28,metalness:0.58});
-  const cd = new THREE.MeshStandardMaterial({color:0x010305,roughness:0.12,metalness:0.25,emissive:0x07151d,emissiveIntensity:0.7});
+
+  const cw = new THREE.MeshStandardMaterial({color:0x090a0c,roughness:.28,metalness:.72});
+  const cg = new THREE.MeshStandardMaterial({color:0x181b20,roughness:.62,metalness:.18});
+  const ca = new THREE.MeshStandardMaterial({color:color,roughness:.30,metalness:.58});
+  const cd = new THREE.MeshStandardMaterial({color:0x020507,roughness:.10,metalness:.20,emissive:0x061820,emissiveIntensity:.8});
+
+  /* Volant type F1 : forme papillon compacte, sans cercle géant. */
   const steeringWheel = new THREE.Group();
-  steeringWheel.position.set(0.30,0.84,0);
-  steeringWheel.rotation.y = -Math.PI/2;
-  steeringWheel.scale.setScalar(0.62);
+  steeringWheel.position.set(.48,.70,0);
+  steeringWheel.rotation.y=-Math.PI/2;
+  steeringWheel.scale.setScalar(.72);
   cockpitControls.add(steeringWheel);
-  const center = new THREE.Mesh(new THREE.BoxGeometry(0.20,0.22,0.075),cw);
-  steeringWheel.add(center);
-  const display = new THREE.Mesh(new THREE.BoxGeometry(0.135,0.070,0.018),cd);
-  display.position.set(0,0.025,0.050); steeringWheel.add(display);
-  const top = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.055,0.06),cw);
-  top.position.y=0.115; steeringWheel.add(top);
-  const bottom = new THREE.Mesh(new THREE.BoxGeometry(0.29,0.055,0.06),cw);
-  bottom.position.y=-0.115; steeringWheel.add(bottom);
-  for(const s of [-1,1]){
-    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.043,0.050,0.18,10),cg);
-    grip.rotation.z=Math.PI/2; grip.position.set(0,s*0.105,0.035); steeringWheel.add(grip);
-    const side = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.17,0.055),cw);
-    side.position.set(0,s*0.105,0); side.rotation.z=s*0.12; steeringWheel.add(side);
-    const button = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.018,12),ca);
-    button.rotation.x=Math.PI/2; button.position.set(0,s*0.145,0.055); steeringWheel.add(button);
-    const paddle = new THREE.Mesh(new THREE.BoxGeometry(0.025,0.13,0.018),ca);
-    paddle.position.set(0.015,s*0.17,-0.065); paddle.rotation.z=s*0.10; steeringWheel.add(paddle);
-  }
-  const dash = new THREE.Mesh(new THREE.BoxGeometry(0.38,0.09,0.28),cw);
-  dash.position.set(-0.02,0.70,0); dash.rotation.z=-0.08; cockpitControls.add(dash);
+
+  const wheelBody=new THREE.Group();
+  steeringWheel.add(wheelBody);
+
+  const center=new THREE.Mesh(new THREE.BoxGeometry(.20,.22,.065),cw);
+  wheelBody.add(center);
+  const screen=new THREE.Mesh(new THREE.BoxGeometry(.125,.065,.012),cd);
+  screen.position.set(0,.025,.039);
+  wheelBody.add(screen);
+
+  const upper=new THREE.Mesh(new THREE.BoxGeometry(.34,.055,.055),cw);
+  upper.position.y=.115;
+  wheelBody.add(upper);
+  const lower=new THREE.Mesh(new THREE.BoxGeometry(.28,.055,.055),cw);
+  lower.position.y=-.115;
+  wheelBody.add(lower);
+
+  [-1,1].forEach(side=>{
+    const grip=new THREE.Mesh(new THREE.BoxGeometry(.075,.18,.07),cg);
+    grip.position.set(0,side*.105,.015);
+    grip.rotation.z=side*.10;
+    wheelBody.add(grip);
+
+    const spoke=new THREE.Mesh(new THREE.BoxGeometry(.12,.045,.06),cw);
+    spoke.position.set(0,side*.065,.015);
+    spoke.rotation.z=side*.20;
+    wheelBody.add(spoke);
+
+    for(let i=0;i<3;i++){
+      const btn=new THREE.Mesh(new THREE.BoxGeometry(.018,.018,.012),ca);
+      btn.position.set(.002,side*(.115+i*.026),.047);
+      wheelBody.add(btn);
+    }
+
+    const paddle=new THREE.Mesh(new THREE.BoxGeometry(.018,.12,.014),ca);
+    paddle.position.set(.02,side*.17,-.045);
+    paddle.rotation.z=side*.08;
+    wheelBody.add(paddle);
+  });
+
+  /* Tableau de bord juste derrière le volant. */
+  const dash=new THREE.Mesh(new THREE.BoxGeometry(.46,.075,.25),cw);
+  dash.position.set(-.10,.63,0);
+  dash.rotation.z=-.05;
+  cockpitControls.add(dash);
+
+  const dashScreen=new THREE.Mesh(new THREE.BoxGeometry(.23,.055,.012),cd);
+  dashScreen.position.set(-.10,.675,.115);
+  cockpitControls.add(dashScreen);
+
+  /* Petit rebord du cockpit visible dans la partie basse de la caméra TV. */
+  const cockpitLip=new THREE.Mesh(new THREE.BoxGeometry(.72,.055,.72),carbon);
+  cockpitLip.position.set(.08,.67,0);
+  cockpitLip.rotation.z=-.04;
+  cockpitControls.add(cockpitLip);
 
   return {root,body,wheels,brake:rearLight,brakeGlow:glowM,flame:flameM,beam,refl:[[paint,.18]],spin:0,pitch:0,roll:0,lastSpeed:0,cockpitControls,steeringWheel};
 }
