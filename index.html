@@ -3686,7 +3686,7 @@ function render3d(t, dt) {
     const o = getCarObj(me.id, me.color, me.name, true);
     placeCar(o, me.x, me.z, me.a, me.speed, me.steer, me.brk > 0.2, dt, true, me);
     if (o.cockpitControls) o.cockpitControls.visible = (camS.mode === 2);
-    if (camS.mode === 2) o.root.visible = false;
+    o.root.visible = true;
     for (const id in remotes) {
       const r = remotes[id];
       if (id[0] !== "b" && !people[id]) continue;
