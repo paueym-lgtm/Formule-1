@@ -189,6 +189,7 @@
     <select id="trackSel">
       <option value="monaco">Monaco</option>
       <option value="abudhabi">Abu Dhabi — Yas Marina</option>
+      <option value="montreal">Montréal — Gilles-Villeneuve</option>
     </select>
 
     <div class="two">
@@ -308,11 +309,18 @@ const TRACKS = {
     ctrl: [[525.5,747.8],[639.0,637.8],[820.5,456.2],[1038.4,262.6],[1123.1,209.4],[1183.6,274.7],[1256.2,323.1],[1449.8,419.9],[1691.9,553.1],[1933.9,698.3],[2127.5,795.1],[2272.8,891.9],[2418.0,988.7],[2490.6,1037.1],[2587.4,1025.0],[2660.0,940.3],[2696.3,770.9],[2708.4,649.9],[2781.0,613.6],[3023.1,565.2],[3265.1,516.8],[3410.4,499.8],[3434.6,553.1],[3386.2,649.9],[3289.3,746.7],[3228.8,843.5],[3228.8,904.0],[3277.2,928.2],[3349.8,867.7],[3410.4,783.0],[3458.8,770.9],[3555.6,807.2],[3604.0,855.6],[3507.2,916.1],[3265.1,1061.3],[3095.7,1182.4],[2974.7,1242.9],[2781.0,1267.1],[2539.0,1255.0],[2297.0,1163.0],[2054.9,1042.0],[1890.3,945.2],[1837.1,911.3],[1788.7,976.6],[1728.2,940.3],[1691.9,867.7],[1667.7,807.2],[1546.6,722.5],[1353.0,577.3],[1135.2,444.1],[1014.2,492.6],[893.1,613.6],[844.7,698.3],[856.8,770.9],[856.8,807.2],[796.3,916.1],[699.5,1037.1],[639.0,1061.3],[578.5,1025.0],[530.1,1037.1],[493.8,1109.8],[474.4,1255.0],[481.7,1424.4],[518.0,1569.6],[542.2,1666.5],[493.8,1690.7],[360.6,1618.0],[239.6,1521.2],[203.3,1448.6],[215.4,1376.0],[251.7,1279.2],[288.0,1134.0],[360.6,964.5],[481.7,795.1]] },
   // Tracé réel du Circuit de Yas Marina (Abu Dhabi, configuration 2021 : 16 virages, 5,281 km), relevé sur le plan officiel.
   // Le point 0 est la ligne de départ, sur la ligne droite des stands (sens inverse des aiguilles d'une montre).
-  // Relief réel : circuit presque plat (10,7 m de dénivelé au total) avec un seul vrai sommet, le grand virage 3 en courbe rapide ;
-  // la longue ligne droite du fond (1,1 km) et le secteur du marina sont les points les plus bas.
-  abudhabi: { name: "Abu Dhabi",
-    elev: [[0.000,3.0],[0.035,2.4],[0.066,2.0],[0.090,3.6],[0.108,5.0],[0.133,8.6],[0.156,11.2],[0.175,8.4],[0.198,5.4],[0.235,3.2],[0.265,1.6],[0.320,0.9],[0.379,0.5],[0.440,0.5],[0.490,0.9],[0.503,1.4],[0.548,2.0],[0.601,2.2],[0.703,1.8],[0.765,2.4],[0.816,3.0],[0.857,3.2],[0.913,3.4],[0.954,3.4],[1.000,3.0]],
+  // Relief réel (10,7 m de dénivelé au total) : la piste s'élève par les virages 1-2 (elle passe au-dessus du tunnel de sortie des stands),
+  // culmine au grand virage 3, redescend vers l'épingle 5, puis reste très plate : ligne droite du fond (1,1 km) et marina sont les points les plus bas.
+  // Éléments réels : l'hôtel Yas Viceroy enjambe la piste entre les virages 13 et 14, et la sortie des stands passe par un tunnel.
+  abudhabi: { name: "Abu Dhabi", hotel: { at: 611 / 720, len: 38 }, pitTunnel: true,
+    elev: [[0.000,2.0],[0.030,2.6],[0.066,5.6],[0.090,7.6],[0.108,8.8],[0.133,10.2],[0.156,11.2],[0.175,9.0],[0.198,5.4],[0.235,2.4],[0.265,0.8],[0.320,0.5],[0.440,0.6],[0.490,1.2],[0.548,1.8],[0.601,2.0],[0.653,2.4],[0.703,3.0],[0.765,2.4],[0.789,2.0],[0.816,1.6],[0.849,1.2],[0.870,1.3],[0.913,1.6],[0.954,2.0],[1.000,2.0]],
     ctrl: [[3020.4,1600.5],[3017.4,1752.5],[3014.3,1904.4],[3011.4,2056.4],[3008.4,2208.4],[3005.4,2360.3],[3003.9,2512.6],[3010.8,2582.2],[3050.3,2641.2],[3101.7,2662.5],[3189.4,2665.1],[3338.8,2656.2],[3487.9,2646.3],[3636.3,2634.9],[3776.8,2604.2],[3872.1,2500.2],[3935.9,2373.5],[4009.1,2250.6],[4117.9,2152.0],[4251.3,2104.2],[4397.5,2105.8],[4527.9,2160.8],[4656.1,2221.0],[4789.2,2269.6],[4928.8,2302.5],[5076.8,2314.9],[5227.7,2324.7],[5377.9,2330.4],[5527.1,2337.3],[5675.5,2343.2],[5823.7,2347.2],[5906.1,2342.0],[5962.4,2317.2],[6004.7,2254.1],[5998.4,2195.7],[5964.9,2150.4],[5893.5,2103.2],[5767.8,2036.8],[5638.4,1979.4],[5508.7,1922.5],[5382.4,1857.8],[5256.5,1791.8],[5130.6,1725.8],[5004.8,1659.7],[4879.1,1593.2],[4753.4,1527.0],[4627.7,1460.5],[4502.1,1393.9],[4376.4,1327.5],[4250.8,1261.0],[4125.2,1194.3],[3999.5,1127.9],[3873.7,1061.7],[3747.4,997.0],[3618.0,939.4],[3489.4,880.1],[3362.6,816.4],[3236.2,752.4],[3105.4,681.9],[2978.9,615.2],[2852.9,549.4],[2727.0,500.0],[2690.9,535.2],[2681.4,614.3],[2662.0,676.3],[2597.2,700.4],[2448.9,716.0],[2300.0,739.8],[2162.4,777.8],[2032.2,833.4],[1908.7,905.1],[1792.6,994.7],[1681.5,1096.3],[1570.5,1198.3],[1459.7,1300.5],[1348.7,1402.5],[1238.0,1505.1],[1127.9,1608.9],[1024.0,1719.0],[928.6,1832.7],[842.2,1950.1],[762.0,2070.1],[681.9,2190.1],[601.9,2310.1],[523.6,2430.9],[500.7,2482.4],[500.0,2566.3],[575.1,2685.9],[706.3,2738.3],[846.4,2715.5],[951.9,2621.4],[1000.3,2488.3],[1036.4,2350.1],[1071.2,2211.3],[1105.2,2072.2],[1142.3,1934.4],[1225.3,1815.6],[1326.2,1704.2],[1430.9,1599.5],[1570.7,1567.2],[1719.0,1555.3],[1806.2,1553.3],[1850.2,1579.6],[1862.4,1615.3],[1862.6,1723.2],[1874.9,1871.3],[1922.0,1933.5],[1978.3,1959.1],[2121.0,1984.0],[2195.1,1980.5],[2248.5,1943.1],[2296.4,1810.7],[2303.1,1662.7],[2306.4,1511.0],[2310.2,1359.3],[2317.5,1209.2],[2361.8,1074.4],[2477.9,994.9],[2610.6,945.3],[2743.4,896.2],[2882.0,861.5],[3012.8,898.5],[3030.4,1040.9],[3029.7,1193.8],[3024.8,1345.0],[3022.0,1497.0]] },
+  // Tracé réel du Circuit Gilles-Villeneuve (Montréal, île Notre-Dame : 14 virages, 4,361 km, sens des aiguilles d'une montre),
+  // relevé sur le plan officiel fourni (ligne centrale extraite du plan puis mise à l'échelle). Le point 0 est la ligne de départ/arrivée,
+  // sur la ligne droite après la chicane du Mur des Champions (virages 13-14), juste avant le virage 1.
+  // Relief : le circuit est bâti sur une île artificielle et est pratiquement plat (pas de points-clés d'altitude).
+  montreal: { name: "Montréal",
+    ctrl: [[5459.7,1492.7],[5538.7,1511.2],[5616.8,1533.2],[5693.2,1560.8],[5767.6,1593.4],[5840.2,1629.6],[5910.4,1670.3],[5979.9,1712.4],[6049.7,1753.9],[6119.0,1796.2],[6191.8,1829.1],[6260.3,1790.7],[6319.5,1735.2],[6395.2,1713.6],[6458.3,1760.9],[6468.9,1839.9],[6434.2,1912.6],[6384.2,1976.5],[6331.7,2038.4],[6275.5,2097.1],[6217.3,2153.6],[6158.4,2209.5],[6085.3,2242.7],[6009.1,2269.5],[5944.6,2318.7],[5877.9,2364.6],[5801.7,2392.2],[5725.1,2419.0],[5649.6,2448.5],[5572.1,2437.7],[5512.5,2382.7],[5438.3,2355.5],[5359.2,2373.1],[5280.6,2393.7],[5202.2,2414.8],[5123.7,2435.3],[5045.3,2456.6],[4974.0,2494.9],[4905.0,2537.4],[4827.8,2562.1],[4747.0,2570.3],[4666.2,2564.6],[4588.5,2541.2],[4514.2,2508.7],[4440.4,2474.9],[4366.5,2441.4],[4292.1,2408.8],[4220.8,2370.3],[4145.4,2340.5],[4068.7,2353.8],[4031.4,2423.7],[4010.9,2502.0],[3954.5,2558.9],[3879.6,2589.0],[3798.8,2594.0],[3718.3,2583.8],[3639.7,2563.6],[3562.1,2539.9],[3485.3,2513.4],[3408.9,2486.0],[3332.7,2457.9],[3257.2,2428.1],[3185.6,2389.8],[3114.2,2351.4],[3035.2,2333.7],[2956.4,2315.6],[2883.5,2279.8],[2813.0,2239.7],[2743.2,2198.3],[2679.1,2148.5],[2612.0,2102.8],[2546.3,2055.0],[2482.9,2004.4],[2419.8,1953.2],[2357.3,1901.4],[2294.8,1849.5],[2232.5,1797.5],[2169.9,1745.7],[2115.5,1687.0],[2135.9,1610.0],[2140.3,1530.0],[2105.2,1457.5],[2050.4,1397.7],[1988.5,1345.6],[1927.1,1292.5],[1865.6,1239.4],[1801.7,1189.3],[1737.4,1139.7],[1672.4,1091.0],[1607.0,1042.9],[1540.8,996.0],[1473.2,950.9],[1405.3,906.5],[1335.2,865.4],[1264.1,826.3],[1191.6,789.8],[1118.0,755.7],[1042.7,725.2],[965.2,701.3],[886.3,682.0],[807.0,664.8],[727.5,648.1],[648.1,630.9],[568.8,613.5],[500.0,574.9],[521.3,504.8],[600.7,500.0],[678.9,521.5],[754.9,549.9],[832.7,573.2],[913.2,583.5],[994.4,583.6],[1075.1,588.2],[1155.7,597.9],[1236.7,604.0],[1317.8,607.7],[1398.7,603.5],[1477.4,583.4],[1558.0,580.3],[1637.7,596.1],[1717.8,608.5],[1798.8,614.3],[1879.7,620.3],[1960.7,626.2],[2041.4,634.7],[2121.2,649.9],[2200.5,667.4],[2279.7,685.0],[2359.1,702.3],[2438.3,720.0],[2517.6,737.5],[2596.9,755.1],[2676.1,772.7],[2755.4,790.1],[2834.7,807.6],[2914.0,825.2],[2993.3,842.8],[3072.5,860.5],[3151.8,878.0],[3231.0,895.7],[3310.3,913.3],[3389.7,930.6],[3468.7,948.9],[3547.8,967.2],[3627.3,983.9],[3706.7,1001.0],[3785.9,1018.6],[3865.3,1035.9],[3944.5,1053.5],[4023.8,1071.1],[4103.1,1088.7],[4174.1,1120.7],[4190.3,1199.1],[4262.6,1231.3],[4341.9,1248.4],[4421.2,1265.9],[4500.5,1283.5],[4579.8,1300.8],[4659.2,1318.1],[4738.5,1335.3],[4817.8,1352.9],[4897.1,1370.3],[4976.4,1387.7],[5055.7,1405.0],[5135.1,1422.3],[5214.3,1439.9],[5293.6,1457.5],[5373.0,1474.4]] },
 };
 let trackKey = "monaco";
 let CTRL = TRACKS.monaco.ctrl.map(p => [p[0] * SC, p[1] * SC]);
@@ -429,9 +437,13 @@ function buildTrack() {
   const tf = TRACKS[trackKey] && TRACKS[trackKey].tunnel;
   if (tf) { TUN_I0 = Math.round(N * tf[0]); TUN_I1 = Math.round(N * tf[1]); }
   else { TUN_I0 = -1; TUN_I1 = -1; }
+  const hd = TRACKS[trackKey] && TRACKS[trackKey].hotel;
+  if (hd) { HOT_C = Math.round(N * hd.at) % N; HOT_R = Math.ceil((hd.len / 2 + 16) / (TRACK_LEN / N)); } else { HOT_C = -1; HOT_R = 0; }
   STAND_IDX = pickStandIndices(5);
 }
 // Portion du circuit couverte par un tunnel (section fermée, comme à Monaco) : -1 si le circuit n'en a pas.
+let HOT_C = -1, HOT_R = 0;   // hôtel qui enjambe la piste : indice central et demi-largeur (en indices)
+function inHotel(i) { if (HOT_C < 0) return false; const d = Math.abs(i - HOT_C); return Math.min(d, N - d) <= HOT_R; }
 let TUN_I0 = -1, TUN_I1 = -1;
 function inTunnel(i) { return TUN_I0 >= 0 && i >= TUN_I0 && i <= TUN_I1; }
 // La voie des stands : entrée APRÈS la ligne, arrêt dans les garages, puis sortie AVANT la ligne.
@@ -743,7 +755,7 @@ function pickStandIndices(count) {
       const k = (target + w + N) % N;
       if (used.some(u => Math.min(Math.abs(u - k), N - Math.abs(u - k)) < 2 * W + 6)) continue;
       if (Math.abs(pitRelM(k)) < 145) continue;   // jamais de tribune (ni de public) sur la voie des stands
-      if (inTunnel(k)) continue;                  // ni dans le tunnel
+      if (inTunnel(k) || inHotel(k)) continue;    // ni dans le tunnel, ni sous l'hôtel
       if (!clear(k)) continue;
       const c = curv(k);
       if (c < bestScore) { bestScore = c; best = k; }
@@ -2242,7 +2254,7 @@ function buildLamps() {
   const pts = [];
   for (let i = 4; i < N; i += 26) {
     if (STAND_IDX.some(s => Math.abs(i - s) < 12)) continue;      // pas dans les tribunes
-    if (inTunnel(i)) continue;                                    // le tunnel a son propre éclairage
+    if (inTunnel(i) || inHotel(i)) continue;                      // le tunnel a son propre éclairage ; pas de mât sous l'hôtel
     for (const side of [-1, 1]) {
       if (side === PIT_SIDE && Math.abs(pitRelM(i)) < 125) continue;   // pas de poteau sur les bretelles des stands
       const off = side * Math.min(WALL_D + 4, (side > 0 ? WDR[i] : WDL[i]) + 2.5);
@@ -2710,15 +2722,86 @@ function updateFlagman(t) {
   for (let i = 0; i < pos.length; i += 3) { const x = b[i]; pos[i + 2] = Math.sin(x * 5 - t * 0.014) * 0.11 * x; pos[i + 1] = b[i + 1] + Math.sin(x * 4 - t * 0.011) * 0.05 * x; }
   f.geo.attributes.position.needsUpdate = true;
 }
+// L'hôtel Yas Viceroy : un grand bloc à façade lumineuse qui enjambe la piste (entre les virages 13 et 14).
+// La piste passe dessous, sur ~10 m de hauteur libre ; quatre piliers en béton le portent de chaque côté.
+function buildHotel() {
+  const hd = TRACKS[trackKey] && TRACKS[trackKey].hotel;
+  if (!hd || HOT_C < 0) return;
+  const c = HOT_C, L = hd.len, HW = 66, CLEAR = 10.5, BH = 24, under = TY[c] + CLEAR;
+  const g = new THREE.Group(); g.position.set(TX[c], 0, TZ[c]); g.rotation.y = -TA[c]; scene.add(g);   // x local = sens de la piste, z local = à droite
+  let sd = 11; const R = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+  const facadeTex = makeTexture(1024, 192, (cx, w, h) => {
+    cx.fillStyle = "#0a1230"; cx.fillRect(0, 0, w, h);
+    for (let y = 8; y < h - 8; y += 24) for (let x = 6; x < w - 6; x += 20) { const r = R(); cx.fillStyle = r < 0.5 ? "#ffd58a" : r < 0.78 ? "#7cc4ff" : "#233a70"; cx.fillRect(x, y, 14, 14); }
+    cx.strokeStyle = "rgba(120,220,255,.5)"; cx.lineWidth = 2;
+    for (let x = -h; x < w + h; x += 64) { cx.beginPath(); cx.moveTo(x, 0); cx.lineTo(x + h, h); cx.stroke(); cx.beginPath(); cx.moveTo(x + h, 0); cx.lineTo(x, h); cx.stroke(); }
+    cx.fillStyle = "#7df9ff"; cx.fillRect(0, 0, w, 5); cx.fillRect(0, h - 5, w, 5);
+  }, false);
+  const sideTex = facadeTex.clone(); sideTex.needsUpdate = true; sideTex.repeat.set(L / (2 * HW), 1);
+  const face = new THREE.MeshBasicMaterial({ map: facadeTex }), side = new THREE.MeshBasicMaterial({ map: sideTex });
+  const roof = new THREE.MeshBasicMaterial({ color: 0x8b93a1 }), belly = new THREE.MeshBasicMaterial({ color: 0x141922 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(L, BH, 2 * HW), [face, face, roof, belly, side, side]);
+  body.position.y = under + BH / 2; g.add(body);
+  const strip = new THREE.MeshBasicMaterial({ color: 0x8fe8ff });
+  for (const z of [-42, -21, 0, 21, 42]) { const m = new THREE.Mesh(new THREE.BoxGeometry(L - 6, 0.12, 0.7), strip); m.position.set(0, under - 0.08, z); g.add(m); }
+  const conc = new THREE.MeshLambertMaterial({ color: 0x9aa0a8 });
+  const PZ = Math.max(WDL[c], WDR[c]) + 8, Hp = under - GROUND_Y;
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(8, Hp, 8), conc); m.position.set(sx * (L / 2 - 5), GROUND_Y + Hp / 2, sz * PZ); g.add(m);
+  }
+}
+
+// Tunnel de sortie des stands (à Yas Marina, la sortie plonge dans un tunnel). Ici : un tunnel couvert avec portails,
+// sur la bretelle de sortie ; la voiture le traverse comme toute la bretelle (pas de collision en mode stand).
+function buildPitTunnel() {
+  if (!(TRACKS[trackKey] && TRACKS[trackKey].pitTunnel)) return;
+  const seg = pitRamps().exit, y0 = pitPose(PIT_TOTAL, 0).y, y1 = trackElevationRel(PIT_EXIT_REL);
+  const U0 = -0.05, U1 = 0.46, n = 24, hw = PIT_HALF_W + 0.5, H = 7.4, P = [];   // commence juste après le panneau PIT EXIT, s'arrête avant de se rapprocher de la piste
+  for (let k = 0; k <= n; k++) {
+    const u = U0 + (U1 - U0) * k / n, q = hermiteAt(seg, u);
+    P.push({ x: q.x, z: q.z, y: y0 + (y1 - y0) * Math.max(0, u), a: q.a, rx: -Math.sin(q.a), rz: Math.cos(q.a) });
+  }
+  const strip = (fa, fb, mat) => {
+    const pos = [], idx = [];
+    P.forEach(p => { pos.push(...fa(p), ...fb(p)); });
+    for (let i = 0; i < n; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, mat); scene.add(m); return m;
+  };
+  const at = (p, lat, dy) => [p.x + p.rx * lat, p.y + dy, p.z + p.rz * lat];
+  const concrete = makeTexture(128, 128, (g, w, h) => { g.fillStyle = "#9599a0"; g.fillRect(0, 0, w, h); noise(g, w, h, 260, 0.05, 0.08, 3); }, true);
+  const wallM = new THREE.MeshBasicMaterial({ map: concrete, color: 0xc7cbd1, side: THREE.DoubleSide }); tintMats.push(wallM);
+  const earthM = new THREE.MeshBasicMaterial({ color: 0x5b8a3d, side: THREE.DoubleSide }); tintMats.push(earthM);
+  strip(p => at(p, -hw, 0), p => at(p, -hw, H), wallM);                 // murs
+  strip(p => at(p, hw, 0), p => at(p, hw, H), wallM);
+  strip(p => at(p, -hw, H), p => at(p, hw, H), wallM);                  // plafond
+  strip(p => at(p, -(hw + 2.5), -0.3), p => at(p, -(hw + 0.6), H + 0.7), earthM);   // talus herbeux par-dessus (étroits : ils ne débordent pas sur la piste)
+  strip(p => at(p, -(hw + 0.6), H + 0.7), p => at(p, hw + 0.6, H + 0.7), earthM);
+  strip(p => at(p, hw + 0.6, H + 0.7), p => at(p, hw + 2.5, -0.3), earthM);
+  // portails d'entrée et de sortie + éclairage
+  const conc2 = new THREE.MeshLambertMaterial({ color: 0x9aa0a8 }), yel = new THREE.MeshBasicMaterial({ color: 0xffcf00 }), lamp = new THREE.MeshBasicMaterial({ color: 0xfff4d0 });
+  [P[0], P[n]].forEach(p => {
+    const g = new THREE.Group(); g.position.set(p.x, p.y, p.z); g.rotation.y = -p.a; scene.add(g);   // z local = à droite
+    for (const sz of [-1, 1]) { const m = new THREE.Mesh(new THREE.BoxGeometry(1.6, H + 1.2, 1.6), conc2); m.position.set(0, (H + 1.2) / 2, sz * (hw + 0.8)); g.add(m); }
+    const lin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 2 * hw + 3.2), conc2); lin.position.set(0, H + 0.6, 0); g.add(lin);
+    const band = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.4, 2 * hw + 3.22), yel); band.position.set(0, H - 0.05, 0); g.add(band);
+  });
+  for (let k = 2; k < n - 1; k += 3) {
+    const p = P[k], m = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.1, 0.7), lamp);
+    m.position.set(p.x, p.y + H - 0.08, p.z); m.rotation.y = -p.a; scene.add(m);
+  }
+}
 function buildExtras() {
   const stage = (name, fn) => { try { fn(); } catch (e) { console.warn("Décor ignoré (" + name + ") :", e); } };
   stage("bandes de tonte", buildMowing);
   stage("panneaux", buildAds);
   stage("projecteurs", buildLamps);
   stage("tunnel", buildTunnel);
+  stage("hôtel", buildHotel);
   stage("public", buildCrowd);
   stage("voie des stands", buildPitLaneRoad);
   stage("infrastructure pit", buildPitInfrastructure);
+  stage("tunnel de sortie des stands", buildPitTunnel);
   stage("paddock", buildPaddock);
   stage("grille de départ", buildStartGrid);
   stage("commissaire au drapeau", buildFlagman);
