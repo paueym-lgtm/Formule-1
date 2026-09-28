@@ -2655,6 +2655,49 @@ function buildGrandstands() {
     scene.add(g);
   });
 }
+var flagman = null;
+function buildFlagman() {
+  const a = TA[0], lat = -(WDL[0] + 2.0), px = TX[0] + RGX[0] * lat, pz = TZ[0] + RGZ[0] * lat, top = TY[0] + 3.6;
+  const root = new THREE.Group(); root.position.set(px, 0, pz); scene.add(root);
+  // Poste de commissaire : socle plein jusqu'au sol, garde-corps blanc et rouge
+  const conc = new THREE.MeshLambertMaterial({ color: 0x8b919b }), rail = new THREE.MeshLambertMaterial({ color: 0xf2f2f2 }), red = new THREE.MeshLambertMaterial({ color: 0xd21f1f });
+  const H = top - GROUND_Y, base = new THREE.Mesh(new THREE.BoxGeometry(2.6, H, 2.6), conc); base.position.y = GROUND_Y + H / 2; base.rotation.y = -a; root.add(base);
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.14, 2.8), rail); cap.position.y = top + 0.07; cap.rotation.y = -a; root.add(cap);
+  const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.3, 2.62), red); stripe.position.y = top - 0.25; stripe.rotation.y = -a; root.add(stripe);
+  for (let k = 1; k <= 3; k++) { const b2 = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.3, 2.62), k % 2 ? rail : red); b2.position.y = top - 0.25 - k * 0.9; b2.rotation.y = -a; root.add(b2); }
+  const man = makeHuman3D(0xffffff, "commissaire"); man.scale.setScalar(1.7); man.position.y = top + 0.2; man.rotation.y = -a; root.add(man);
+  // Drapeau : hampe tenue à la main droite, tissu ondulant
+  const hold = new THREE.Group(); hold.position.set(0.16, -0.56, 0.05); man.userData.armR.add(hold);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.7, 6), new THREE.MeshLambertMaterial({ color: 0xdadde2 })); pole.position.y = 0.85; hold.add(pole);
+  const geo = new THREE.PlaneGeometry(1.25, 0.85, 10, 6); geo.translate(0.625, 0, 0);
+  const base0 = Float32Array.from(geo.attributes.position.array);
+  const greenTex = makeTexture(64, 64, (g, w, h) => { g.fillStyle = "#12a44a"; g.fillRect(0, 0, w, h); g.fillStyle = "rgba(255,255,255,.10)"; g.fillRect(0, 0, w, h * .18); }, true);
+  const chkTex = makeTexture(160, 96, (g, w, h) => { const c = 8, r = 5, cw = w / c, ch = h / r; for (let j = 0; j < r; j++) for (let i = 0; i < c; i++) { g.fillStyle = (i + j) % 2 ? "#111" : "#fff"; g.fillRect(i * cw, j * ch, cw + 1, ch + 1); } }, true);
+  const greenM = new THREE.MeshBasicMaterial({ map: greenTex, side: THREE.DoubleSide }), chkM = new THREE.MeshBasicMaterial({ map: chkTex, side: THREE.DoubleSide });
+  const cloth = new THREE.Mesh(geo, greenM); cloth.position.set(0.02, 1.25, 0); cloth.scale.set(1.35, 1.35, 1); hold.add(cloth);
+  hold.visible = false;
+  flagman = { man, hold, cloth, geo, base0, greenM, chkM, kind: "" };
+}
+function updateFlagman(t) {
+  const f = flagman; if (!f) return;
+  const racing = phase === "race" || phase === "finished";
+  let kind = "";
+  if (phase === "finished") kind = "chk";
+  else if (phase === "race") { if (raceNow(t) < 10000) kind = "green"; else if (me.cross >= laps) kind = "chk"; }
+  if (!racing) kind = "";
+  const arm = f.man.userData.armR;
+  if (!kind) { f.hold.visible = false; arm.rotation.z += (0 - arm.rotation.z) * 0.15; f.man.rotation.x = 0; return; }
+  if (f.kind !== kind) { f.kind = kind; f.cloth.material = kind === "chk" ? f.chkM : f.greenM; }
+  f.hold.visible = true;
+  const w = t * 0.0075, A = 2.3 + Math.sin(w * 1.3) * 0.25;
+  arm.rotation.z = A;
+  f.hold.rotation.z = -A + Math.sin(w) * 0.75;           // la hampe décrit de grands cercles
+  f.hold.rotation.x = Math.cos(w) * 0.6;
+  f.man.rotation.z = Math.sin(w) * 0.05;
+  const pos = f.geo.attributes.position.array, b = f.base0;
+  for (let i = 0; i < pos.length; i += 3) { const x = b[i]; pos[i + 2] = Math.sin(x * 5 - t * 0.014) * 0.11 * x; pos[i + 1] = b[i + 1] + Math.sin(x * 4 - t * 0.011) * 0.05 * x; }
+  f.geo.attributes.position.needsUpdate = true;
+}
 function buildExtras() {
   const stage = (name, fn) => { try { fn(); } catch (e) { console.warn("Décor ignoré (" + name + ") :", e); } };
   stage("bandes de tonte", buildMowing);
@@ -2666,6 +2709,7 @@ function buildExtras() {
   stage("infrastructure pit", buildPitInfrastructure);
   stage("paddock", buildPaddock);
   stage("grille de départ", buildStartGrid);
+  stage("commissaire au drapeau", buildFlagman);
   stage("repère lointain", buildLandmark);
   stage("soleil", () => {
     sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(curMood.glow), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
@@ -3189,6 +3233,7 @@ function render3d(t, dt) {
   updateCamera(dt, t);
   stepFx(dt);
   stepPitCrew(dt);
+  try { updateFlagman(t); } catch (e) {}
   renderer.render(scene, camera);
 }
 function initGL() {
@@ -3309,6 +3354,21 @@ function drawMini() {
     mx.beginPath(); mx.arc(ox + (x - x0) * sc, oz + (z - z0) * sc, rad * DPR, 0, TAU);
     mx.fillStyle = col; mx.fill(); mx.strokeStyle = "#000"; mx.lineWidth = 1.5 * DPR; mx.stroke();
   };
+  {   // ligne de départ en damier, perpendiculaire au tracé
+    const px = ox + (TX[0] - x0) * sc, py = oz + (TZ[0] - z0) * sc, dx = Math.cos(TA[0]), dz = Math.sin(TA[0]);
+    const L = 9 * DPR, w = 3 * DPR;
+    const row = (off, lw, col, dOff, dash) => {
+      mx.beginPath();
+      mx.moveTo(px + dx * off - RGX[0] * L, py + dz * off - RGZ[0] * L);
+      mx.lineTo(px + dx * off + RGX[0] * L, py + dz * off + RGZ[0] * L);
+      mx.setLineDash(dash ? [w, w] : []); mx.lineDashOffset = dOff; mx.lineWidth = lw; mx.lineCap = "butt"; mx.strokeStyle = col; mx.stroke();
+    };
+    row(0, 2 * w + 2 * DPR, "#000", 0, false);
+    row(0, 2 * w, "#fff", 0, false);
+    row(-w / 2, w, "#000", 0, true);
+    row(w / 2, w, "#000", w, true);
+    mx.setLineDash([]); mx.lineDashOffset = 0;
+  }
   for (const id in remotes) if (id[0] === "b" || people[id]) dot(remotes[id].rx, remotes[id].rz, colorOf(id), 3.5);
   for (const b of bots) dot(b.x, b.z, colorOf(b.id), 3.5);
   dot(me.x, me.z, me.color, 5.5);
