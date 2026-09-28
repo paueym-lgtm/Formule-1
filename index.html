@@ -120,7 +120,7 @@
   .opts{display:flex;gap:8px;align-items:center;margin:0 0 4px}
   .opts select{flex:1}
 
-  #pitStatus{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:12px 18px;background:rgba(8,12,20,.9);color:#fff;border:2px solid var(--signal);border-radius:6px;font-weight:800;pointer-events:none;z-index:8;text-align:center;min-width:260px}
+  #pitStatus{position:fixed;top:112px;left:50%;transform:translateX(-50%);padding:8px 16px;background:rgba(8,12,20,.82);color:#fff;border:2px solid var(--signal);border-radius:6px;font-weight:800;pointer-events:none;z-index:8;text-align:center;min-width:260px}
   #pitStatus .small{display:block;font-size:12px;color:#cdd5e0;margin-top:3px}
   @media (max-width:600px), (pointer:coarse){
     #lobby{top:10px;left:10px;padding:16px}
@@ -144,6 +144,10 @@
 <canvas id="gauge" hidden aria-label="Compteur de vitesse"></canvas>
 
 <!-- Accueil et salle -->
+<audio id="menuMusic" preload="auto" loop aria-label="Musique d'accueil">
+  <source src="audio.mp3" type="audio/mpeg">
+</audio>
+
 <section id="lobby" class="panel">
   <h1 class="display">Grand Prix</h1>
   <p class="sub">Course de F1 en 3D, seul ou entre amis</p>
@@ -288,16 +292,52 @@ let STAND_IDX = [];   // recalculé pour chaque circuit : uniquement sur les sec
 // Tracé réel du Circuit de Monaco (relevé sur le plan officiel, mis à l'échelle : 3,335 km).
 // Le point 0 est la ligne de départ, sur la ligne droite entre la Rascasse/Antony Noghes et Sainte-Dévote.
 const TRACKS = {
-  monaco: { name: "Monaco", ctrl: [[525.5,747.8],[639.0,637.8],[820.5,456.2],[1038.4,262.6],[1123.1,209.4],[1183.6,274.7],[1256.2,323.1],[1449.8,419.9],[1691.9,553.1],[1933.9,698.3],[2127.5,795.1],[2272.8,891.9],[2418.0,988.7],[2490.6,1037.1],[2587.4,1025.0],[2660.0,940.3],[2696.3,770.9],[2708.4,649.9],[2781.0,613.6],[3023.1,565.2],[3265.1,516.8],[3410.4,499.8],[3434.6,553.1],[3386.2,649.9],[3289.3,746.7],[3228.8,843.5],[3228.8,904.0],[3277.2,928.2],[3349.8,867.7],[3410.4,783.0],[3458.8,770.9],[3555.6,807.2],[3604.0,855.6],[3507.2,916.1],[3265.1,1061.3],[3095.7,1182.4],[2974.7,1242.9],[2781.0,1267.1],[2539.0,1255.0],[2297.0,1163.0],[2054.9,1042.0],[1890.3,945.2],[1837.1,911.3],[1788.7,976.6],[1728.2,940.3],[1691.9,867.7],[1667.7,807.2],[1546.6,722.5],[1353.0,577.3],[1135.2,444.1],[1014.2,492.6],[893.1,613.6],[844.7,698.3],[856.8,770.9],[856.8,807.2],[796.3,916.1],[699.5,1037.1],[639.0,1061.3],[578.5,1025.0],[530.1,1037.1],[493.8,1109.8],[474.4,1255.0],[481.7,1424.4],[518.0,1569.6],[542.2,1666.5],[493.8,1690.7],[360.6,1618.0],[239.6,1521.2],[203.3,1448.6],[215.4,1376.0],[251.7,1279.2],[288.0,1134.0],[360.6,964.5],[481.7,795.1]] },
+  monaco: { name: "Monaco", tunnel: [0.443, 0.578],
+    // Relief réel du circuit (le point 0 est la ligne de départ) : Sainte Dévote au creux de la
+    // descente, montée très raide de Beau Rivage, point culminant au Casino (virage 4), puis longue
+    // redescente par Mirabeau / l'épingle du Grand Hôtel / Portier jusqu'au tunnel qui plonge vers la
+    // mer, quai à niveau de la mer jusqu'à la Rascasse (point le plus bas), puis léger regain avant la
+    // ligne de départ. Écart Casino/Rascasse : environ 42 m, comme sur le vrai circuit.
+    elev: [[0.000,6.0],[0.030,3.0],[0.088,2.0],[0.150,16.0],[0.218,31.0],[0.252,44.0],[0.290,39.0],
+           [0.316,33.0],[0.369,25.0],[0.409,17.0],[0.433,10.0],[0.500,6.0],[0.619,3.0],[0.706,2.0],
+           [0.777,2.0],[0.829,2.0],[0.888,0.5],[0.957,2.0],[1.000,6.0]],
+    ctrl: [[525.5,747.8],[639.0,637.8],[820.5,456.2],[1038.4,262.6],[1123.1,209.4],[1183.6,274.7],[1256.2,323.1],[1449.8,419.9],[1691.9,553.1],[1933.9,698.3],[2127.5,795.1],[2272.8,891.9],[2418.0,988.7],[2490.6,1037.1],[2587.4,1025.0],[2660.0,940.3],[2696.3,770.9],[2708.4,649.9],[2781.0,613.6],[3023.1,565.2],[3265.1,516.8],[3410.4,499.8],[3434.6,553.1],[3386.2,649.9],[3289.3,746.7],[3228.8,843.5],[3228.8,904.0],[3277.2,928.2],[3349.8,867.7],[3410.4,783.0],[3458.8,770.9],[3555.6,807.2],[3604.0,855.6],[3507.2,916.1],[3265.1,1061.3],[3095.7,1182.4],[2974.7,1242.9],[2781.0,1267.1],[2539.0,1255.0],[2297.0,1163.0],[2054.9,1042.0],[1890.3,945.2],[1837.1,911.3],[1788.7,976.6],[1728.2,940.3],[1691.9,867.7],[1667.7,807.2],[1546.6,722.5],[1353.0,577.3],[1135.2,444.1],[1014.2,492.6],[893.1,613.6],[844.7,698.3],[856.8,770.9],[856.8,807.2],[796.3,916.1],[699.5,1037.1],[639.0,1061.3],[578.5,1025.0],[530.1,1037.1],[493.8,1109.8],[474.4,1255.0],[481.7,1424.4],[518.0,1569.6],[542.2,1666.5],[493.8,1690.7],[360.6,1618.0],[239.6,1521.2],[203.3,1448.6],[215.4,1376.0],[251.7,1279.2],[288.0,1134.0],[360.6,964.5],[481.7,795.1]] },
 };
 let trackKey = "monaco";
 let CTRL = TRACKS.monaco.ctrl.map(p => [p[0] * SC, p[1] * SC]);
 const TX = new Float32Array(N), TZ = new Float32Array(N), TA = new Float32Array(N);
 const RGX = new Float32Array(N), RGZ = new Float32Array(N);
+const TY = new Float32Array(N);   // altitude (m) le long du circuit, pour le relief (montées/descentes)
+// Interpole l'altitude à une fraction (0..1) du tour, à partir des points-clés "elev" du circuit
+// (lissage en escalier arrondi : pas de cassure brutale de pente au passage d'un point-clé à l'autre).
+function elevAt(frac, keys) {
+  if (!keys || !keys.length) return 0;
+  frac = ((frac % 1) + 1) % 1;
+  let i = 0; while (i < keys.length - 1 && keys[i + 1][0] < frac) i++;
+  const a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)];
+  const span = (b[0] - a[0]) || 1e-6;
+  let t = clamp((frac - a[0]) / span, 0, 1);
+  t = t * t * (3 - 2 * t);
+  return a[1] + (b[1] - a[1]) * t;
+}
+// Hauteur du sol (altitude de la piste) au point le plus proche d'une position (x,z) donnée, en
+// interpolant entre les deux échantillons encadrants. Utilisé pour poser voitures et décor au bon
+// niveau. "hint" est un index approximatif (évite de tout rechercher).
+function groundY(i) { return TY[i]; }
 const WDR = new Float32Array(N), WDL = new Float32Array(N);   // distance du rail à l'axe, côté droit / gauche (réduite là où un autre tronçon est tout proche)   // vecteur "droite" en chaque point
 let TRACK_LEN = 0;
 function computeWallLimits() {
-  const ds = TRACK_LEN / N, own = Math.round(40 / ds), minW = TRACK_W / 2 + KERB + 1.4;
+  // "own" définit la portion du circuit (de part et d'autre du point testé) considérée comme
+  // "le même virage" et donc ignorée quand on cherche un AUTRE tronçon du circuit tout proche
+  // (ce qui rétrécit les rails pour éviter qu'ils ne se chevauchent, utile par ex. à Rascasse).
+  // À 40 m, cette portion était plus courte qu'un simple virage serré ou qu'une chicane : le
+  // point situé juste après un tel virage se retrouvait tout près du point juste avant, et le
+  // code croyait donc à tort qu'un AUTRE tronçon du circuit passait juste à côté. Les rails se
+  // repliaient alors brutalement vers l'intérieur sur quelques mètres (une vraie encoche), ce qui
+  // permettait à la voiture de se glisser dedans et de se retrouver derrière le mur. 100 m couvre
+  // largement n'importe quel virage ou chicane isolé, tout en repérant toujours les cas où le
+  // circuit revient réellement près d'un AUTRE tronçon, plus loin.
+  const ds = TRACK_LEN / N, own = Math.round(100 / ds), minW = TRACK_W / 2 + KERB + 1.4;
   const r = new Float32Array(N).fill(WALL_D), l = new Float32Array(N).fill(WALL_D);
   for (let i = 0; i < N; i++) {
     const ca = Math.cos(TA[i]), sa = Math.sin(TA[i]);
@@ -309,7 +349,21 @@ function computeWallLimits() {
       const cand = d / 2 - 1.0, lat = dx * RGX[i] + dz * RGZ[i];
       if (lat > 0) r[i] = Math.min(r[i], cand); else l[i] = Math.min(l[i], cand);
     }
-    const k = 5, dth = wrap(TA[(i + k) % N] - TA[(i - k + N) % N]), R = 2 * k * ds / Math.max(Math.abs(dth), 1e-4);
+    // Rayon de courbure local : on le mesure à PLUSIEURS échelles (k=2,3,5) et on garde la plus
+    // petite valeur trouvée. Une seule fenêtre large (k=5, environ 46 m) moyenne la courbure et ne
+    // "voit" jamais l'apex d'une épingle très serrée (Grand Hôtel, Rascasse, Nouvelle Chicane...),
+    // où le vrai rayon peut descendre à 10 m sur une dizaine de mètres à peine. Le rail restait alors
+    // calé à sa largeur normale (~18 m) alors que le tracé, lui, tournait bien plus court : le rail
+    // (et son décalage géométrique par rapport à l'axe) se repliait sur lui-même dans le virage,
+    // laissant un vrai trou par lequel la voiture pouvait sortir. Prendre le minimum sur plusieurs
+    // échelles capture l'apex le plus serré, quelle que soit sa longueur, sans être bruité par le
+    // relevé du tracé (fait à la main) sur une fenêtre trop fine.
+    let R = 1e9, dth = 0;
+    for (const k of [2, 3, 5]) {
+      const d2 = wrap(TA[(i + k) % N] - TA[(i - k + N) % N]);
+      const Rk = 2 * k * ds / Math.max(Math.abs(d2), 1e-4);
+      if (Rk < R) { R = Rk; dth = d2; }
+    }
     const cap = Math.max(R - 0.5, minW - 0.8);            // à l'intérieur d'un virage serré le rail ne doit pas se replier
     if (dth > 0) r[i] = Math.min(r[i], cap); else l[i] = Math.min(l[i], cap);
   }
@@ -348,6 +402,8 @@ function buildTrack() {
     TX[k] = a[0] + (b[0] - a[0]) * f;
     TZ[k] = a[1] + (b[1] - a[1]) * f;
   }
+  const elevKeys = TRACKS[trackKey] && TRACKS[trackKey].elev;
+  for (let k = 0; k < N; k++) TY[k] = elevKeys ? elevAt(k / N, elevKeys) : 0;
   for (let k = 0; k < N; k++) {
     const a = (k + 1) % N, b = (k - 1 + N) % N;
     TA[k] = Math.atan2(TZ[a] - TZ[b], TX[a] - TX[b]);
@@ -357,9 +413,16 @@ function buildTrack() {
   PIT_Z = TZ[0] + RGZ[0] * PIT_SIDE * PIT_LAT;
   GARAGE_X = TX[0] + RGX[0] * PIT_SIDE * GARAGE_LAT;
   GARAGE_Z = TZ[0] + RGZ[0] * PIT_SIDE * GARAGE_LAT;
+  PIT_GROUND_Y = TY[0];
   computeWallLimits();
+  const tf = TRACKS[trackKey] && TRACKS[trackKey].tunnel;
+  if (tf) { TUN_I0 = Math.round(N * tf[0]); TUN_I1 = Math.round(N * tf[1]); }
+  else { TUN_I0 = -1; TUN_I1 = -1; }
   STAND_IDX = pickStandIndices(5);
 }
+// Portion du circuit couverte par un tunnel (section fermée, comme à Monaco) : -1 si le circuit n'en a pas.
+let TUN_I0 = -1, TUN_I1 = -1;
+function inTunnel(i) { return TUN_I0 >= 0 && i >= TUN_I0 && i <= TUN_I1; }
 // La voie des stands : entrée APRÈS la ligne, arrêt dans les garages, puis sortie AVANT la ligne.
 // La trajectoire est une vraie courbe indépendante de la piste : elle contourne les garages
 // et revient sur la piste dans le même sens de circulation.
@@ -375,6 +438,17 @@ const PIT_GARAGE_LANE = 15.6;  // écart entre l'axe de la voie et le centre d'u
 const PIT_BOX_W = 9.4, PIT_MAXBOX = 10;
 let pitBoxCount = 6;           // nombre de garages = nombre de voitures dans la course (fixé au départ)
 let PIT_X = 0, PIT_Z = 0, GARAGE_X = 0, GARAGE_Z = 0;
+// Altitude du sol de la voie des stands et du paddock : la voie suit à peu près l'altitude de la
+// ligne de départ (TY[0]) sur toute sa longueur, mais son tracé (bretelles, box) est calculé en 2D
+// (x,z) sans tenir compte du relief. Sans ce décalage constant, tout le paddock et la voie des stands
+// étaient posés à l'altitude 0 alors que la piste, juste à côté, est à TY[0] (par ex. 6 m à Monaco) :
+// stands et voie des stands semblaient "enterrés".
+let PIT_GROUND_Y = 0;
+// Le point le plus bas du circuit n'est qu'à 0.5 m au-dessus de 0 (près de Rascasse). Le sol plat
+// (l'herbe) était posé exactement à y=0 : à cet endroit, il devenait si proche de la piste que le
+// tampon de profondeur ne pouvait plus trancher entre les deux à distance, d'où le scintillement de
+// l'herbe qui semblait "affleurer" sur la piste elle-même. On descend le sol nettement en dessous.
+const GROUND_Y = -1.5;
 let pitPath = null, PIT_TOTAL = 180, PIT_SERVICE_PROGRESS = 88, PIT_EXIT_PROGRESS = 142;
 function pitRelM(i) { let d = i; if (d > N / 2) d -= N; return d * (TRACK_LEN / N); }
 function trackPoseRel(relM) {
@@ -410,7 +484,7 @@ function ensurePitPath() {
   for (let k = 0; k <= nS; k++) {
     const rel = PIT_LANE_A + k, t = trackPoseRel(rel), n = pitNormalAt(rel), q = { x: t.x + n.rx * PIT_LAT, z: t.z + n.rz * PIT_LAT };
     if (prev) total += Math.hypot(q.x - prev.x, q.z - prev.z);
-    samples.push({ u: k / nS, x: q.x, z: q.z, s: total });
+    samples.push({ u: k / nS, x: q.x, z: q.z, y: trackElevationRel(rel), rel, s: total });
     if (rel === 0) s0 = total;
     prev = q;
   }
@@ -419,6 +493,11 @@ function ensurePitPath() {
   PIT_SERVICE_PROGRESS = s0;   // abscisse de la ligne de départ sur la voie
   PIT_EXIT_PROGRESS = total;
 }
+function trackElevationRel(relM){
+  let d=relM%TRACK_LEN; if(d<0)d+=TRACK_LEN;
+  const keys=TRACKS[trackKey]&&TRACKS[trackKey].elev;
+  return keys ? elevAt(d/TRACK_LEN,keys) : 0;
+}
 function pitPose(progress,lane=0){
   ensurePitPath();
   const s=clamp(progress,0,pitPath.total);
@@ -426,9 +505,11 @@ function pitPose(progress,lane=0){
   while(lo<hi){const m=(lo+hi)>>1;if(pitPath.samples[m].s<s)lo=m+1;else hi=m;}
   const ib=Math.max(lo,1), b=pitPath.samples[ib], a=pitPath.samples[ib-1], span=(b.s-a.s)||1, f=clamp((s-a.s)/span,0,1);
   const x=a.x+(b.x-a.x)*f, z=a.z+(b.z-a.z)*f;
+  const relA=a.rel==null ? PIT_LANE_A : a.rel, relB=b.rel==null ? PIT_LANE_A : b.rel;
+  const y=(a.y==null?trackElevationRel(relA):a.y)+((b.y==null?trackElevationRel(relB):b.y)-(a.y==null?trackElevationRel(relA):a.y))*f;
   const ang=Math.atan2(b.z-a.z,b.x-a.x);
   const rx=-Math.sin(ang), rz=Math.cos(ang);
-  return {idx:0,x:x+rx*lane,z:z+rz*lane,a:ang,rx,rz};
+  return {idx:0,x:x+rx*lane,z:z+rz*lane,y,a:ang,rx,rz,s};
 }
 function inPitZone(i) {
   const r=pitRelM(i);
@@ -449,7 +530,7 @@ function pitWallGap(i) {
    --------------------------------------------------------------------- */
 const PIT_TRIG_REL = PIT_ENTRY_REL;       // la voiture doit être là (côté droit) pour prendre la bretelle
 const PIT_ARC_D = 8;                       // la voiture quitte l'axe de la voie 8 m avant l'axe de son box
-const PIT_RAMP_LAT = TRACK_W / 2 - 1.5;    // les bretelles rejoignent la piste 1,5 m à l'intérieur de son bord
+const PIT_RAMP_LAT = TRACK_W / 2 + 0.4;    // raccord au bord de piste, sans empiéter inutilement sur l'asphalte
 function hermiteSeg(x0, z0, a0, x1, z1, a1, k0, k1) {
   const L = Math.hypot(x1 - x0, z1 - z0) || 1, m0 = L * k0, m1 = L * k1;
   return { x0, z0, x1, z1, m0x: Math.cos(a0) * m0, m0z: Math.sin(a0) * m0, m1x: Math.cos(a1) * m1, m1z: Math.sin(a1) * m1 };
@@ -479,7 +560,7 @@ function pitBoxXs(box) { return (box - (pitBoxCount - 1) / 2) * PIT_BOX_W; }   /
 function pitBoxFrame(box) {                // position d'arrêt (et cap : nez vers le fond du box) d'un box
   ensurePitPath();
   const xs = pitBoxXs(box), c0 = pitPose(PIT_SERVICE_PROGRESS + xs, 0);
-  return { x: c0.x + c0.rx * PIT_GARAGE_LANE, z: c0.z + c0.rz * PIT_GARAGE_LANE, a: c0.a + Math.PI / 2, xs };
+  return { x: c0.x + c0.rx * PIT_GARAGE_LANE, z: c0.z + c0.rz * PIT_GARAGE_LANE, y: c0.y, a: c0.a + Math.PI / 2, xs };
 }
 function pitArc(box) {                     // arc de la voie jusque dans le box
   const g = pitGeo();
@@ -505,7 +586,17 @@ function pitTrack(c) {                     // suit la position sur le circuit pe
   c.progress = c.cross * N + c.idx;
 }
 function pitPlace(c, p, speed, fwd) {
-  c.x = p.x; c.z = p.z; c.a = p.a; c.steer = 0; c.speed = speed;
+  let py=p.y;
+  if(py==null){
+    if(c.pitMode===1 && c.pitSub===0) py=trackElevationRel(PIT_ENTRY_REL)+(trackElevationRel(PIT_LANE_A)-trackElevationRel(PIT_ENTRY_REL))*c.pitU;
+    else if(c.pitMode===1 && c.pitSub===1) py=pitPose(Math.min(c.pitProgress,PIT_SERVICE_PROGRESS),0).y;
+    else if(c.pitMode===1 && c.pitSub===2) py=trackElevationRel(0);
+    else if(c.pitMode===3 && c.pitSub===0) py=trackElevationRel(0);
+    else if(c.pitMode===3 && c.pitSub===1) py=pitPose(Math.min(c.pitProgress,PIT_TOTAL),0).y;
+    else if(c.pitMode===3 && c.pitSub===2) py=trackElevationRel(PIT_EXIT_REL);
+    else py=trackElevation(p.x,p.z,c.idx);
+  }
+  c.x = p.x; c.z = p.z; c.pitY = py; c.a = p.a; c.steer = 0; c.speed = speed;
   if (fwd) { c.vx = Math.cos(p.a) * speed; c.vz = Math.sin(p.a) * speed; } else { c.vx = c.vz = 0; }
 }
 function pitBegin(c, box, cruise) {        // la voiture entre aux stands
@@ -552,7 +643,12 @@ function pitMove(c, h, vOut) {
     } else {                                                // bretelle de sortie : voie -> piste
       p = hermiteAt(c.pitSeg, c.pitU);
       c.pitU = Math.min(1, c.pitU + vOut * h / Math.max(p.d, 1));
-      pitPlace(c, hermiteAt(c.pitSeg, c.pitU), vOut, true);
+      const rp = hermiteAt(c.pitSeg, c.pitU);
+      // La bretelle monte/descend réellement entre la voie et la piste.
+      // Sans cette interpolation, la voiture gardait l'altitude finale pendant toute la rampe
+      // et s'enfonçait visuellement dans le revêtement.
+      rp.y = pitPose(PIT_TOTAL,0).y + (trackElevationRel(PIT_EXIT_REL) - pitPose(PIT_TOTAL,0).y) * c.pitU;
+      pitPlace(c, rp, vOut, true);
       if (c.pitU >= 1) ev = "done";
     }
   }
@@ -563,50 +659,52 @@ function setPitStatus(main,sub,show=true){const e=$("pitStatus");if(!e)return;e.
 function buildPitLaneRoad() {
   ensurePitPath();
   const pos=[],uv=[],idx=[];
-  const tex=makeTexture(64,256,(g,w,h)=>{
-    g.fillStyle="#46494f"; g.fillRect(0,0,w,h);
-    g.fillStyle="rgba(255,255,255,.06)"; for(let y=0;y<h;y+=10)g.fillRect(0,y,w,4);
-    g.fillStyle="#ffcf00"; g.fillRect(0,0,w*.06,h); g.fillRect(w*.94,0,w*.06,h);
+  const tex=makeTexture(256,256,(g,w,h)=>{
+    g.fillStyle="#3b3e44"; g.fillRect(0,0,w,h); noise(g,w,h,2200,.05,.09,2);
+    g.fillStyle="rgba(0,0,0,.10)"; g.fillRect(w*.12,0,w*.16,h);
+    g.fillStyle="#f2c400"; g.fillRect(w*.035,0,w*.03,h); g.fillRect(w*.935,0,w*.03,h);
+    g.fillStyle="#f4f4f4"; g.fillRect(w*.545,0,w*.02,h);
   },true);
   const mat=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});
   const count=220;
   for(let k=0;k<=count;k++){
-    const p=pitPose(PIT_TOTAL*k/count), hw=PIT_HALF_W;
-    pos.push(p.x+p.rx*(-hw),.06,p.z+p.rz*(-hw),p.x+p.rx*hw,.06,p.z+p.rz*hw);
-    uv.push(0,k*.6,1,k*.6);
+    // La voie suivait auparavant une hauteur FIXE (celle de la ligne de départ) sur toute sa longueur :
+    // là où le circuit juste à côté monte ou descend, la voiture (elle, toujours posée à la vraie
+    // altitude du circuit) se retrouvait au-dessus ou EN DESSOUS du ruban de la voie. On interpole ici
+    // l'altitude réelle du circuit à chaque point, exactement comme pour la voiture elle-même.
+    const p=pitPose(PIT_TOTAL*k/count), hw=PIT_HALF_W, gy=p.y+.12;
+    pos.push(p.x+p.rx*(-hw),gy,p.z+p.rz*(-hw),p.x+p.rx*hw,gy,p.z+p.rz*hw);
+    uv.push(0,(PIT_TOTAL*k/count)/6,1,(PIT_TOTAL*k/count)/6);
   }
   for(let i=0;i<count;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}
   const geo=new THREE.BufferGeometry(); geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
   geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2)); geo.setIndex(idx); scene.add(new THREE.Mesh(geo,mat));
 
-  // Vraies bretelles d'accès : elles relient la piste à la pit-lane sans faire
-  // apparaître la voiture comme si elle traversait directement le mur.
-  const addConnector=(rel)=>{
-    const t=trackPoseRel(rel);
-    const edge={x:t.x+t.rx*(TRACK_W/2+0.35),z:t.z+t.rz*(TRACK_W/2+0.35)};
-    const pit=pitPose(rel===PIT_ENTRY_REL?0:PIT_TOTAL);
-    const hw=PIT_HALF_W;
-    const nx=t.rx, nz=t.rz;
-    const left={x:edge.x+nx*hw,z:edge.z+nz*hw};
-    const right={x:edge.x-nx*hw,z:edge.z-nz*hw};
-    const pl={x:pit.x+pit.rx*hw,z:pit.z+pit.rz*hw};
-    const pr={x:pit.x-pit.rx*hw,z:pit.z-pit.rz*hw};
-    const base=0.07, arr=[left.x,base,left.z,right.x,base,right.z,pl.x,base,pl.z,pr.x,base,pr.z];
-    const g=new THREE.BufferGeometry(); g.setAttribute("position",new THREE.Float32BufferAttribute(arr,3));
-    g.setAttribute("uv",new THREE.Float32BufferAttribute([0,0,1,0,0,1,1,1],2));
-    g.setIndex([0,1,2,1,3,2]); scene.add(new THREE.Mesh(g,mat));
-  };
-  // Bretelles courbes = exactement les trajectoires suivies par les voitures
-  const addRamp=(seg)=>{
-    const pos=[],uv=[],idx=[],n=40,hw=PIT_HALF_W;
-    for(let k=0;k<=n;k++){const p=hermiteAt(seg,k/n),rx=-Math.sin(p.a),rz=Math.cos(p.a);
-      pos.push(p.x-rx*hw,.07,p.z-rz*hw,p.x+rx*hw,.07,p.z+rz*hw);uv.push(0,k*.6,1,k*.6);}
+  const addRamp=(seg,y0,y1,hwA,hwB)=>{
+    const pos=[],uv=[],idx=[],n=48; let d=0,pv=null;
+    for(let k=0;k<=n;k++){
+      const u=k/n,p=hermiteAt(seg,u),rx=-Math.sin(p.a),rz=Math.cos(p.a),gy=y0+(y1-y0)*u+.12;
+      const hw=hwA+(hwB-hwA)*(u*u*(3-2*u));
+      if(pv)d+=Math.hypot(p.x-pv.x,p.z-pv.z); pv=p;
+      pos.push(p.x-rx*hw,gy,p.z-rz*hw,p.x+rx*hw,gy,p.z+rz*hw);uv.push(0,d/6,1,d/6);
+    }
     for(let i=0;i<n;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}
     const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
     g.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);scene.add(new THREE.Mesh(g,mat));
   };
-  addRamp(pitRamps().entry);
-  addRamp(pitRamps().exit);
+  // Bretelles effilées : elles naissent au bord de la piste au lieu de recouvrir l'asphalte
+  addRamp(pitRamps().entry,trackElevationRel(PIT_ENTRY_REL),trackElevationRel(PIT_LANE_A),0.7,PIT_HALF_W);
+  addRamp(pitRamps().exit,pitPose(PIT_TOTAL,0).y,trackElevationRel(PIT_EXIT_REL),PIT_HALF_W,0.75);
+  // Marquages peints : barres de limite de vitesse et « PIT » à l'entrée / la sortie
+  [12,PIT_TOTAL-12].forEach(sp=>{const q=pitPose(sp,0);pitDecal(scene,360,28,(g,w,h)=>{g.fillStyle="#f4f4f4";g.fillRect(0,0,w,h);},q.x,q.y+.135,q.z,q.a,PIT_HALF_W*2-.6,.5);});
+  [24,PIT_TOTAL-30].forEach(sp=>{const q=pitPose(sp,-1.9);pitDecal(scene,160,120,(g,w,h)=>{g.fillStyle="#f4f4f4";g.font="900 104px Barlow Condensed,Arial,sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText("PIT",w/2,h/2);},q.x,q.y+.135,q.z,q.a,3.4,2.6);});
+}
+// Décalque peint à plat : la hauteur du dessin = sens de marche, la largeur = latéral (lisible pour le pilote)
+function pitDecal(parent,cw,ch,draw,x,y,z,fa,aw,al){
+  const t=makeTexture(cw,ch,draw,true); t.wrapT=THREE.ClampToEdgeWrapping;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(aw,al),new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false}));
+  m.rotation.x=-Math.PI/2; const g=new THREE.Group(); g.add(m);
+  g.rotation.y=Math.atan2(-Math.cos(fa),-Math.sin(fa)); g.position.set(x,y,z); parent.add(g); return g;
 }
 function pickStandIndices(count) {
   // Choisit des emplacements de tribunes sur des portions assez droites, et assez loin de tout autre tronçon
@@ -634,6 +732,7 @@ function pickStandIndices(count) {
       const k = (target + w + N) % N;
       if (used.some(u => Math.min(Math.abs(u - k), N - Math.abs(u - k)) < 2 * W + 6)) continue;
       if (Math.abs(pitRelM(k)) < 145) continue;   // jamais de tribune (ni de public) sur la voie des stands
+      if (inTunnel(k)) continue;                  // ni dans le tunnel
       if (!clear(k)) continue;
       const c = curv(k);
       if (c < bestScore) { bestScore = c; best = k; }
@@ -714,6 +813,25 @@ function nearest(x, z, hint) {
     if (d < best) { best = d; bi = i; }
   }
   return { i: bi, d: Math.sqrt(best) };
+}
+// Altitude exacte (interpolée) au point (x,z), plutôt que l'altitude du point du circuit le plus
+// proche (TY[i]) : ce dernier change par paliers d'un échantillon à l'autre (720 sur tout le tour),
+// ce qui donnait soit un tremblement (recopiée telle quelle), soit un décalage de hauteur en pente
+// (lissée dans le temps — la voiture semblait s'enfoncer sous la route). En interpolant entre les
+// deux points du circuit qui encadrent réellement (x,z), la hauteur suit la pente sans à-coup ET
+// sans retard, quelle que soit la vitesse.
+function trackElevation(x, z, hint) {
+  const i0 = nearest(x, z, hint).i;
+  let best = null;
+  for (const d of [-1, 0]) {
+    const a = (i0 + d + N) % N, b = (a + 1) % N;
+    const dx = TX[b] - TX[a], dz = TZ[b] - TZ[a], len2 = dx * dx + dz * dz || 1e-6;
+    let t = ((x - TX[a]) * dx + (z - TZ[a]) * dz) / len2;
+    t = clamp(t, 0, 1);
+    const px = TX[a] + dx * t, pz = TZ[a] + dz * t, dist2 = (x - px) * (x - px) + (z - pz) * (z - pz);
+    if (best === null || dist2 < best.dist2) best = { a, b, t, dist2 };
+  }
+  return TY[best.a] + (TY[best.b] - TY[best.a]) * best.t;
 }
 function slotPose(slot) {
   // Grille de départ classique, sur la piste elle-même (comme en vrai F1 — on ne part pas du garage,
@@ -1445,7 +1563,7 @@ function onStart(pl) {
   for (let i = 0; i < pl.nb; i++) { const id = "b" + i; raceBots.push(id); botInfo[id] = botInfoFor(i); }
   // Autant de garages que de voitures (joueurs + bots), chacun au nom de son pilote
   pitBoxCount = Math.max(1, Math.min(PIT_MAXBOX, raceOrder.length + raceBots.length)); pitCache = null;
-  try { if (typeof renderer !== "undefined" && renderer && scene) buildPaddock(); } catch (e) { console.warn("Garages non reconstruits", e); }
+  try { if (typeof renderer !== "undefined" && renderer && scene) { buildPaddock(); buildStartGrid(); } } catch (e) { console.warn("Garages non reconstruits", e); }
   resetMe(slot);
   if (isHost) {
     raceBots.forEach((id, i) => {
@@ -1526,7 +1644,7 @@ function stepPlayerPit(h){
  else if(me.pitMode===2){
    me.pitService+=h;
    const p=pitBoxFrame(me.pitBox);
-   me.x=p.x;me.z=p.z;
+   me.x=p.x;me.z=p.z;me.pitY=p.y;
    me.a=p.a;me.speed=0;me.vx=me.vz=0;
    const co=carObjs[me.id];if(co)co.pitT=Math.max(co.pitT||0,PIT_STOP_DUR-me.pitService);
    if(!me.pitCrewSpawned){spawnPitCrew(me.x,me.z,me.a);me.pitCrewSpawned=1;}
@@ -1580,7 +1698,7 @@ function physics(h, t) {
       b.thr = c.thr; b.brk = c.brk;
       if(!b.pitMode&&b.tireLaps>=2){const rel=pitRelativeFromCar(b);if(rel>PIT_TRIG_REL-9&&rel<PIT_TRIG_REL+9){b.pitMode=1;pitBegin(b,b.pitSlot||0,28);b.pitService=0;}}
       if(b.pitMode===1){if(pitMove(b,h,32)==="service")b.pitMode=2;if(b.pitCrossFlag){b.pitCrossFlag=0;b.tireLaps++;if(b.cross===laps+1)b.f=raceNow(t);}}
-      else if(b.pitMode===2){const pp=pitBoxFrame(b.pitBox);b.x=pp.x;b.z=pp.z;b.a=pp.a;b.speed=0;b.vx=b.vz=0;b.pitService+=h;if(b.pitService>=PIT_STOP_DUR){b.tireLaps=b.pitSawLine?1:0;b.pitCompleted=0;b.pitDeadline=0;b.pitMode=3;pitLeave(b);}}
+      else if(b.pitMode===2){const pp=pitBoxFrame(b.pitBox);b.x=pp.x;b.z=pp.z;b.pitY=pp.y;b.a=pp.a;b.speed=0;b.vx=b.vz=0;b.pitService+=h;if(b.pitService>=PIT_STOP_DUR){b.tireLaps=b.pitSawLine?1:0;b.pitCompleted=0;b.pitDeadline=0;b.pitMode=3;pitLeave(b);}}
       else if(b.pitMode===3){if(pitMove(b,h,32)==="done")b.pitMode=0;if(b.pitCrossFlag){b.pitCrossFlag=0;b.tireLaps++;if(b.cross===laps+1)b.f=raceNow(t);}}
       else stepCar(b,c.thr,c.brk,c.steer,h);
       if(!b.pitMode){
@@ -1675,18 +1793,18 @@ function noise(g, w, h, n, alphaA, alphaB, maxSize) {
   }
 }
 // Ruban le long du circuit, entre deux décalages latéraux
-function ribbon(inner, outer, y, material, tile) {
+function ribbon(inner, outer, y, material, tile, gapTest) {
   const pos = [], uv = [], idx = [];
   const tiles = Math.max(1, Math.round(TRACK_LEN / tile)), vs = TRACK_LEN / tiles;
   let arc = 0;
   for (let i = 0; i <= N; i++) {
     const k = i % N, x = TX[k], z = TZ[k], rx = RGX[k], rz = RGZ[k];
     const io = typeof inner === "function" ? inner(k) : inner, oo = typeof outer === "function" ? outer(k) : outer;
-    pos.push(x + rx * io, y, z + rz * io, x + rx * oo, y, z + rz * oo);
+    pos.push(x + rx * io, TY[k] + y, z + rz * io, x + rx * oo, TY[k] + y, z + rz * oo);
     uv.push(0, arc / vs, 1, arc / vs);
     if (i < N) { const j = (i + 1) % N; arc += Math.hypot(TX[j] - x, TZ[j] - z); }
   }
-  for (let i = 0; i < N; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  for (let i = 0; i < N; i++) { if (gapTest && (gapTest(i) || gapTest((i + 1) % N))) continue; const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
@@ -1709,7 +1827,7 @@ function wallStrip(offset, height, material, tile, gapTest) {
     const gap = gapTest && (gapTest(k) || gapTest(j));
     if (!gap) {
       const a = pos.length / 3;
-      pos.push(x0, 0, z0, x0, height, z0, x1, 0, z1, x1, height, z1);
+      pos.push(x0, TY[k], z0, x0, TY[k] + height, z0, x1, TY[j], z1, x1, TY[j] + height, z1);
       uv.push(0, arc / vs, 1, arc / vs, 0, (arc + Math.hypot(x1-x0,z1-z0)) / vs, 1, (arc + Math.hypot(x1-x0,z1-z0)) / vs);
       idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
     }
@@ -1719,6 +1837,11 @@ function wallStrip(offset, height, material, tile, gapTest) {
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
   geo.setIndex(idx);
+  // Indispensable pour tout matériau ÉCLAIRÉ (MeshLambertMaterial, utilisé par les murs du tunnel) :
+  // sans normales, la lumière ne peut pas être calculée et la surface s'affiche en noir plein. Le
+  // rail habituel n'en souffrait pas car il utilise un matériau non éclairé (MeshBasicMaterial),
+  // mais wallStrip() est aussi réutilisée pour les murs du tunnel, qui eux ont besoin de lumière.
+  geo.computeVertexNormals();
   return new THREE.Mesh(geo, material);
 }
 function buildScene() {
@@ -1753,7 +1876,7 @@ function buildScene() {
   grass.repeat.set(500, 500);
   const grassMat = new THREE.MeshBasicMaterial({ map: grass }); tintMats.push(grassMat);
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(8000, 8000), grassMat);
-  ground.rotation.x = -Math.PI / 2; scene.add(ground);
+  ground.rotation.x = -Math.PI / 2; ground.position.y = GROUND_Y; scene.add(ground);
 
   // Gravier
   const sand = makeTexture(128, 128, (g, w, h) => {
@@ -1784,7 +1907,7 @@ function buildScene() {
   const kerbMat = new THREE.MeshBasicMaterial({ map: kerb, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   tintMats.push(kerbMat);
   scene.add(ribbon(-(TRACK_W / 2 + KERB), -TRACK_W / 2, 0.14, kerbMat, 6));
-  scene.add(ribbon(TRACK_W / 2, TRACK_W / 2 + KERB, 0.14, kerbMat, 6));
+  scene.add(ribbon(TRACK_W / 2, TRACK_W / 2 + KERB, 0.14, kerbMat, 6, k => { const r = pitRelM(k); return (r > PIT_ENTRY_REL - 2 && r < PIT_ENTRY_REL + 26) || (r > PIT_EXIT_REL - 26 && r < PIT_EXIT_REL + 2); }));
 
   // Rails de sécurité
   const wallTex = makeTexture(128, 32, (g, w, h) => {
@@ -1793,17 +1916,18 @@ function buildScene() {
   }, true);
   const wallMat = new THREE.MeshBasicMaterial({ map: wallTex, side: THREE.DoubleSide });
   tintMats.push(wallMat);
-  scene.add(wallStrip(k => -(WDL[k] + 0.2), 1.3, wallMat, 8), wallStrip(k => WDR[k] + 0.2, 1.3, wallMat, 8, pitWallGap));
+  // Le rail habituel s'arrête là où le tunnel prend le relais (ses propres murs, plus hauts et fermés).
+  scene.add(wallStrip(k => -(WDL[k] + 0.2), 1.3, wallMat, 8, inTunnel), wallStrip(k => WDR[k] + 0.2, 1.3, wallMat, 8, k => pitWallGap(k) || inTunnel(k)));
 
   // Ligne de départ en damier
   const checker = makeTexture(64, 64, (g, w, h) => {
     g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.fillStyle = "#111";
     g.fillRect(0, 0, w / 2, h / 2); g.fillRect(w / 2, h / 2, w / 2, h / 2);
   });
-  checker.repeat.set(1, TRACK_W / 4);
-  const startG = new THREE.Group(); startG.position.set(TX[0], 0, TZ[0]); startG.rotation.y = -TA[0];
-  const line = new THREE.Mesh(new THREE.PlaneGeometry(4, TRACK_W),
-    new THREE.MeshBasicMaterial({ map: checker, polygonOffset: true, polygonOffsetFactor: -6, polygonOffsetUnits: -6 }));
+  checker.repeat.set(2, TRACK_W / 1.8);
+  const startG = new THREE.Group(); startG.position.set(TX[0], TY[0], TZ[0]); startG.rotation.y = -TA[0];
+  const line = new THREE.Mesh(new THREE.PlaneGeometry(3.6, TRACK_W),
+    new THREE.MeshBasicMaterial({ map: checker }));
   line.rotation.x = -Math.PI / 2; line.position.y = 0.16; startG.add(line);
 
   // Portique de départ avec 5 feux
@@ -1827,27 +1951,7 @@ function buildScene() {
   }
   scene.add(startG);
 
-  // Tribunes : façade propre à gradins, le public réel (3D) se tient devant
-  const crowd = makeTexture(256, 64, (g, w, h) => {
-    g.fillStyle = "#454b58"; g.fillRect(0, 0, w, h);
-    for (let row = 0; row < 8; row++) {
-      g.fillStyle = row % 2 ? "#3c4250" : "#4b5262";
-      g.fillRect(0, row * (h / 8), w, h / 8 - 1);
-    }
-    g.fillStyle = "#e10600"; g.fillRect(0, 0, w, h * 0.07);
-    g.fillStyle = "#ffcf00"; g.fillRect(0, h - h * 0.05, w, h * 0.05);
-  });
-  const standMat = new THREE.MeshLambertMaterial({ map: crowd });
-  const roofMat = new THREE.MeshLambertMaterial({ color: 0x1c2130 });
-  STAND_IDX.flatMap(i => [[i, 1], [i, -1]]).forEach(([i, side]) => {
-    const g = new THREE.Group();
-    g.position.set(TX[i] + RGX[i] * side * (WALL_D + 11), 0, TZ[i] + RGZ[i] * side * (WALL_D + 11));
-    g.rotation.y = -TA[i];
-    crowd.repeat.set(2, 1);
-    const b = new THREE.Mesh(new THREE.BoxGeometry(50, 9, 12), standMat); b.position.y = 4.5; g.add(b);
-    const roof = new THREE.Mesh(new THREE.BoxGeometry(52, 0.6, 15), roofMat); roof.position.set(0, 12, side * -1.5); g.add(roof);
-    scene.add(g);
-  });
+  buildGrandstands();
 
   // Arbres
   let bx0 = 1e9, bx1 = -1e9, bz0 = 1e9, bz1 = -1e9;
@@ -1879,7 +1983,7 @@ function buildScene() {
   if (round.instanceColor) round.instanceColor.needsUpdate = true;
   scene.add(trunk, pine, round);
   buildExtras();
-  scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  scene.traverse(o => { if (o.isMesh) { o.castShadow = !o.userData.noShadow; o.receiveShadow = true; } });
 }
 
 /* =====================================================================
@@ -1993,7 +2097,7 @@ function ribbonWide(side, y, material, tile, maxW) {
     const k = i % N, x = TX[k], z = TZ[k];
     let R = 1e9; for (let d = -3; d <= 3; d++) R = Math.min(R, curveRadius((k + d + N) % N, 6));
     const wd = side > 0 ? WDR[k] : WDL[k], w = clamp(0.8 * R - wd, 5, maxW) * (wd < WALL_D - 0.5 ? 0.1 : 1), a = side * wd, b = side * (wd + w);
-    pos.push(x + RGX[k] * a, y, z + RGZ[k] * a, x + RGX[k] * b, y, z + RGZ[k] * b);
+    pos.push(x + RGX[k] * a, TY[k] + y, z + RGZ[k] * a, x + RGX[k] * b, TY[k] + y, z + RGZ[k] * b);
     uv.push(0, arc / vs, 1, arc / vs);
     if (i < N) { const j = (i + 1) % N; arc += Math.hypot(TX[j] - x, TZ[j] - z); }
   }
@@ -2016,8 +2120,8 @@ function wallStripUV(offset, y0, y1, material, tile, flip, gapTest) {
     if (!(gapTest && (gapTest(k) || gapTest(j)))) {
       const a = pos.length / 3, u0 = (flip ? -1 : 1) * arc / vs, u1 = (flip ? -1 : 1) * (arc + seg) / vs;
       const o0 = typeof offset === "function" ? offset(k) : offset, o1 = typeof offset === "function" ? offset(j) : offset;
-      pos.push(TX[k] + RGX[k] * o0, y0, TZ[k] + RGZ[k] * o0, TX[k] + RGX[k] * o0, y1, TZ[k] + RGZ[k] * o0,
-               TX[j] + RGX[j] * o1, y0, TZ[j] + RGZ[j] * o1, TX[j] + RGX[j] * o1, y1, TZ[j] + RGZ[j] * o1);
+      pos.push(TX[k] + RGX[k] * o0, TY[k] + y0, TZ[k] + RGZ[k] * o0, TX[k] + RGX[k] * o0, TY[k] + y1, TZ[k] + RGZ[k] * o0,
+               TX[j] + RGX[j] * o1, TY[j] + y0, TZ[j] + RGZ[j] * o1, TX[j] + RGX[j] * o1, TY[j] + y1, TZ[j] + RGZ[j] * o1);
       uv.push(u0, 0, u0, 1, u1, 0, u1, 1);
       idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
     }
@@ -2030,15 +2134,80 @@ function wallStripUV(offset, y0, y1, material, tile, flip, gapTest) {
   return new THREE.Mesh(geo, material);
 }
 function buildMowing() {
-  const tex = makeTexture(32, 64, (g, w, h) => {
-    g.fillStyle = "#4a9d56"; g.fillRect(0, 0, w, h / 2);
-    g.fillStyle = "#3a8646"; g.fillRect(0, h / 2, w, h / 2);
-    noise(g, w, h, 160, 0.05, 0.06, 2);
-  }, true);
-  const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  // Relief : on garde le terrain, mais on le rend CONTINU. Le bord de la piste est
+  // toujours relié au sol par un talus, et les zones où le calcul de sécurité ne
+  // permet pas un grand talus reçoivent quand même une fondation verticale courte.
+  // Cela évite les trous par lesquels on voyait l'envers de la piste.
+  const tex = makeTexture(128, 128, (g,w,h) => {
+    const gr = g.createLinearGradient(0,0,0,h);
+    gr.addColorStop(0,"#6b9d59");
+    gr.addColorStop(1,"#4d7f45");
+    g.fillStyle=gr; g.fillRect(0,0,w,h);
+    noise(g,w,h,420,.045,.055,3);
+  },true);
+  const mat=new THREE.MeshLambertMaterial({map:tex,side:THREE.DoubleSide,
+    polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
   tintMats.push(mat);
-  scene.add(ribbonWide(1, 0.03, mat, 20, 40), ribbonWide(-1, 0.03, mat, 20, 40));
+
+  // On ne coupe presque plus le relief autour des portails : le tunnel garde son
+  // intérieur propre, mais le terrain reprend immédiatement à sa sortie.
+  const isTunnelInterior = i => TUN_I0 >= 0 && i >= TUN_I0 && i <= TUN_I1;
+
+  const safeWidth=(side,i,desired)=>{
+    const ni=(side>0?WDR[i]:WDL[i])+0.42;
+    let w=desired;
+    const ox=TX[i]+RGX[i]*side*(ni+w), oz=TZ[i]+RGZ[i]*side*(ni+w);
+    let nearestOther=1e9;
+    for(let j=0;j<N;j+=2){
+      let d=Math.abs(j-i); d=Math.min(d,N-d);
+      if(d < Math.round(65/(TRACK_LEN/N))) continue;
+      const dx=ox-TX[j], dz=oz-TZ[j], q=dx*dx+dz*dz;
+      if(q<nearestOther) nearestOther=q;
+    }
+    const clear=Math.sqrt(nearestOther);
+    if(clear < 5.2) return 0;
+    if(clear < w+6) w=Math.max(0,clear-6);
+    return Math.min(w,desired);
+  };
+
+  const makeSide=side=>{
+    const pos=[],uv=[],idx=[]; let arc=0;
+    for(let i=0;i<N;i++){
+      const j=(i+1)%N, seg=Math.hypot(TX[j]-TX[i],TZ[j]-TZ[i]);
+      if(isTunnelInterior(i) && isTunnelInterior(j)){ arc+=seg; continue; }
+
+      const ni=(side>0?WDR[i]:WDL[i])+0.42;
+      const nj=(side>0?WDR[j]:WDL[j])+0.42;
+      const wi=safeWidth(side,i,clamp(18+TY[i]*0.32,18,34));
+      const wj=safeWidth(side,j,clamp(18+TY[j]*0.32,18,34));
+
+      // Même quand un autre tronçon interdit le grand talus, on garde une petite
+      // bande de fondation afin que la piste ne soit jamais suspendue dans le vide.
+      const fi = wi>0 ? wi : 1.35;
+      const fj = wj>0 ? wj : 1.35;
+      const oi=ni+fi, oj=nj+fj;
+      const yi=GROUND_Y;
+      const yj=GROUND_Y;
+      const a=pos.length/3;
+      pos.push(
+        TX[i]+RGX[i]*side*ni, TY[i]+0.045, TZ[i]+RGZ[i]*side*ni,
+        TX[i]+RGX[i]*side*oi, yi, TZ[i]+RGZ[i]*side*oi,
+        TX[j]+RGX[j]*side*nj, TY[j]+0.045, TZ[j]+RGZ[j]*side*nj,
+        TX[j]+RGX[j]*side*oj, yj, TZ[j]+RGZ[j]*side*oj
+      );
+      uv.push(0,arc/24,fi/5,arc/24,0,(arc+seg)/24,fj/5,(arc+seg)/24);
+      idx.push(a,a+1,a+2,a+1,a+3,a+2);
+      arc+=seg;
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+    geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));
+    geo.setIndex(idx); geo.computeVertexNormals();
+    return new THREE.Mesh(geo,mat);
+  };
+  scene.add(makeSide(-1),makeSide(1));
 }
+
 function buildAds() {
   const brands = [["NOVA ENERGY", "#e10600", "#ffffff"], ["TURBO OIL", "#ffcf00", "#0f1b3d"], ["FALCON", "#0f1b3d", "#ffcf00"], ["VORTEX", "#12b76a", "#ffffff"],
     ["TITAN MOTORS", "#f2f2f2", "#e10600"], ["ORAGE", "#00a3e0", "#ffffff"], ["COMÈTE", "#9b5de5", "#ffffff"], ["MISTRAL", "#ff7a00", "#0f1b3d"]];
@@ -2054,35 +2223,165 @@ function buildAds() {
   }, false);
   const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
   tintMats.push(mat);
-  scene.add(wallStripUV(k => -(WDL[k] + 0.28), 1.3, 3.0, mat, 64, false), wallStripUV(k => WDR[k] + 0.28, 1.3, 3.0, mat, 64, true, pitWallGap));
+  // Pas de panneau publicitaire à l'intérieur du tunnel : ses propres murs en béton prennent le relais.
+  scene.add(wallStripUV(k => -(WDL[k] + 0.28), 1.3, 3.0, mat, 64, false, inTunnel), wallStripUV(k => WDR[k] + 0.28, 1.3, 3.0, mat, 64, true, k => pitWallGap(k) || inTunnel(k)));
 }
 function buildLamps() {
   const pts = [];
   for (let i = 4; i < N; i += 26) {
     if (STAND_IDX.some(s => Math.abs(i - s) < 12)) continue;      // pas dans les tribunes
+    if (inTunnel(i)) continue;                                    // le tunnel a son propre éclairage
     for (const side of [-1, 1]) {
       if (side === PIT_SIDE && Math.abs(pitRelM(i)) < 125) continue;   // pas de poteau sur les bretelles des stands
       const off = side * Math.min(WALL_D + 4, (side > 0 ? WDR[i] : WDL[i]) + 2.5);
-      pts.push([TX[i] + RGX[i] * off, TZ[i] + RGZ[i] * off]);
+      pts.push([TX[i] + RGX[i] * off, TZ[i] + RGZ[i] * off, TY[i]]);
     }
   }
   const pole = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.22, 0.32, 17, 6), new THREE.MeshLambertMaterial({ color: 0x9aa3b2 }), pts.length);
   const head = new THREE.InstancedMesh(new THREE.BoxGeometry(2.6, 0.5, 1.4), new THREE.MeshBasicMaterial({ color: 0xfff1c8 }), pts.length);
   const d = new THREE.Object3D();
   pts.forEach((p, i) => {
-    d.position.set(p[0], 8.5, p[1]); d.updateMatrix(); pole.setMatrixAt(i, d.matrix);
-    d.position.set(p[0], 17.2, p[1]); d.updateMatrix(); head.setMatrixAt(i, d.matrix);
+    d.position.set(p[0], p[2] + 8.5, p[1]); d.updateMatrix(); pole.setMatrixAt(i, d.matrix);
+    d.position.set(p[0], p[2] + 17.2, p[1]); d.updateMatrix(); head.setMatrixAt(i, d.matrix);
   });
   pole.instanceMatrix.needsUpdate = true; head.instanceMatrix.needsUpdate = true;
   pole.frustumCulled = false; head.frustumCulled = false;
   scene.add(pole, head);
   const arr = new Float32Array(pts.length * 3);
-  pts.forEach((p, i) => { arr[i * 3] = p[0]; arr[i * 3 + 1] = 17.2; arr[i * 3 + 2] = p[1]; });
+  pts.forEach((p, i) => { arr[i * 3] = p[0]; arr[i * 3 + 1] = p[2] + 17.2; arr[i * 3 + 2] = p[1]; });
   const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(arr, 3));
   lampGlow = new THREE.Points(geo, new THREE.PointsMaterial({ map: glowTexture("255,235,180"), size: 9, sizeAttenuation: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
   lampGlow.frustumCulled = false; scene.add(lampGlow);
 }
-function buildPitInfrastructure(){const sign=(text,progress,lat)=>{const p=pitPose(progress,lat),g=new THREE.Group(),pole=new THREE.Mesh(new THREE.CylinderGeometry(.08,.1,2.8,6),new THREE.MeshLambertMaterial({color:0x7f8794}));pole.position.y=1.4;g.add(pole);const tx=makeTexture(256,72,(c,w,h)=>{c.fillStyle="#11151b";c.fillRect(0,0,w,h);c.fillStyle="#fff";c.font="800 38px Barlow Condensed,Arial";c.textAlign="center";c.textBaseline="middle";c.fillText(text,w/2,h/2);},true);const b=new THREE.Mesh(new THREE.PlaneGeometry(4.5,1.25),new THREE.MeshBasicMaterial({map:tx,side:THREE.DoubleSide}));b.position.y=2.8;b.rotation.y=-p.a;g.add(b);g.position.set(p.x,0,p.z);scene.add(g);};ensurePitPath();sign("PIT ENTRY",8,PIT_HALF_W+1.5);sign("PIT EXIT",PIT_TOTAL-8,PIT_HALF_W+1.5);}
+// Le tunnel (comme à Monaco, entre Portier et la Nouvelle Chicane) : murs fermés plus hauts,
+// plafond, portails d'entrée/sortie et éclairage intérieur. Il suit EXACTEMENT les mêmes limites
+// de piste (WDL/WDR) que le rail de sécurité habituel : la voiture ne peut donc jamais physiquement
+// traverser ses murs, sans avoir besoin d'écrire une nouvelle logique de collision.
+function buildTunnel() {
+  if (TUN_I0 < 0) return;
+  const H = 6.4;   // hauteur du plafond
+  // Un peu plus large que la zone du tunnel elle-même (inTunnel), pour chevaucher d'un tronçon
+  // le rail habituel de chaque côté et ne laisser aucune coupure visible au niveau des portails.
+  const outer = i => !(i >= TUN_I0 && i < TUN_I1);
+
+  const concrete = makeTexture(128, 128, (g, w, h) => {
+    g.fillStyle = "#9599a0"; g.fillRect(0, 0, w, h); noise(g, w, h, 260, 0.05, 0.08, 3);
+  }, true);
+  // side: DoubleSide est indispensable ici : les deux murs (gauche et décalage négatif, droit et
+  // décalage positif) sont générés par la même fonction wallStrip avec un enroulement de triangles
+  // identique, donc leurs normales pointent dans des directions opposées. Sans DoubleSide, le mur
+  // dont la normale finit par pointer vers l'INTÉRIEUR du tunnel devient invisible (transparent)
+  // vu depuis l'intérieur — c'est le bug du "mur de gauche transparent".
+  // MeshBasicMaterial (non éclairé) : avec un matériau éclairé, la face du mur vue depuis l'INTÉRIEUR
+  // du tunnel reçoit sa lumière d'ambiance de la lumière hémisphérique, dont la couleur "sol" (verte,
+  // pensée pour la lumière rebondie sous l'herbe) teintait tout le tunnel d'un vert sale immonde.
+  // Un matériau non éclairé garde un béton gris net, quelle que soit l'heure ou l'endroit du circuit.
+  const wallMatT = new THREE.MeshBasicMaterial({ map: concrete, color: 0xc7cbd1, side: THREE.DoubleSide });
+  tintMats.push(wallMatT);
+  scene.add(wallStrip(k => -(WDL[k] + 0.2), H, wallMatT, 6, outer), wallStrip(k => WDR[k] + 0.2, H, wallMatT, 6, outer));
+
+  // Plafond : un ruban entre les deux murs, uniquement sur la portion couverte par le tunnel.
+  const pos = [], uv = [], idx = []; let arc = 0;
+  for (let i = TUN_I0; i <= TUN_I1; i++) {
+    const o0 = -(WDL[i] + 0.2), o1 = WDR[i] + 0.2;
+    pos.push(TX[i] + RGX[i] * o0, TY[i] + H, TZ[i] + RGZ[i] * o0, TX[i] + RGX[i] * o1, TY[i] + H, TZ[i] + RGZ[i] * o1);
+    uv.push(0, arc / 6, 1, arc / 6);
+    if (i < TUN_I1) arc += Math.hypot(TX[i + 1] - TX[i], TZ[i + 1] - TZ[i]);
+  }
+  for (let i = 0; i < TUN_I1 - TUN_I0; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  const roofGeo = new THREE.BufferGeometry();
+  roofGeo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  roofGeo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  roofGeo.setIndex(idx);
+  roofGeo.computeVertexNormals();   // sans ça, le plafond (matériau éclairé) s'affichait tout noir
+  const roofTex = makeTexture(64, 32, (g, w, h) => {
+    g.fillStyle = "#4d5157"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "rgba(0,0,0,.25)"; for (let x = 0; x < w; x += 16) g.fillRect(x, 0, 2, h);
+  }, true);
+  // Même raison que pour les murs (voir plus haut) : le dessous du plafond, vu depuis l'intérieur,
+  // ne recevait quasiment que la composante "sol" verte de la lumière hémisphérique -> plafond vert
+  // sale au lieu du gris béton attendu. MeshBasicMaterial règle le problème une fois pour toutes.
+  const roofMat = new THREE.MeshBasicMaterial({ map: roofTex, side: THREE.DoubleSide });
+  tintMats.push(roofMat);
+  scene.add(new THREE.Mesh(roofGeo, roofMat));
+
+  // Sol du tunnel, entre le vibreur et chaque mur : à l'air libre cette bande est du gravier
+  // (zone de dégagement), mais à l'intérieur d'un tunnel fermé un gravier n'a aucun sens et
+  // laissait voir une bande "hors piste" en pleine lumière artificielle, très moche. On la
+  // recouvre ici d'un revêtement bitumineux, posé légèrement au-dessus pour bien la cacher.
+  const floorTex = makeTexture(128, 128, (g, w, h) => {
+    g.fillStyle = "#3a3d42"; g.fillRect(0, 0, w, h); noise(g, w, h, 500, 0.05, 0.07, 3);
+  }, true);
+  const floorMat = new THREE.MeshLambertMaterial({ map: floorTex, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  tintMats.push(floorMat);
+  const floorStrip = (inner, outer) => {
+    const fp = [], fu = []; const fidx = []; let a2 = 0;
+    for (let i = TUN_I0; i <= TUN_I1; i++) {
+      const io = typeof inner === "function" ? inner(i) : inner, oo = typeof outer === "function" ? outer(i) : outer;
+      fp.push(TX[i] + RGX[i] * io, TY[i] + 0.08, TZ[i] + RGZ[i] * io, TX[i] + RGX[i] * oo, TY[i] + 0.08, TZ[i] + RGZ[i] * oo);
+      fu.push(0, a2 / 6, 1, a2 / 6);
+      if (i < TUN_I1) a2 += Math.hypot(TX[i + 1] - TX[i], TZ[i + 1] - TZ[i]);
+    }
+    for (let i = 0; i < TUN_I1 - TUN_I0; i++) { const a = i * 2; fidx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    const fg = new THREE.BufferGeometry();
+    fg.setAttribute("position", new THREE.Float32BufferAttribute(fp, 3));
+    fg.setAttribute("uv", new THREE.Float32BufferAttribute(fu, 2));
+    fg.setIndex(fidx);
+    fg.computeVertexNormals();   // sans ça, le sol du tunnel (matériau éclairé) s'affichait tout noir
+    return new THREE.Mesh(fg, floorMat);
+  };
+  scene.add(floorStrip(k => -(WDL[k] + 0.2), -(TRACK_W / 2 + KERB - 0.1)));
+  scene.add(floorStrip(TRACK_W / 2 + KERB - 0.1, k => WDR[k] + 0.2));
+
+  // Portiques d'entrée et de sortie, avec un panneau "TUNNEL".
+  const signTex = makeTexture(256, 56, (g, w, h) => {
+    g.fillStyle = "#12151a"; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#ffcf00"; g.font = "italic 800 36px 'Barlow Condensed','Arial Narrow',Impact,sans-serif";
+    g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("TUNNEL", w / 2, h / 2 + 2);
+  }, true);
+  const portalMat = new THREE.MeshLambertMaterial({ color: 0x3a3e46 });
+  [TUN_I0, TUN_I1].forEach((i, n) => {
+    const g = new THREE.Group();
+    g.position.set(TX[i], TY[i], TZ[i]);
+    g.rotation.y = -TA[i];
+    const left = -(WDL[i] + 0.35), right = WDR[i] + 0.35;
+    const width = right - left, mid = (left + right) * 0.5;
+    const beamT = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.9, width), portalMat);
+    beamT.position.set(0, H + 0.45, mid); g.add(beamT);
+    const legL = new THREE.Mesh(new THREE.BoxGeometry(1.0,H,0.8),portalMat);
+    const legR = new THREE.Mesh(new THREE.BoxGeometry(1.0,H,0.8),portalMat);
+    legL.position.set(0,H/2,left+0.4); legR.position.set(0,H/2,right-0.4); g.add(legL,legR);
+    const label = new THREE.Mesh(new THREE.PlaneGeometry(5.8,1.05),
+      new THREE.MeshBasicMaterial({ map: signTex, transparent:true, side:THREE.DoubleSide }));
+    // Le panneau regarde dans le sens de circulation à l'entrée et vers les voitures à la sortie.
+    label.position.set(n===0 ? -0.53 : 0.53, H+0.45, mid);
+    label.rotation.y = n===0 ? -Math.PI/2 : Math.PI/2;
+    g.add(label);
+    scene.add(g);
+  });
+
+  // Éclairage intérieur : rangée de plafonniers, avec quelques points de lumière chaude (perf. limitée).
+  const lampMat = new THREE.MeshBasicMaterial({ color: 0xfff3c8 });
+  const glowPos = [];
+  for (let i = TUN_I0 + 5; i < TUN_I1 - 5; i += 9) {
+    const fx = TX[i], fz = TZ[i], fy = TY[i];
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.16, 0.6), lampMat);
+    lamp.position.set(fx, fy + H - 0.22, fz); lamp.rotation.y = -TA[i];
+    scene.add(lamp);
+    glowPos.push(fx, fy + H - 0.5, fz);
+    if ((i - TUN_I0) % 27 < 9) {
+      const pl = new THREE.PointLight(0xffcf8a, 0.7, 24, 2);
+      pl.position.set(fx, fy + H - 0.6, fz); scene.add(pl);
+    }
+  }
+  const glowGeo = new THREE.BufferGeometry();
+  glowGeo.setAttribute("position", new THREE.Float32BufferAttribute(new Float32Array(glowPos), 3));
+  scene.add(new THREE.Points(glowGeo, new THREE.PointsMaterial({
+    map: glowTexture("255,235,180"), size: 7, sizeAttenuation: true, transparent: true,
+    depthWrite: false, blending: THREE.AdditiveBlending, fog: false
+  })));
+}
+function buildPitInfrastructure(){const sign=(text,progress,lat)=>{const p=pitPose(progress,lat),g=new THREE.Group(),pole=new THREE.Mesh(new THREE.CylinderGeometry(.08,.1,2.8,6),new THREE.MeshLambertMaterial({color:0x7f8794}));pole.position.y=1.4;g.add(pole);const tx=makeTexture(256,72,(c,w,h)=>{c.fillStyle="#11151b";c.fillRect(0,0,w,h);c.fillStyle="#fff";c.font="800 38px Barlow Condensed,Arial";c.textAlign="center";c.textBaseline="middle";c.fillText(text,w/2,h/2);},true);const b=new THREE.Mesh(new THREE.PlaneGeometry(4.5,1.25),new THREE.MeshBasicMaterial({map:tx,side:THREE.DoubleSide}));b.position.y=2.8;b.rotation.y=Math.atan2(-Math.cos(p.a),-Math.sin(p.a));g.add(b);g.position.set(p.x,p.y ?? trackElevation(p.x,p.z,0),p.z);scene.add(g);};ensurePitPath();sign("PIT ENTRY",8,PIT_HALF_W+1.5);sign("PIT EXIT",PIT_TOTAL-8,PIT_HALF_W+1.5);}
 function makeHuman3D(teamColor=0xe10600, role="mécano") {
   const g=new THREE.Group();
   const suit=new THREE.MeshStandardMaterial({color:teamColor,roughness:.78,metalness:.02});
@@ -2127,6 +2426,31 @@ function paddockTeams() {   // nom et couleur de chaque garage : dans l'ordre de
   }
   return out;
 }
+function buildStartGrid() {
+  if (startGridGroup) { scene.remove(startGridGroup); startGridGroup.traverse(o => { if (o.geometry) o.geometry.dispose?.(); if (o.material) o.material.dispose?.(); }); startGridGroup = null; }
+  const total = Math.max(1, Math.min(PIT_MAXBOX, (raceOrder.length || 0) + (raceBots.length || 0)) || pitBoxCount);
+  const g = new THREE.Group();
+  const boxW = 3.4, boxLen = 6.6;
+  for (let slot = 0; slot < total; slot++) {
+    const s = slotPose(slot);
+    const tex = makeTexture(136, 264, (cx, w, h) => {      // largeur = latéral, hauteur = sens de marche
+      cx.clearRect(0, 0, w, h); cx.strokeStyle = "#f4f4f4"; cx.fillStyle = "#f4f4f4";
+      cx.lineWidth = 6; cx.strokeRect(4, 4, w - 8, h - 8);
+      cx.lineWidth = 12; cx.beginPath(); cx.moveTo(4, 4); cx.lineTo(w - 4, 4); cx.stroke();
+      cx.font = "900 84px Barlow Condensed,Arial,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle";
+      cx.fillText(String(slot + 1), w / 2, h * 0.5);
+    }, true);
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(boxW, boxLen), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+    plane.rotation.x = -Math.PI / 2;
+    const grp = new THREE.Group();
+    grp.position.set(s.x, TY[s.idx] + 0.15, s.z);
+    grp.rotation.y = Math.atan2(-Math.cos(s.a), -Math.sin(s.a));
+    grp.add(plane); g.add(grp);
+  }
+  scene.add(g);
+  startGridGroup = g;
+}
 function buildPaddock() {
   if (paddockGroup) { scene.remove(paddockGroup); paddockGroup.traverse(o => { if (o.geometry) o.geometry.dispose?.(); if (o.material) { if (Array.isArray(o.material)) o.material.forEach(m=>m.dispose?.()); else o.material.dispose?.(); } }); paddockGroup=null; }
   ensurePitPath();
@@ -2145,11 +2469,16 @@ function buildPaddock() {
   for (let k = 0; k < n; k++) {
     const f = pitBoxFrame(k), lane = f.a - Math.PI / 2, rx = -Math.sin(lane), rz = Math.cos(lane);
     const b = new THREE.Group();
-    b.position.set(f.x - rx * 1.1, 0, f.z - rz * 1.1);
+    // f.y est déjà l'altitude absolue du box : on ne l'ajoute pas deux fois.
+    b.position.set(f.x - rx * 1.1, f.y - PIT_GROUND_Y, f.z - rz * 1.1);
     b.rotation.y = -lane;
     const c = new THREE.Color(teams[k].color);
     const teamMat = new THREE.MeshStandardMaterial({color:c,roughness:.62,metalness:.05});
     const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); b.add(m); return m; };
+    // Fondation du paddock : les garages restent à la bonne altitude, mais le sol
+    // sous eux descend maintenant jusqu'au terrain naturel. Plus de bâtiments flottants.
+    const foundationH=Math.max(0.5,PIT_GROUND_Y-GROUND_Y+0.35);
+    add(new THREE.BoxGeometry(boxW+.65,foundationH,depth+3.2), new THREE.MeshStandardMaterial({color:0x4f7b45,roughness:.96}), 0, -(foundationH/2)+0.1, 0);
     add(new THREE.BoxGeometry(boxW+.5,0.22,depth+3), floorMat, 0, .1, 0);                    // dalle
     add(new THREE.BoxGeometry(boxW+.5,.45,depth+2), dark, 0, 8.5, 0);                        // toit
     add(new THREE.BoxGeometry(boxW+.5,8.2,.35), wallMat, 0, 4.15, 7.7);                      // mur du fond
@@ -2188,6 +2517,14 @@ function buildPaddock() {
     const p2 = makeHuman3D(c.getHex(), "mécano"); p2.scale.setScalar(.96); p2.position.set(3.7,.25,-6.1); p2.rotation.y = Math.PI; b.add(p2);
     g.add(b);
   }
+  for (let k = 0; k < n; k++) {
+    const q = pitPose(PIT_SERVICE_PROGRESS + pitBoxXs(k), 2.4);
+    pitDecal(g, 150, 360, (cx, w, h) => {
+      cx.strokeStyle = "#f4f4f4"; cx.fillStyle = "#f4f4f4"; cx.lineWidth = 6; cx.strokeRect(4, 4, w - 8, h - 8);
+      cx.font = "900 96px Barlow Condensed,Arial,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(String(k + 1), w / 2, h * 0.5);
+    }, q.x, q.y - PIT_GROUND_Y + .135, q.z, q.a, 3.75, 9);
+  }
+  g.position.y = PIT_GROUND_Y;
   scene.add(g);
   paddockGroup=g;
   garageLabelState=null;
@@ -2211,40 +2548,124 @@ function buildLandmark() {
   mesh.position.set(cx, h / 2 - 6, cz - dist);
   scene.add(mesh);
 }
-function buildCrowd() {
-  // Public en 3D: corps, têtes, bras et jambes séparés pour éviter l'effet "mannequins plats".
-  const cols=[0xe10600,0xffcf00,0x00a3e0,0xffffff,0x12b76a,0xff7a00,0x9b5de5,0x20242a];
-  const people=[]; let seed=17; const r=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};
-  STAND_IDX.forEach(i=>{
-    const tx=Math.cos(TA[i]),tz=Math.sin(TA[i]);
-    [-1,1].forEach(side=>{
-      for(let row=0;row<4;row++){
-        const lat=WALL_D+1.4+row*.92, y=.25+row*.9;
-        for(let k=0;k<13;k++){
-          const along=(k-6)*5.0+(r()-.5)*1.6;
-          const wx=TX[i]+RGX[i]*side*lat+tx*along, wz=TZ[i]+RGZ[i]*side*lat+tz*along;
-          const p=makeHuman3D(cols[Math.floor(r()*cols.length)],"spectateur");
-          const sc=.78+row*.08; p.scale.setScalar(sc); p.position.set(wx,y,wz); p.rotation.y=r()*TAU;
-          // Spectateurs totalement statiques : aucune animation, aucun mouvement des bras.
-          // Verrouillage complet : les spectateurs ne sont jamais animés ni recalculés.
-          p.matrixAutoUpdate = false;
-          p.updateMatrix();
-          scene.add(p); people.push({g:p});
-        }
-      }
+// Talus : relie le bord extérieur du rail au niveau du sol (l'herbe plate, à y=0) par une pente, pour
+// que la piste ne semble jamais "flotter" au-dessus du vide dans les portions en relief (Beau Rivage,
+// Casino...). Sans ça, dès que TY[k] s'élevait au-dessus de 0, il n'y avait plus rien entre le pied du
+// rail et l'herbe plate en contrebas : on voyait à travers (le "relief incomplet"), et l'herbe semblait
+// affleurer sur la piste elle-même quand la caméra regardait le long de la pente.
+function buildEmbankment() {
+  const dirtTex = makeTexture(128,128,(g,w,h)=>{
+    const gr=g.createLinearGradient(0,0,0,h);
+    gr.addColorStop(0,"#6a9658"); gr.addColorStop(1,"#4d7d45");
+    g.fillStyle=gr; g.fillRect(0,0,w,h); noise(g,w,h,300,.045,.055,3);
+  },true);
+  const dirtMat=new THREE.MeshLambertMaterial({map:dirtTex,side:THREE.DoubleSide});
+  tintMats.push(dirtMat);
+  const makeSide=side=>{
+    const pos=[],uv=[],idx=[]; let arc=0;
+    for(let i=0;i<N;i++){
+      const j=(i+1)%N;
+      if(inTunnel(i)||inTunnel(j)){arc+=Math.hypot(TX[j]-TX[i],TZ[j]-TZ[i]);continue;}
+      const ni=(side>0?WDR[i]:WDL[i])+0.32, nj=(side>0?WDR[j]:WDL[j])+0.32;
+      const ri=ni<WALL_D-0.6?0:clamp(TY[i]*0.18,4,10);
+      const rj=nj<WALL_D-0.6?0:clamp(TY[j]*0.18,4,10);
+      if(ri||rj){
+        const a=pos.length/3,seg=Math.hypot(TX[j]-TX[i],TZ[j]-TZ[i]);
+        pos.push(
+          TX[i]+RGX[i]*side*ni,TY[i]+0.02,TZ[i]+RGZ[i]*side*ni,
+          TX[i]+RGX[i]*side*(ni+ri),Math.max(GROUND_Y-0.03,TY[i]-ri*.9),TZ[i]+RGZ[i]*side*(ni+ri),
+          TX[j]+RGX[j]*side*nj,TY[j]+0.02,TZ[j]+RGZ[j]*side*nj,
+          TX[j]+RGX[j]*side*(nj+rj),Math.max(GROUND_Y-0.03,TY[j]-rj*.9),TZ[j]+RGZ[j]*side*(nj+rj)
+        );
+        uv.push(0,arc/24,ri/5,arc/24,0,(arc+seg)/24,rj/5,(arc+seg)/24);
+        idx.push(a,a+1,a+2,a+1,a+3,a+2);
+        arc+=seg;
+      } else arc+=Math.hypot(TX[j]-TX[i],TZ[j]-TZ[i]);
+    }
+    const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+    geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();
+    return new THREE.Mesh(geo,dirtMat);
+  };
+  scene.add(makeSide(-1),makeSide(1));
+}
+
+function buildCrowd() { crowdPeople = []; }   // le public est intégré aux tribunes (buildGrandstands)
+function buildGrandstands() {
+  let sd = 77; const R = () => { sd = (sd * 16807) % 2147483647; return (sd - 1) / 2147483646; };
+  const LEN = 44, ROWS = 10, RH = .5, RD = .95, SLAB = 3.2, PITCH = .72, PER = Math.floor(LEN / PITCH);
+  const cols = [0xe10600, 0xf5f5f5, 0x1f4fb4, 0xffcf00, 0x12b76a, 0x20242a, 0xff7a00, 0x9b5de5, 0xd8dde5];
+  const skins = [0xf1c9a5, 0xd9a37c, 0xb97a57, 0x8a5a3c, 0x5e3b26];
+  const seatTex = makeTexture(256, 64, (g, w, h) => {
+    g.fillStyle = "#262a33"; g.fillRect(0, 0, w, h);
+    const pal = ["#d21f1f", "#f2f2f2", "#1f4fb4"];
+    for (let c = 0; c < 8; c++) { g.fillStyle = pal[(R() * 3) | 0]; g.fillRect(c * 32 + 3, 10, 26, 44); g.fillStyle = "rgba(0,0,0,.25)"; g.fillRect(c * 32 + 3, 46, 26, 8); }
+  }, false);
+  seatTex.repeat.set(LEN / 4, 1);
+  const seatM = new THREE.MeshLambertMaterial({ map: seatTex }), conc = new THREE.MeshLambertMaterial({ color: 0x9096a0 });
+  const dark = new THREE.MeshLambertMaterial({ color: 0x2a2e37 }), roofM = new THREE.MeshLambertMaterial({ color: 0xe9ecf1 }), redM = new THREE.MeshLambertMaterial({ color: 0xd21f1f });
+  const netM = new THREE.MeshBasicMaterial({ color: 0x111418, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false });
+  const boardTex = makeTexture(1024, 64, (g, w, h) => {
+    [["NOVA ENERGY", "#d21f1f"], ["MISTRAL", "#f0a020"], ["TITAN MOTORS", "#f2f2f2"], ["ORAGE", "#1aa79a"], ["COMÈTE", "#a45fc1"], ["FALCON", "#10214a"], ["VORTEX", "#16a870"], ["TURBO OIL", "#f2d21a"]].forEach((p, i) => {
+      g.fillStyle = p[1]; g.fillRect(i * 128, 0, 128, h); g.fillStyle = (p[1] === "#f2f2f2" || p[1] === "#f2d21a") ? "#111" : "#fff";
+      g.font = "900 26px Barlow Condensed,Arial,sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(p[0], i * 128 + 64, h / 2);
     });
+  }, false);
+  boardTex.repeat.set(LEN / 16, 1);
+  const boardM = new THREE.MeshBasicMaterial({ map: boardTex, side: THREE.DoubleSide }); tintMats.push(boardM);
+  const bodyG = new THREE.CylinderGeometry(.2, .25, .55, 6); bodyG.translate(0, .33, 0);
+  const headG = new THREE.IcosahedronGeometry(.16, 0); headG.translate(0, .82, 0);
+  const aisles = [-LEN / 3, 0, LEN / 3], K = Math.max(2, Math.round(22 / (TRACK_LEN / N)));
+  STAND_IDX.flatMap(i => [[i, 1], [i, -1]]).forEach(([i, side]) => {
+    const Hf = (TY[i] - GROUND_Y) + 4, base = WALL_D + .5;   // fondations jusqu'au sol : plus de gradins qui flottent
+    const g = new THREE.Group();
+    g.position.set(TX[i] + RGX[i] * side * base, TY[i], TZ[i] + RGZ[i] * side * base);
+    g.rotation.y = -TA[i] + (side < 0 ? Math.PI : 0);      // z local = vers l'extérieur du circuit
+    const inner = new THREE.Group(); g.add(inner);
+    const pitch = Math.atan2(TY[(i + K) % N] - TY[(i - K + N) % N], 2 * K * (TRACK_LEN / N));
+    inner.rotation.z = side > 0 ? pitch : -pitch;          // suit la pente du circuit
+    const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); inner.add(m); return m; };
+    add(new THREE.BoxGeometry(LEN, Hf, SLAB), conc, 0, .1 - Hf / 2, SLAB / 2);
+    add(new THREE.PlaneGeometry(LEN, 2.6), netM, 0, 1.4, .35);
+    for (let p = 0; p <= 10; p++) add(new THREE.BoxGeometry(.1, 2.8, .1), dark, -LEN / 2 + p * LEN / 10, 1.5, .35);
+    for (let r = 0; r < ROWS; r++) {
+      const h = Hf + (r + 1) * RH;
+      add(new THREE.BoxGeometry(LEN, h, RD), [conc, conc, seatM, conc, conc, conc], 0, .1 + (r + 1) * RH - h / 2, SLAB + r * RD + RD / 2);
+    }
+    const topY = .1 + ROWS * RH, zB = SLAB + ROWS * RD, wallH = topY + 2.2 - .1 + Hf;
+    add(new THREE.BoxGeometry(LEN, wallH, .4), dark, 0, .1 - Hf + wallH / 2, zB + .2);
+    const zR0 = SLAB + ROWS * RD * .15, lenR = zB + 1.2 - zR0, colH = topY + 3.6 - .1 + Hf;
+    add(new THREE.BoxGeometry(LEN + 1.6, .35, lenR), roofM, 0, topY + 3.6, zR0 + lenR / 2);
+    add(new THREE.BoxGeometry(LEN + 1.6, .5, .15), redM, 0, topY + 3.6, zR0);
+    [-LEN / 2 + .8, -LEN / 6, LEN / 6, LEN / 2 - .8].forEach(x => add(new THREE.BoxGeometry(.5, colH, .5), dark, x, .1 - Hf + colH / 2, zB + .65));
+    add(new THREE.PlaneGeometry(LEN, .8), boardM, 0, .5, SLAB - .03).rotation.y = Math.PI;
+    const bodies = new THREE.InstancedMesh(bodyG, new THREE.MeshLambertMaterial({ color: 0xffffff }), ROWS * PER);
+    const heads = new THREE.InstancedMesh(headG, new THREE.MeshLambertMaterial({ color: 0xffffff }), ROWS * PER);
+    const d = new THREE.Object3D(), c = new THREE.Color(); let n = 0;
+    for (let r = 0; r < ROWS; r++) for (let q = 0; q < PER; q++) {
+      const x = -LEN / 2 + .5 + q * PITCH;
+      if (aisles.some(a => Math.abs(x - a) < .7) || R() < .1) continue;
+      const sc = .92 + R() * .16;
+      d.position.set(x + (R() - .5) * .1, .1 + (r + 1) * RH, SLAB + r * RD + RD * .5 + (R() - .5) * .15);
+      d.scale.set(sc, sc * (.95 + R() * .1), sc); d.updateMatrix();
+      bodies.setMatrixAt(n, d.matrix); heads.setMatrixAt(n, d.matrix);
+      bodies.setColorAt(n, c.setHex(cols[(R() * cols.length) | 0])); heads.setColorAt(n, c.setHex(skins[(R() * skins.length) | 0])); n++;
+    }
+    bodies.count = heads.count = n;
+    [bodies, heads].forEach(m => { m.frustumCulled = false; m.userData.noShadow = true; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; inner.add(m); });
+    scene.add(g);
   });
-  crowdPeople=people;
 }
 function buildExtras() {
   const stage = (name, fn) => { try { fn(); } catch (e) { console.warn("Décor ignoré (" + name + ") :", e); } };
   stage("bandes de tonte", buildMowing);
   stage("panneaux", buildAds);
   stage("projecteurs", buildLamps);
+  stage("tunnel", buildTunnel);
   stage("public", buildCrowd);
   stage("voie des stands", buildPitLaneRoad);
   stage("infrastructure pit", buildPitInfrastructure);
   stage("paddock", buildPaddock);
+  stage("grille de départ", buildStartGrid);
   stage("repère lointain", buildLandmark);
   stage("soleil", () => {
     sunSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(curMood.glow), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
@@ -2630,9 +3051,49 @@ function getCarObj(id, color, name, mine) {
   if (!o) { o = carObjs[id] = makeCar(color, name, mine); scene.add(o.root); }
   return o;
 }
-function placeCar(o, x, z, a, speed, steer, braking, dt, mine) {
+function placeCar(o, x, z, a, speed, steer, braking, dt, mine, entity) {
   o.root.visible = true;
-  o.root.position.set(x, 0, z); o.root.rotation.y = -a;
+  o.idxHint = nearest(x, z, o.idxHint || 0).i;
+  const pitY = entity && entity.pitMode && Number.isFinite(entity.pitY) ? entity.pitY : null;
+  const baseY = (pitY != null ? pitY : trackElevation(x, z, o.idxHint)) + 0.08;
+  o.root.position.set(x, baseY, z);
+
+  // La piste est fortement vallonnée. Une voiture qui reste parfaitement verticale
+  // sur une pente finit visuellement dans l'asphalte (surtout au freinage et dans les
+  // bretelles). On aligne donc le châssis sur la pente réelle, sans modifier sa hauteur.
+  // Repère local de la voiture : +X = avant, +Y = haut, +Z = droite.
+  const probe = 3.0;
+  const ca = Math.cos(a), sa = Math.sin(a);
+  let yBack, yFront;
+  if (pitY != null && entity) {
+    // Sur la pit-lane, trackElevation(x,z) peut choisir un tronçon de piste voisin.
+    // On utilise directement la variation de hauteur du mouvement des stands.
+    if (entity.pitMode === 1 && entity.pitSub === 0) {
+      const y0 = trackElevationRel(PIT_ENTRY_REL);
+      const y1 = trackElevationRel(PIT_LANE_A);
+      const u = clamp(entity.pitU,0,1);
+      const slope = (y1-y0); yBack = pitY-slope*0.06; yFront = pitY+slope*0.06;
+    } else if (entity.pitMode === 3 && entity.pitSub === 2) {
+      const y0 = pitPose(PIT_TOTAL,0).y, y1 = trackElevationRel(PIT_EXIT_REL);
+      const slope = y1-y0; yBack = pitY-slope*0.06; yFront = pitY+slope*0.06;
+    } else if ((entity.pitMode === 1 || entity.pitMode === 3) && entity.pitSub === 1) {
+      const p0 = pitPose(Math.max(0,entity.pitProgress-probe),0);
+      const p1 = pitPose(Math.min(PIT_TOTAL,entity.pitProgress+probe),0);
+      const span = Math.max(1,(p1.s-p0.s)||1);
+      const slope = (p1.y-p0.y)/span; yBack = pitY-slope*probe; yFront = pitY+slope*probe;
+    } else {
+      yBack = baseY; yFront = baseY;
+    }
+  } else {
+    yBack = trackElevation(x-ca*probe,z-sa*probe,o.idxHint);
+    yFront = trackElevation(x+ca*probe,z+sa*probe,o.idxHint);
+  }
+  const slope = (yFront-yBack)/(2*probe);
+  const forward = new THREE.Vector3(ca, slope, sa).normalize();
+  const right = new THREE.Vector3(-forward.z, 0, forward.x).normalize();
+  const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+  const basis = new THREE.Matrix4().makeBasis(forward, up, right);
+  o.root.quaternion.setFromRotationMatrix(basis);
   o.spin += speed * dt / 0.36;
   if (o.pitT > 0) {                                     // pneus qui clignotent le temps du changement
     o.pitT -= dt;
@@ -2657,9 +3118,9 @@ function updateCamera(dt, t) {
   const racing = phase === "countdown" || phase === "race" || phase === "finished";
   let fov = 55;
   if (!racing) {
-    const s = slotPose(3), ang = t * 0.00016, rad = 32;
-    camera.position.set(s.x + Math.cos(ang) * rad, 9, s.z + Math.sin(ang) * rad);
-    camera.lookAt(s.x, 1.2, s.z);
+    const s = slotPose(3), ang = t * 0.00016, rad = 32, gy = TY[s.idx];
+    camera.position.set(s.x + Math.cos(ang) * rad, gy + 9, s.z + Math.sin(ang) * rad);
+    camera.lookAt(s.x, gy + 1.2, s.z);
   } else {
     camS.a += wrap(me.a - camS.a) * (1 - Math.exp(-((camS.mode === 2 || me.pitMode) ? 40 : 6) * dt));
     const v = Math.abs(me.speed), ca = Math.cos(camS.a), sa = Math.sin(camS.a);
@@ -2673,8 +3134,9 @@ function updateCamera(dt, t) {
     camS.shake *= Math.exp(-4 * dt);
     const amp = camS.shake * 0.5 + (me.dist > OFFD ? 0.07 * Math.min(1, v / 40) : 0);
     const jx = (Math.random() - 0.5) * amp, jy = (Math.random() - 0.5) * amp, jz = (Math.random() - 0.5) * amp;
-    camera.position.set(me.x - ca * dist + jx, hgt + jy, me.z - sa * dist + jz);
-    camera.lookAt(me.x + ca * look, lookY, me.z + sa * look);
+    const gy = (me.pitMode && Number.isFinite(me.pitY)) ? me.pitY : (trackElevation(me.x, me.z, me.idx) || 0);
+    camera.position.set(me.x - ca * dist + jx, gy + hgt + jy, me.z - sa * dist + jz);
+    camera.lookAt(me.x + ca * look, gy + lookY, me.z + sa * look);
     camS.roll += (-me.steer * Math.min(1, v / 60) * 0.035 - camS.roll) * Math.min(1, dt * (me.pitMode ? 20 : 5));
     camera.rotateZ(camS.roll);
   }
@@ -2699,7 +3161,7 @@ function render3d(t, dt) {
   for (const id in carObjs) carObjs[id].root.visible = false;
   if (racing) {
     const o = getCarObj(me.id, me.color, me.name, true);
-    placeCar(o, me.x, me.z, me.a, me.speed, me.steer, me.brk > 0.2, dt, true);
+    placeCar(o, me.x, me.z, me.a, me.speed, me.steer, me.brk > 0.2, dt, true, me);
     if (camS.mode === 2) o.root.visible = false;
     for (const id in remotes) {
       const r = remotes[id];
@@ -2709,7 +3171,7 @@ function render3d(t, dt) {
     }
     for (const b of bots) {
       const o3 = getCarObj(b.id, colorOf(b.id), nameOf(b.id), false);
-      placeCar(o3, b.x, b.z, b.a, b.speed, b.steer, b.brk > 0.3, dt);
+      placeCar(o3, b.x, b.z, b.a, b.speed, b.steer, b.brk > 0.3, dt, false, b);
     }
     const lit = phase === "countdown" ? clamp(Math.floor((t - cdStart) / 600), 0, 5) : 0;
     gantryLamps.forEach((m, i) => m.material.color.setHex(i < lit ? 0xff2b1f : 0x2a0a08));
@@ -2854,6 +3316,20 @@ function drawMini() {
 
 /* ------------------------------ Son : tout est fabriqué par le navigateur (aucun fichier à télécharger) ------------------------------ */
 let audio = null;
+let menuMusicEl = null;
+function startMenuMusic(){
+  if(!menuMusicEl) menuMusicEl=$("menuMusic");
+  if(!menuMusicEl || muted) return;
+  menuMusicEl.volume=0.32;
+  const p=menuMusicEl.play();
+  if(p && p.catch) p.catch(()=>{}); // le navigateur peut bloquer l'autoplay avant le premier clic
+}
+function stopMenuMusic(){
+  if(!menuMusicEl) menuMusicEl=$("menuMusic");
+  if(!menuMusicEl) return;
+  menuMusicEl.pause();
+  try{menuMusicEl.currentTime=0;}catch(e){}
+}
 function noiseBuf(ac, sec, brown) {
   const n = Math.floor(ac.sampleRate * sec), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
   let last = 0;
@@ -2879,6 +3355,7 @@ function satCurve(k) {
 function setMuted(v) {
   muted = v;
   const b = $("soundBtn"); if (b) { b.textContent = v ? "🔇" : "🔊"; b.setAttribute("aria-pressed", String(v)); }
+  if(v) stopMenuMusic(); else if(phase === "menu" || phase === "lobby") startMenuMusic();
 }
 function initAudio() {
   if (audio) { try { audio.ac.resume(); } catch (e) {} return; }
@@ -2893,7 +3370,7 @@ function initAudio() {
     const rvIn = ac.createGain(); rvIn.gain.value = 0.18; rvIn.connect(rv); rv.connect(master);
     const white = noiseBuf(ac, 3, false), brown = noiseBuf(ac, 3, true);
     const loopNoise = buf => { const s = ac.createBufferSource(); s.buffer = buf; s.loop = true; s.start(); return s; };
-    const A = { ac, master, rvIn, white, rpm: 0.2, gear: 1, dip: 0, lit: 0, prevPhase: "", lastCrash: -9, lastBump: -9, cheer: 0 };
+    const A = { ac, master, rvIn, white, rpm: 0.2, gear: 1, dip: 0, lit: 0, prevPhase: "", lastCrash: -9, lastBump: -9, cheer: 0, menuNext: 0, menuStep: 0 };
 
     // Moteur : banque d'harmoniques + bruit d'échappement/admission.
     // L'objectif est un son de moteur de course organique, sans effet "sirène" électronique.
@@ -3025,6 +3502,7 @@ function sfxClunk(up) { tone(up ? 95 : 70, 0.07, "square", 0.1, 0, 45); burst("b
 const pitCrewPool = [];
 let crowdPeople = [];
 let garageLabelState = null;
+let startGridGroup = null;
 let paddockGroup = null;
 let paddockCars = [];   // voitures exposées dans les boxes (masquées quand la vraie voiture y entre)
 const PIT_STOP_DUR = 3.0;   // durée totale d'un arrêt : bien assez longue pour voir l'action
@@ -3034,7 +3512,7 @@ function spawnPitCrew(x,z,a){
   const door=(fw,lat)=>({x:x+fw*ca-lat*sa,z:z+fw*sa+lat*ca});   // point (avant, latéral) autour de la voiture
   const add=(grp,fw,lat,rot,role,tool)=>{
     const end=door(fw,lat), start=door(-7.2,lat*3.4);            // départ : porte du garage, côté voie des stands
-    grp.position.set(start.x,.18,start.z); grp.rotation.y=rot; scene.add(grp);
+    grp.position.set(start.x,trackElevation(start.x,start.z,0)+.18,start.z); grp.rotation.y=rot; scene.add(grp);
     pitCrewPool.push({g:grp,toolGrp:tool||null,t:0,sx:start.x,sz:start.z,bx:end.x,bz:end.z,rot:rot,role:role});
   };
   const roles=[[-1.75,.95,"pneu avant gauche"],[1.75,.95,"pneu avant droit"],[-1.75,-.95,"pneu arrière gauche"],[1.75,-.95,"pneu arrière droit"]];
@@ -3065,22 +3543,23 @@ function stepPitCrew(dt){
     else if(p.t>D-WOUT_T){walkT=ease((p.t-(D-WOUT_T))/WOUT_T);x=p.bx+(p.sx-p.bx)*walkT;z=p.bz+(p.sz-p.bz)*walkT;dirx=p.sx-p.bx;dirz=p.sz-p.bz;}
     else{x=p.bx;z=p.bz;working=true;}
     p.g.position.x=x; p.g.position.z=z;
+    const gy=trackElevation(x,z,0);   // altitude réelle du circuit à cet endroit (la voie des stands n'est pas partout à la même hauteur)
     if(working){
       p.g.rotation.y=p.rot;
       const u=clamp((p.t-WIN_T)/(D-WOUT_T-WIN_T),0,1);
       if(p.role<4){
         const crouch=Math.sin(u*Math.PI)*.42;
-        p.g.position.y=.18-crouch*.1;
+        p.g.position.y=gy+.18-crouch*.1;
         p.g.userData.armL.rotation.z=-.55-Math.sin(u*Math.PI*8)*.35;
         p.g.userData.armR.rotation.z=.55+Math.sin(u*Math.PI*8)*.35;
         if(p.toolGrp)p.toolGrp.rotation.z+=dt*42;
       }else if(p.role===4){
-        p.g.position.y=.18+Math.sin(u*Math.PI)*.08; p.g.rotation.z=Math.sin(u*Math.PI)*.08;
+        p.g.position.y=gy+.18+Math.sin(u*Math.PI)*.08; p.g.rotation.z=Math.sin(u*Math.PI)*.08;
       }else{
         p.g.rotation.z=Math.sin(u*Math.PI)*.10;
       }
     }else{
-      p.g.position.y=.18+Math.abs(Math.sin(p.t*11))*.05;      // petit rebond de la marche, pieds toujours au sol
+      p.g.position.y=gy+.18+Math.abs(Math.sin(p.t*11))*.05;      // petit rebond de la marche, pieds toujours au sol
       p.g.rotation.z=0; p.g.rotation.y=-Math.atan2(dirz,dirx);
     }
     if(p.t>D){scene.remove(p.g);pitCrewPool.splice(i,1);}
@@ -3099,6 +3578,24 @@ function sfxFinish(first) {
   if (first) [1047, 1319, 1568].forEach(f => tone(f, 0.95, "triangle", 0.13, 0.66));
 }
 
+function menuMusicTick(A){
+  if(!A || muted) return;
+  const ac=A.ac, now=ac.currentTime;
+  if(!A.menuNext) A.menuNext=now+0.05;
+  const roots=[196,220,174,165];
+  const root=roots[A.menuStep%roots.length];
+  const notes=[root,root*1.25,root*1.5,root*2];
+  notes.forEach((f,j)=>{
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.type=j===0?'sine':'triangle'; o.frequency.value=f;
+    const t=A.menuNext+j*0.035;
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(j===0?0.045:0.022,t+0.08);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+1.65);
+    o.connect(g); g.connect(A.master); o.start(t); o.stop(t+1.8);
+  });
+  A.menuNext+=2.0; A.menuStep++;
+}
+
 function updateAudio(dt, t) {
   const A = audio; if (!A) return;
   const ac = A.ac, now = ac.currentTime;
@@ -3106,6 +3603,12 @@ function updateAudio(dt, t) {
   A.master.gain.setTargetAtTime(muted ? 0 : 0.9, now, 0.05);
   const E = A.eng;
   if (!racing) {
+    if (phase === "menu" || phase === "lobby") {
+      startMenuMusic();
+      A.menuNext = now + 0.2; A.menuStep = 0;
+    } else {
+      stopMenuMusic(); A.menuNext = now + 0.2; A.menuStep = 0;
+    }
     E.bus.gain.setTargetAtTime(0, now, 0.05);
     ["tire", "gravel", "wind", "crowd"].forEach(k => A[k].g.gain.setTargetAtTime(0, now, 0.08));
     A.kerb.g.gain.setTargetAtTime(0, now, 0.05);
@@ -3210,6 +3713,7 @@ function updateAudio(dt, t) {
 const lamps = [...document.querySelectorAll(".lamp")];
 function setPhase(p) {
   phase = p;
+  if(p === "menu" || p === "lobby") startMenuMusic(); else stopMenuMusic();
   const racing = p === "countdown" || p === "race" || p === "finished";
   $("lobby").hidden = racing;
   $("joinView").hidden = p !== "menu";
@@ -3365,8 +3869,10 @@ function readProfile() {
   });
   $("startBtn").addEventListener("click", () => {
     if (!isHost || phase !== "lobby") return;
-    initAudio(); requestStart();
+    initAudio(); stopMenuMusic(); requestStart();
   });
+  $("joinBtn").addEventListener("click", () => { initAudio(); startMenuMusic(); });
+  $("soloBtn").addEventListener("click", () => { initAudio(); startMenuMusic(); });
   $("leaveBtn").addEventListener("click", () => { disconnect(); joinStatus(""); setPhase("menu"); });
   $("backBtn").addEventListener("click", () => { enterLobby(); });
   $("voiceBtn").addEventListener("click", () => { toggleVoice(); });
@@ -3376,7 +3882,7 @@ function readProfile() {
   const sel = $("moodSel"), btn = $("soundBtn"), trkSel = $("trackSel");
   sel.value = moodKey;
   sel.addEventListener("change", () => { applyMood(sel.value); try { localStorage.setItem("gp_mood", moodKey); } catch (e) {} });
-  btn.addEventListener("click", () => { initAudio(); setMuted(!muted); });
+  btn.addEventListener("click", () => { initAudio(); setMuted(!muted); startMenuMusic(); });
   setMuted(muted);
   trkSel.value = trackKey;
   const roomSelects = [trkSel, $("lapsSel"), $("botsSel"), $("lvlSel")];
