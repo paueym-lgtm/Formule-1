@@ -3500,71 +3500,41 @@ function makeCarPro(color, name, mine) {
     sprite.scale.set(8,2,1);sprite.position.set(0,3.4,0);root.add(sprite);
   }
 
-  // Volant F1 compact et détaillé, uniquement visible depuis le cockpit.
+  /* Cockpit TV : élément interne, masqué sur les caméras extérieures. */
   const cockpitControls = new THREE.Group();
-  cockpitControls.position.set(0.38,0.86,0);
+  cockpitControls.visible = false;
   root.add(cockpitControls);
-
-  const wheelMat = new THREE.MeshStandardMaterial({color:0x070808,roughness:0.3,metalness:0.75});
-  const gripMat = new THREE.MeshStandardMaterial({color:0x151617,roughness:0.72,metalness:0.12});
-  const accentMat = new THREE.MeshStandardMaterial({color:color,roughness:0.3,metalness:0.55});
-  const screenMat = new THREE.MeshStandardMaterial({color:0x010304,roughness:0.12,metalness:0.25,emissive:0x07151d,emissiveIntensity:0.7});
-
+  const cw = new THREE.MeshStandardMaterial({color:0x080909,roughness:0.34,metalness:0.72});
+  const cg = new THREE.MeshStandardMaterial({color:0x151617,roughness:0.72,metalness:0.12});
+  const ca = new THREE.MeshStandardMaterial({color:color,roughness:0.28,metalness:0.58});
+  const cd = new THREE.MeshStandardMaterial({color:0x010305,roughness:0.12,metalness:0.25,emissive:0x07151d,emissiveIntensity:0.7});
   const steeringWheel = new THREE.Group();
-  steeringWheel.rotation.y=-Math.PI/2;
-  steeringWheel.scale.setScalar(0.58);
+  steeringWheel.position.set(0.30,0.84,0);
+  steeringWheel.rotation.y = -Math.PI/2;
+  steeringWheel.scale.setScalar(0.62);
   cockpitControls.add(steeringWheel);
-
-  const core = new THREE.Mesh(new THREE.BoxGeometry(0.19,0.23,0.07),wheelMat);
-  steeringWheel.add(core);
-
-  const display = new THREE.Mesh(new THREE.BoxGeometry(0.13,0.065,0.018),screenMat);
-  display.position.set(0,0.025,0.047);
-  steeringWheel.add(display);
-
-  const topBar = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.055,0.06),wheelMat);
-  topBar.position.y=0.125;
-  steeringWheel.add(topBar);
-
-  const bottomBar = new THREE.Mesh(new THREE.BoxGeometry(0.28,0.055,0.06),wheelMat);
-  bottomBar.position.y=-0.125;
-  steeringWheel.add(bottomBar);
-
-  for(const side of [-1,1]){
-    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.05,0.18,10),gripMat);
-    grip.rotation.z=Math.PI/2;
-    grip.position.set(0,side*0.105,0.035);
-    steeringWheel.add(grip);
-
-    const sidePod = new THREE.Mesh(new THREE.BoxGeometry(0.065,0.17,0.055),wheelMat);
-    sidePod.position.set(0,side*0.105,0);
-    sidePod.rotation.z=side*0.12;
-    steeringWheel.add(sidePod);
-
-    const button = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.018,12),accentMat);
-    button.rotation.x=Math.PI/2;
-    button.position.set(0,side*0.145,0.052);
-    steeringWheel.add(button);
-
-    const paddle = new THREE.Mesh(new THREE.BoxGeometry(0.022,0.13,0.018),accentMat);
-    paddle.position.set(0.015,side*0.17,-0.065);
-    paddle.rotation.z=side*0.10;
-    steeringWheel.add(paddle);
+  const center = new THREE.Mesh(new THREE.BoxGeometry(0.20,0.22,0.075),cw);
+  steeringWheel.add(center);
+  const display = new THREE.Mesh(new THREE.BoxGeometry(0.135,0.070,0.018),cd);
+  display.position.set(0,0.025,0.050); steeringWheel.add(display);
+  const top = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.055,0.06),cw);
+  top.position.y=0.115; steeringWheel.add(top);
+  const bottom = new THREE.Mesh(new THREE.BoxGeometry(0.29,0.055,0.06),cw);
+  bottom.position.y=-0.115; steeringWheel.add(bottom);
+  for(const s of [-1,1]){
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.043,0.050,0.18,10),cg);
+    grip.rotation.z=Math.PI/2; grip.position.set(0,s*0.105,0.035); steeringWheel.add(grip);
+    const side = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.17,0.055),cw);
+    side.position.set(0,s*0.105,0); side.rotation.z=s*0.12; steeringWheel.add(side);
+    const button = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.018,12),ca);
+    button.rotation.x=Math.PI/2; button.position.set(0,s*0.145,0.055); steeringWheel.add(button);
+    const paddle = new THREE.Mesh(new THREE.BoxGeometry(0.025,0.13,0.018),ca);
+    paddle.position.set(0.015,s*0.17,-0.065); paddle.rotation.z=s*0.10; steeringWheel.add(paddle);
   }
+  const dash = new THREE.Mesh(new THREE.BoxGeometry(0.38,0.09,0.28),cw);
+  dash.position.set(-0.02,0.70,0); dash.rotation.z=-0.08; cockpitControls.add(dash);
 
-  for(const side of [-1,1]){
-    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.045,0.17,0.055),wheelMat);
-    arm.position.set(0,side*0.075,0);
-    arm.rotation.z=side*0.58;
-    steeringWheel.add(arm);
-  }
-
-  const dash = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.09,0.25),wheelMat);
-  dash.position.set(-0.10,0.72,0);
-  dash.rotation.z=-0.08;
-  cockpitControls.add(dash);
-
-  return {root,body,wheels,brake:rearLight,brakeGlow:glowM,flame:flameM,beam,refl:[[paint,.18]],spin:0,pitch:0,roll:0,lastSpeed:0,steeringWheel};
+  return {root,body,wheels,brake:rearLight,brakeGlow:glowM,flame:flameM,beam,refl:[[paint,.18]],spin:0,pitch:0,roll:0,lastSpeed:0,cockpitControls,steeringWheel};
 }
 function lum(hex) { const c = new THREE.Color(hex); return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b; }
 function makeCar(color, name, mine) {
@@ -3656,7 +3626,7 @@ function updateCamera(dt, t) {
     const pk = camS.pit, mix = (a, b) => a + (b - a) * pk;
     if (camS.mode === 0) { dist = mix(8.5 + v * 0.02, 14.5); hgt = mix(3.2 + v * 0.004, 5.4); look = mix(14, 3); lookY = 1.3; fov = mix(66 + v * 0.16, 62); }
     else if (camS.mode === 1) { dist = mix(14, 17); hgt = mix(7.5, 9.5); look = 12; lookY = 1.0; fov = 62 + v * 0.10; }
-    else { dist = -0.18; hgt = 1.00; look = 17; lookY = 0.94; fov = 73 + v * 0.035; }
+    else { dist = 0.48; hgt = 0.88; look = 16; lookY = 0.88; fov = 72 + v * 0.035; }
     camS.shake *= Math.exp(-4 * dt);
     const amp = camS.shake * 0.5 + (me.dist > OFFD ? 0.07 * Math.min(1, v / 40) : 0);
     const jx = (Math.random() - 0.5) * amp, jy = (Math.random() - 0.5) * amp, jz = (Math.random() - 0.5) * amp;
@@ -3688,7 +3658,8 @@ function render3d(t, dt) {
   if (racing) {
     const o = getCarObj(me.id, me.color, me.name, true);
     placeCar(o, me.x, me.z, me.a, me.speed, me.steer, me.brk > 0.2, dt, true, me);
-    o.root.visible = true;
+    if (o.cockpitControls) o.cockpitControls.visible = (camS.mode === 2);
+    if (camS.mode === 2) o.root.visible = false;
     for (const id in remotes) {
       const r = remotes[id];
       if (id[0] !== "b" && !people[id]) continue;
