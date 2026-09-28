@@ -2233,22 +2233,178 @@ function buildMowing() {
 }
 
 function buildAds() {
-  const brands = [["NOVA ENERGY", "#e10600", "#ffffff"], ["TURBO OIL", "#ffcf00", "#0f1b3d"], ["FALCON", "#0f1b3d", "#ffcf00"], ["VORTEX", "#12b76a", "#ffffff"],
-    ["TITAN MOTORS", "#f2f2f2", "#e10600"], ["ORAGE", "#00a3e0", "#ffffff"], ["COMÈTE", "#9b5de5", "#ffffff"], ["MISTRAL", "#ff7a00", "#0f1b3d"]];
-  const tex = makeTexture(2048, 64, (g, w, h) => {
+  /*
+   * PANNEAUX PUBLICITAIRES — VERSION RÉALISTE
+   * Marques inspirées de l'environnement F1.
+   * Le reste du circuit n'est pas modifié.
+   */
+  const brands = [
+    {
+      name: "PIRELLI",
+      bg: "#ffd800",
+      fg: "#111111",
+      accent: "#d40000"
+    },
+    {
+      name: "DHL",
+      bg: "#ffcc00",
+      fg: "#d40511",
+      accent: "#d40511"
+    },
+    {
+      name: "AWS",
+      bg: "#232f3e",
+      fg: "#ffffff",
+      accent: "#ff9900"
+    },
+    {
+      name: "LENOVO",
+      bg: "#e2231a",
+      fg: "#ffffff",
+      accent: "#ffffff"
+    },
+    {
+      name: "aramco",
+      bg: "#007f5f",
+      fg: "#ffffff",
+      accent: "#8bd3b5"
+    },
+    {
+      name: "TAG HEUER",
+      bg: "#101010",
+      fg: "#ffffff",
+      accent: "#00a878"
+    },
+    {
+      name: "ROLEX",
+      bg: "#006039",
+      fg: "#d4af37",
+      accent: "#d4af37"
+    },
+    {
+      name: "MSC CRUISES",
+      bg: "#071d49",
+      fg: "#ffffff",
+      accent: "#00a9e0"
+    },
+    {
+      name: "QATAR AIRWAYS",
+      bg: "#5c0d3d",
+      fg: "#ffffff",
+      accent: "#c8a96b"
+    },
+    {
+      name: "EMIRATES",
+      bg: "#d71920",
+      fg: "#ffffff",
+      accent: "#ffffff"
+    }
+  ];
+
+  const tex = makeTexture(2048, 80, (g, w, h) => {
     const bw = w / brands.length;
-    brands.forEach((b, i) => {
-      g.fillStyle = b[1]; g.fillRect(i * bw, 0, bw, h);
-      g.fillStyle = "rgba(255,255,255,.18)"; g.fillRect(i * bw, 0, bw, h * 0.12);
-      g.fillStyle = b[2]; g.font = "italic 800 40px 'Barlow Condensed','Arial Narrow',Impact,sans-serif";
-      g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(b[0], i * bw + bw / 2, h / 2 + 2);
-      g.fillStyle = "#111"; g.fillRect(i * bw, 0, 3, h);
+
+    brands.forEach((brand, i) => {
+      const x = i * bw;
+
+      // Fond du panneau
+      g.fillStyle = brand.bg;
+      g.fillRect(x + 4, 0, bw - 8, h);
+
+      // Bord supérieur légèrement éclairé
+      g.fillStyle = "rgba(255,255,255,.16)";
+      g.fillRect(x + 4, 0, bw - 8, 7);
+
+      // Bord inférieur
+      g.fillStyle = "rgba(0,0,0,.28)";
+      g.fillRect(x + 4, h - 6, bw - 8, 6);
+
+      // Séparateurs entre panneaux
+      g.fillStyle = "#080808";
+      g.fillRect(x, 0, 4, h);
+
+      // Petite ligne lumineuse autour du panneau
+      g.strokeStyle = "rgba(255,255,255,.38)";
+      g.lineWidth = 2;
+      g.strokeRect(x + 5, 2, bw - 10, h - 4);
+
+      // Accent coloré
+      g.fillStyle = brand.accent;
+      g.fillRect(x + 15, h - 13, bw - 30, 4);
+
+      // Nom de la marque
+      g.fillStyle = brand.fg;
+
+      let fontSize = 30;
+
+      if (brand.name === "QATAR AIRWAYS") {
+        fontSize = 22;
+      } else if (brand.name === "MSC CRUISES") {
+        fontSize = 24;
+      } else if (brand.name === "TAG HEUER") {
+        fontSize = 26;
+      }
+
+      g.font =
+        `italic 900 ${fontSize}px ` +
+        `'Arial Black','Barlow Condensed','Arial Narrow',Arial,sans-serif`;
+
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+
+      g.fillText(
+        brand.name,
+        x + bw / 2,
+        h / 2 - 2
+      );
+
+      // Petit reflet sur le panneau
+      const gradient = g.createLinearGradient(
+        0,
+        0,
+        0,
+        h
+      );
+
+      gradient.addColorStop(0, "rgba(255,255,255,.12)");
+      gradient.addColorStop(.45, "rgba(255,255,255,0)");
+      gradient.addColorStop(1, "rgba(0,0,0,.14)");
+
+      g.fillStyle = gradient;
+      g.fillRect(x + 4, 0, bw - 8, h);
     });
   }, false);
-  const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide });
+
+  const mat = new THREE.MeshBasicMaterial({
+    map: tex,
+    side: THREE.DoubleSide
+  });
+
   tintMats.push(mat);
-  // Pas de panneau publicitaire à l'intérieur du tunnel : ses propres murs en béton prennent le relais.
-  scene.add(wallStripUV(k => -(WDL[k] + 0.28), 1.3, 3.0, mat, 64, false, inTunnel), wallStripUV(k => WDR[k] + 0.28, 1.3, 3.0, mat, 64, true, k => pitWallGap(k) || inTunnel(k)));
+
+  // Pas de publicité à l'intérieur du tunnel :
+  // les murs du tunnel prennent le relais.
+  scene.add(
+    wallStripUV(
+      k => -(WDL[k] + 0.28),
+      1.3,
+      3.0,
+      mat,
+      64,
+      false,
+      inTunnel
+    ),
+
+    wallStripUV(
+      k => WDR[k] + 0.28,
+      1.3,
+      3.0,
+      mat,
+      64,
+      true,
+      k => pitWallGap(k) || inTunnel(k)
+    )
+  );
 }
 function buildLamps() {
   const pts = [];
