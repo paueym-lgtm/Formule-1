@@ -3500,24 +3500,69 @@ function makeCarPro(color, name, mine) {
     sprite.scale.set(8,2,1);sprite.position.set(0,3.4,0);root.add(sprite);
   }
 
-  // Cockpit intérieur uniquement.
+  // Volant F1 compact et détaillé, uniquement visible depuis le cockpit.
   const cockpitControls = new THREE.Group();
-  cockpitControls.position.set(0.55,0.82,0);
+  cockpitControls.position.set(0.38,0.86,0);
   root.add(cockpitControls);
-  const dark = new THREE.MeshStandardMaterial({color:0x090a0b,roughness:0.38,metalness:0.7});
-  const accent = new THREE.MeshStandardMaterial({color:color,roughness:0.3,metalness:0.55});
-  const displayMat = new THREE.MeshStandardMaterial({color:0x020304,roughness:0.15,metalness:0.2,emissive:0x071018,emissiveIntensity:0.5});
+
+  const wheelMat = new THREE.MeshStandardMaterial({color:0x070808,roughness:0.3,metalness:0.75});
+  const gripMat = new THREE.MeshStandardMaterial({color:0x151617,roughness:0.72,metalness:0.12});
+  const accentMat = new THREE.MeshStandardMaterial({color:color,roughness:0.3,metalness:0.55});
+  const screenMat = new THREE.MeshStandardMaterial({color:0x010304,roughness:0.12,metalness:0.25,emissive:0x07151d,emissiveIntensity:0.7});
+
   const steeringWheel = new THREE.Group();
   steeringWheel.rotation.y=-Math.PI/2;
+  steeringWheel.scale.setScalar(0.58);
   cockpitControls.add(steeringWheel);
-  steeringWheel.add(new THREE.Mesh(new THREE.TorusGeometry(0.29,0.043,10,36),dark));
-  const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.075,0.05,16),accent); hub.rotation.x=Math.PI/2; steeringWheel.add(hub);
-  const display=new THREE.Mesh(new THREE.BoxGeometry(0.16,0.075,0.025),displayMat); display.position.set(0,0.045,0.035); steeringWheel.add(display);
-  for(const s of [-1,1]){
-    const sp=new THREE.Mesh(new THREE.BoxGeometry(0.235,0.025,0.025),dark); sp.position.set(0,s*0.075,0); sp.rotation.z=s*0.20; steeringWheel.add(sp);
-    const paddle=new THREE.Mesh(new THREE.BoxGeometry(0.025,0.12,0.018),accent); paddle.position.set(0,s*0.225,0.055); steeringWheel.add(paddle);
+
+  const core = new THREE.Mesh(new THREE.BoxGeometry(0.19,0.23,0.07),wheelMat);
+  steeringWheel.add(core);
+
+  const display = new THREE.Mesh(new THREE.BoxGeometry(0.13,0.065,0.018),screenMat);
+  display.position.set(0,0.025,0.047);
+  steeringWheel.add(display);
+
+  const topBar = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.055,0.06),wheelMat);
+  topBar.position.y=0.125;
+  steeringWheel.add(topBar);
+
+  const bottomBar = new THREE.Mesh(new THREE.BoxGeometry(0.28,0.055,0.06),wheelMat);
+  bottomBar.position.y=-0.125;
+  steeringWheel.add(bottomBar);
+
+  for(const side of [-1,1]){
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.05,0.18,10),gripMat);
+    grip.rotation.z=Math.PI/2;
+    grip.position.set(0,side*0.105,0.035);
+    steeringWheel.add(grip);
+
+    const sidePod = new THREE.Mesh(new THREE.BoxGeometry(0.065,0.17,0.055),wheelMat);
+    sidePod.position.set(0,side*0.105,0);
+    sidePod.rotation.z=side*0.12;
+    steeringWheel.add(sidePod);
+
+    const button = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.018,12),accentMat);
+    button.rotation.x=Math.PI/2;
+    button.position.set(0,side*0.145,0.052);
+    steeringWheel.add(button);
+
+    const paddle = new THREE.Mesh(new THREE.BoxGeometry(0.022,0.13,0.018),accentMat);
+    paddle.position.set(0.015,side*0.17,-0.065);
+    paddle.rotation.z=side*0.10;
+    steeringWheel.add(paddle);
   }
-  const dash=new THREE.Mesh(new THREE.BoxGeometry(0.42,0.11,0.30),dark); dash.position.set(-0.10,0.76,0); dash.rotation.z=-0.08; cockpitControls.add(dash);
+
+  for(const side of [-1,1]){
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.045,0.17,0.055),wheelMat);
+    arm.position.set(0,side*0.075,0);
+    arm.rotation.z=side*0.58;
+    steeringWheel.add(arm);
+  }
+
+  const dash = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.09,0.25),wheelMat);
+  dash.position.set(-0.10,0.72,0);
+  dash.rotation.z=-0.08;
+  cockpitControls.add(dash);
 
   return {root,body,wheels,brake:rearLight,brakeGlow:glowM,flame:flameM,beam,refl:[[paint,.18]],spin:0,pitch:0,roll:0,lastSpeed:0,steeringWheel};
 }
