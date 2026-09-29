@@ -991,8 +991,18 @@ function botControl(b, others, skill) {
 // PHYS_END
 
 /* ------------------------------ Joueurs ------------------------------ */
-const COLORS = ["#e10600", "#00a3e0", "#ffcf00", "#12b76a", "#ff7a00", "#9b5de5", "#ff4fa3", "#f2f2f2"];
-const COLOR_NAMES = ["Rouge", "Bleu", "Jaune", "Vert", "Orange", "Violet", "Rose", "Blanc"];
+const COLORS = [
+  "#e10600", "#0057ff", "#00a3e0", "#00d4ff", "#00c853", "#12b76a",
+  "#7cff00", "#ffcf00", "#ffd166", "#ff7a00", "#ff3d00", "#ff1744",
+  "#ff4fa3", "#ff00a8", "#9b5de5", "#6c2bd9", "#7b61ff", "#00bfa5",
+  "#00e5ff", "#8d6e63", "#f2f2f2", "#b9c0cc", "#343a40", "#111111"
+];
+const COLOR_NAMES = [
+  "Rouge", "Bleu", "Bleu ciel", "Cyan", "Vert vif", "Vert",
+  "Vert fluo", "Jaune", "Jaune doré", "Orange", "Orange rouge", "Rouge vif",
+  "Rose", "Magenta", "Violet", "Violet foncé", "Indigo", "Turquoise",
+  "Cyan clair", "Marron", "Blanc", "Argent", "Gris anthracite", "Noir"
+];
 const BOT_NAMES = ["Max Verstappen", "Lewis Hamilton", "Charles Leclerc", "Lando Norris", "George Russell", "Carlos Sainz", "Fernando Alonso", "Oscar Piastri", "Sergio Pérez", "Pierre Gasly"];
 const botInfoFor = i => ({ name: BOT_NAMES[i % BOT_NAMES.length], color: COLORS[(i * 3 + 1) % COLORS.length] });
 const STEP = 1 / 120;
@@ -1563,7 +1573,7 @@ function updateTires(c, t) {
   }
 }
 function disqualify(t) {
-  me.dq = 1; me.f = raceNow(t) || 0.001;
+  me.dq = 1; me.f = 0;
   setPhase("finished");
   flash("DISQUALIFIÉ — pneus non changés dans le délai obligatoire", 2600);
   sfxCrash(1);
@@ -1772,7 +1782,7 @@ const COARSE = window.matchMedia && matchMedia("(pointer:coarse)").matches;
 function nameOf(id) { return (people[id] || botInfo[id] || { name: "?" }).name; }
 function colorOf(id) { return (people[id] || botInfo[id] || { color: "#888" }).color; }
 function standings() {
-  const list = [{ id: me.id, me: true, name: me.name, color: me.color, p: me.progress, f: me.f, c: me.cross }];
+  const list = [{ id: me.id, me: true, name: me.name, color: me.color, p: me.progress, f: me.f, c: me.cross, dq: !!me.dq }];
   for (const id of raceOrder) {
     const r = remotes[id];
     if (id === me.id || !r || !people[id]) continue;
@@ -4076,14 +4086,14 @@ function showResults() { $("results").hidden = false; refreshResults(); }
 function refreshResults() {
   const list = standings();
   const myPos = list.findIndex(e => e.me) + 1;
-  $("resTitle").textContent = me.f ? (myPos === 1 ? "Victoire !" : "Position " + myPos) : "Course en cours";
-  $("resMine").textContent = "Ton temps : " + fmt(me.f) + (me.best ? ". Meilleur tour : " + fmt(me.best) : ".");
+  $("resTitle").textContent = me.dq ? "DISQUALIFIÉ" : (me.f ? (myPos === 1 ? "Victoire !" : "Position " + myPos) : "Course en cours");
+  $("resMine").textContent = me.dq ? "Pneus non changés : course terminée par disqualification." : "Ton temps : " + fmt(me.f) + (me.best ? ". Meilleur tour : " + fmt(me.best) : ".");
   const ol = $("resList"); ol.textContent = "";
   list.forEach((e, i) => {
     const li = document.createElement("li"); if (e.me) li.className = "me";
     const pos = document.createElement("span"); pos.className = "pos display"; pos.textContent = i + 1;
     const nm = document.createElement("span"); nm.textContent = e.name;
-    const tm = document.createElement("span"); tm.className = "tm"; tm.textContent = e.f ? fmt(e.f) : "en course";
+    const tm = document.createElement("span"); tm.className = "tm"; tm.textContent = e.dq ? "DISQUALIFIÉ" : (e.f ? fmt(e.f) : "en course");
     li.append(pos, dotEl(e.color), nm, tm); ol.appendChild(li);
   });
 }
