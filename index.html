@@ -867,8 +867,10 @@ function slotPose(slot) {
 }
 
 // Une voiture : c.x, c.z, c.a (cap), c.vx, c.vz, c.speed, c.steer
-function stepCar(c, thr, brk, steerIn, h) {
+function stepCar(c, thr, brk, steerIn, h, handbrake = false) {
   const off = c.dist > OFFD;
+  const wasHandbrake = !!c.handbrakeActive;
+  if (handbrake && thr > 0) c.handbrakeCharge = Math.min((c.handbrakeCharge || 0) + h, 1.5);
   const ca = Math.cos(c.a), sa = Math.sin(c.a);
   const sp = c.vx * ca + c.vz * sa, av = Math.abs(sp);
   const grip = c.tireGrip || 1;
@@ -880,11 +882,22 @@ function stepCar(c, thr, brk, steerIn, h) {
   if (thr > 0) vf += Math.min(ACC, PWR / Math.max(vf, 1)) * thr * h;
   if (brk > 0) {
     if (vf > 0.5) { vf -= BRK * brk * h; if (vf < 0) vf = 0; }
-    else { vf -= 8 * brk * h; if (vf < -12) vf = -12; }
+    else if (!handbrake) { vf -= 8 * brk * h; if (vf < -12) vf = -12; }
+    else { vf = 0; }
   }
   vf -= DRAG * vf * Math.abs(vf) * h + 0.03 * vf * h;
   if (off) { vf -= vf * 0.6 * h; if (vf > 28) vf -= (vf - 28) * 2 * h; }
-  vl *= Math.exp(-(off ? 3 : 9) * h);
+  vl *= Math.exp(-(off ? 3 : (handbrake ? 2.2 : 9)) * h);
+  if (handbrake && av > 8) c.a += steerIn * Math.min(av / 25, 1) * 0.55 * h;
+  // Frein à main + accélérateur : on charge la motricité, puis la voiture bondit
+  // vers l'avant quand le frein à main est relâché.
+  if (wasHandbrake && !handbrake && (c.handbrakeCharge || 0) > 0) {
+    const boost = 12 + Math.min(c.handbrakeCharge, 1.5) * 18;
+    vf += boost;
+    c.handbrakeCharge = 0;
+  }
+  if (!handbrake) c.handbrakeActive = false;
+  else c.handbrakeActive = true;
   c.vx = f * vf + rx * vl; c.vz = g * vf + rz * vl;
   c.x += c.vx * h; c.z += c.vz * h; c.speed = vf;
 }
@@ -1702,6 +1715,8 @@ function physics(h, t) {
   const canDrive = phase === "race";
   const steerIn = canDrive ? ((input("right") ? 1 : 0) - (input("left") ? 1 : 0)) : 0;
   let thr = canDrive && input("up") ? 1 : 0, brk = canDrive && input("down") ? 1 : 0;
+  const handbrake = canDrive && input("handbrake");
+  if (handbrake) brk = 1;
   if(canDrive&&!me.pitMode){
   const rel=pitRelativeFromCar(me),nr=nearest(me.x,me.z,me.idx);
   const right=((me.x-TX[nr.i])*RGX[nr.i]+(me.z-TZ[nr.i])*RGZ[nr.i])>TRACK_W*.16;
@@ -1710,7 +1725,7 @@ function physics(h, t) {
   if (phase === "finished") { thr = 0; brk = 0.35; }
   me.thr = thr; me.brk = brk;
   if (canDrive && !me.dq) updateTires(me, t);
-  if(canDrive&&me.pitMode)stepPlayerPit(h); else stepCar(me,thr,brk,steerIn,h);
+  if(canDrive&&me.pitMode)stepPlayerPit(h); else stepCar(me,thr,brk,steerIn,h,handbrake);
   if(me.pitCrossFlag){me.pitCrossFlag=0;if(phase==="race")onLap(t);}   // ligne franchie dans la voie des stands = tour compté
   if(!me.pitMode){if(separate(me,others))sfxBump(Math.abs(me.speed));const r=locate(me);if(r.hit){camS.shake=1;sfxCrash(clamp(Math.abs(me.speed)/55,.25,1));sparkBurst(me.x,me.z,16);}if(r.crossed&&phase==="race")onLap(t);}
   // Après un tête-à-queue ou un accrochage, la voiture du joueur pouvait rester coincée contre un mur
@@ -1751,9 +1766,9 @@ function physics(h, t) {
 }
 
 /* ------------------------------ Commandes ------------------------------ */
-const keys = { up: false, down: false, left: false, right: false };
-const touch = { up: false, down: false, left: false, right: false };
-const KEYMAP = { ArrowUp: "up", KeyW: "up", ArrowDown: "down", KeyS: "down", ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right" };
+const keys = { up: false, down: false, left: false, right: false, handbrake: false };
+const touch = { up: false, down: false, left: false, right: false, handbrake: false };
+const KEYMAP = { ArrowUp: "up", KeyW: "up", ArrowDown: "down", KeyS: "down", ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right", Space: "handbrake" };
 // KeyW/KeyA/KeyS/KeyD sont les touches physiques : ça donne ZQSD sur un clavier AZERTY.
 let muted = false;
 addEventListener("keydown", e => {
