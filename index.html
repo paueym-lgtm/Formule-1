@@ -272,16 +272,14 @@
 "use strict";
 
 /* =====================================================================
-   RÉGLAGES SUPABASE (le multijoueur en ligne en a besoin)
+   SERVEUR MULTIJOUEUR RENDER
    Dans Supabase : Project Settings > API
    - Project URL  -> à coller dans SUPABASE_URL
    - anon public  -> à coller dans SUPABASE_ANON_KEY
    Ne colle JAMAIS la clé "service_role" ici.
    ===================================================================== */
-const SUPABASE_URL = "https://jxtrncptxmonpwzmgfux.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_VAvSLiZZI84XgeK450EoRA_0POsIPhg";
-
-const ONLINE = !/COLLE_ICI/.test(SUPABASE_URL + SUPABASE_ANON_KEY) && typeof supabase !== "undefined";
+const GAME_SERVER_URL = "wss://paulogames-server.onrender.com/ws";
+const ONLINE = true;
 
 /* ------------------------------ Utilitaires ------------------------------ */
 const $ = id => document.getElementById(id);
@@ -553,7 +551,7 @@ function pitLaneY(rel) {
 }
 const PIT_HALF_W = 4.5;
 const PIT_GARAGE_LANE = 17.0;  // écart entre l'axe de la voie et le centre d'une voiture arrêtée dans son box
-const PIT_BOX_W = 9.4, PIT_MAXBOX = 10;
+const PIT_BOX_W = 9.4, PIT_MAXBOX = 40;
 let pitBoxCount = 6;           // nombre de garages = nombre de voitures dans la course (fixé au départ)
 let PIT_X = 0, PIT_Z = 0, GARAGE_X = 0, GARAGE_Z = 0;
 // Altitude du sol de la voie des stands et du paddock : la voie suit à peu près l'altitude de la
@@ -1172,13 +1170,20 @@ let roomCode = null, client = null, channel = null, connected = false;
 let joinedAt = 0;
 let roomHostId = null;
 let roomConfig = { trk: trackKey, laps: 3, bots: 5, lvl: 0.95 };
-function presencePayload() { return { name: me.name, color: me.color, num: me.num || 0, joinedAt, roomConfig, voice: voiceOn }; }
+let gameSocket = null;
+let reconnectTimer = null;
+let manualDisconnect = false;
+let reconnectAttempts = 0;
+let serverConnected = false;
+function presencePayload() {
+  return { name: me.name, color: me.color, num: me.num || 0, joinedAt, roomConfig, voice: voiceOn };
+}
 
-/* ------------------------------ Voix entre joueurs (Supabase Radio) ------------------------------ */
+/* ------------------------------ Voix entre joueurs (serveur Render) ------------------------------ */
 /*
    La voix n'utilise plus WebRTC/STUN/TURN.
    Le micro est converti en PCM mono 16 kHz puis envoyé en binaire
-   par Supabase Realtime Broadcast. Cela évite toute connexion P2P.
+   par le serveur Render.
 */
 const VOICE_SAMPLE_RATE = 12000;
 const VOICE_EVENT = "voice-audio";
@@ -1240,9 +1245,17 @@ async function startVoice() {
     voiceProcessor.connect(voiceMuteGain);
     voiceMuteGain.connect(voiceCtx.destination);
 
+    let lastVoiceSend = 0;
     voiceProcessor.onaudioprocess = e => {
       if (!voiceOn || !channel || !connected) return;
+      const now = performance.now();
+      if (now - lastVoiceSend < 125) return;
       const input = e.inputBuffer.getChannelData(0);
+      let energy = 0;
+      for (let i=0;i<input.length;i++) energy += Math.abs(input[i]);
+      energy /= Math.max(1,input.length);
+      if (energy < 0.008) return;
+      lastVoiceSend = now;
       const pcm = downsampleTo16k(input, voiceCtx.sampleRate);
       if (pcm.length) broadcastVoicePCM(pcm);
     };
@@ -1539,81 +1552,138 @@ function pollSpeaking(t) {
 
 /* ------------------------------ Réseau (Supabase Realtime) ------------------------------ */
 function disconnect() {
+  manualDisconnect = true;
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
   stopVoice();
-  if (channel && client) { try { client.removeChannel(channel); } catch (e) {} }
-  channel = null; client = null; connected = false; roomCode = null; roomHostId = null; isHost = false;
-  people = {}; remotes = {};
+  if (channel && typeof channel.removeChannel === "function") {
+    try { channel.removeChannel(); } catch (e) {}
+  }
+  gameSocket = null;
+  channel = null;
+  client = null;
+  connected = false;
+  serverConnected = false;
+  roomCode = null;
+  roomHostId = null;
+  isHost = false;
+  people = {};
+  remotes = {};
   updateVoiceBtn();
 }
+function makeGameChannel(ws) {
+  const handlers = {};
+  const ch = {
+    send(message) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      let out = message;
+      if (message && message.type === "broadcast") {
+        const event = message.event;
+        const map = {s:"state",go:"start",lobby:"lobby"};
+        out = { type: map[event] || (event === VOICE_EVENT ? "voice" : event), payload: message.payload };
+      }
+      try { ws.send(JSON.stringify(out)); } catch (e) {}
+    },
+    track(payload) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      try { ws.send(JSON.stringify({ type:"profile", payload })); } catch (e) {}
+    },
+    on(_kind, filter, callback) {
+      if (filter && filter.event && typeof callback === "function") handlers[filter.event] = callback;
+      return ch;
+    },
+    subscribe() { return ch; },
+    removeChannel() { try { ws.close(); } catch (e) {} },
+    _emit(event, payload) {
+      if (handlers[event]) handlers[event]({payload});
+    }
+  };
+  return ch;
+}
+function handleServerMessage(data) {
+  if (!data || typeof data !== "object") return;
+  if (data.type === "error") { joinStatus(String(data.message || "Erreur serveur.")); return; }
+  if (data.type === "players") {
+    syncPeople(data.players || [], data.hostId || null, data.config || null);
+    if (phase === "menu" || phase === "lobby") enterLobby();
+    return;
+  }
+  if (data.type === "state") { onState(data.payload); return; }
+  if (data.type === "snapshot") {
+    for (const p of (Array.isArray(data.states) ? data.states : [])) onState(p);
+    return;
+  }
+  if (data.type === "start") { onStart(data.payload); return; }
+  if (data.type === "lobby") { enterLobby(); return; }
+  if (data.type === "voice") { handleVoicePayload(data.payload); return; }
+}
 function connect(code) {
-  disconnect();
+  manualDisconnect = false;
+  clearTimeout(reconnectTimer);
   roomCode = code;
   joinedAt = Date.now() + Math.random();
-  roomConfig = { trk: $("trackSel").value || trackKey, laps: +$("lapsSel").value || 3, bots: +$("botsSel").value || 0, lvl: +$("lvlSel").value || 0.95 };
+  roomConfig = {trk:$("trackSel").value||trackKey,laps:+$("lapsSel").value||3,bots:+$("botsSel").value||0,lvl:+$("lvlSel").value||.95};
   try {
-    client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { realtime: { params: { eventsPerSecond: 20 } } });
-    channel = client.channel("gp3d-" + code, { config: { broadcast: { self: false, ack: false }, presence: { key: me.id } } });
-setupVoiceBroadcast();
+    gameSocket = new WebSocket(GAME_SERVER_URL);
+    channel = makeGameChannel(gameSocket);
+    setupVoiceBroadcast();
   } catch (e) {
-    joinStatus("La configuration Supabase n'est pas valide. Vérifie l'URL et la clé.");
-    disconnect(); return;
+    joinStatus("Impossible d'ouvrir la connexion au serveur.");
+    return;
   }
-  const ch = channel;
-  ch.on("broadcast", { event: "s" }, m => onState(m.payload))
-    .on("broadcast", { event: "go" }, m => onStart(m.payload))
-    .on("broadcast", { event: "lobby" }, m => { if (m.payload && m.payload.rid === raceId && (phase === "finished" || phase === "race" || phase === "countdown")) enterLobby(); })
-    .on("presence", { event: "sync" }, syncPeople);
-  const timer = setTimeout(() => {
-    if (ch === channel && !connected) {
-      joinStatus("Connexion impossible. Vérifie l'URL, la clé et que Realtime est activé dans Supabase.");
-      disconnect();
+  const ws = gameSocket;
+  const timeout = setTimeout(() => {
+    if (ws === gameSocket && !connected) {
+      try { ws.close(); } catch (e) {}
+      joinStatus("Le serveur met trop de temps à répondre.");
     }
-  }, 9000);
-  ch.subscribe(async status => {
-    if (ch !== channel) return;
-    if (status === "SUBSCRIBED") {
-      clearTimeout(timer); connected = true;
-      try { await ch.track(presencePayload()); } catch (e) {}
-      syncPeople(); enterLobby(); updateVoiceBtn();
-    } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-      if (!connected) {
-        clearTimeout(timer);
-        joinStatus("Connexion impossible. Vérifie l'URL, la clé et que Realtime est activé dans Supabase.");
-        disconnect();
-      } else { setNote("Connexion instable, les autres voitures peuvent saccader."); }
-    }
+  }, 10000);
+  ws.addEventListener("open", () => {
+    if (ws !== gameSocket) return;
+    clearTimeout(timeout);
+    connected = true;
+    serverConnected = true;
+    reconnectAttempts = 0;
+    ws.send(JSON.stringify({type:"join",room:roomCode,id:me.id,profile:presencePayload()}));
+    enterLobby();
+    updateVoiceBtn();
+  });
+  ws.addEventListener("message", ev => {
+    if (ws !== gameSocket) return;
+    try { handleServerMessage(JSON.parse(ev.data)); } catch (e) { console.warn("Message serveur invalide:",e); }
+  });
+  ws.addEventListener("error", () => {});
+  ws.addEventListener("close", () => {
+    if (ws !== gameSocket) return;
+    clearTimeout(timeout);
+    connected = false;
+    serverConnected = false;
+    channel = null;
+    updateVoiceBtn();
+    if (manualDisconnect || !roomCode) return;
+    setNote("Connexion interrompue. Reconnexion automatique…");
+    const delay = Math.min(15000,1000*Math.pow(2,reconnectAttempts))*(.7+Math.random()*.6);
+    reconnectAttempts = Math.min(reconnectAttempts+1,4);
+    clearTimeout(reconnectTimer);
+    reconnectTimer = setTimeout(() => { if (!manualDisconnect && roomCode) connect(roomCode); }, delay);
   });
 }
-function syncPeople() {
-  if (!channel) return;
-  const st = channel.presenceState(), next = {};
-  let host = null, hostJoined = Infinity, hostCfg = null;
-  for (const key in st) {
-    const m = st[key][0] || {};
-    const joined = Number.isFinite(+m.joinedAt) ? +m.joinedAt : Infinity;
-    next[key] = {
-      id: key,
-      name: String(m.name || "Pilote").slice(0, 14),
-      color: isHexColor(m.color) ? m.color : COLORS[0],
-      num: Math.max(0, Math.min(99, parseInt(m.num, 10) || 0)),
-      joinedAt: joined,
-      roomConfig: m.roomConfig || null,
-      voice: !!m.voice
-    };
-    if (joined < hostJoined) { hostJoined = joined; host = key; hostCfg = m.roomConfig || null; }
+function syncPeople(list, hostId, config) {
+  const next = {};
+  for (const m of (Array.isArray(list)?list:[])) {
+    if (!m || !m.id) continue;
+    next[m.id] = {id:m.id,name:String(m.name||"Pilote").slice(0,14),color:isHexColor(m.color)?m.color:COLORS[0],
+      num:Math.max(0,Math.min(99,parseInt(m.num,10)||0)),joinedAt:Number.isFinite(+m.joinedAt)?+m.joinedAt:Infinity,
+      roomConfig:m.roomConfig||null,voice:!!m.voice};
   }
-  next[me.id] = { id: me.id, name: me.name, color: me.color, joinedAt, roomConfig, voice: voiceOn };
-  if (!host || joinedAt < hostJoined) { host = me.id; hostJoined = joinedAt; hostCfg = roomConfig; }
-  roomHostId = host;
-  isHost = me.id === roomHostId;
-  if (hostCfg && !isHost) {
-    roomConfig = { ...roomConfig, ...hostCfg };
-    applyRoomConfig();
-  }
-  people = next;
-  for (const id in remotes) if (id[0] !== "b" && !people[id]) delete remotes[id];
+  next[me.id]={id:me.id,name:me.name,color:me.color,num:me.num||0,joinedAt,roomConfig,voice:voiceOn};
+  people=next;
+  roomHostId=hostId||roomHostId||me.id;
+  isHost=roomHostId===me.id;
+  if(config&&typeof config==="object"){roomConfig={...roomConfig,...config};if(!isHost)applyRoomConfig();}
+  for(const id in remotes)if(id[0]!=="b"&&!people[id])delete remotes[id];
+  if(phase==="lobby")renderPeople();
   updateRoomControls();
-  if (phase === "lobby") renderPeople();
 }
 function applyRoomConfig() {
   const cfg = roomConfig || {};
@@ -1664,15 +1734,11 @@ let lastSend = 0;
 const r2 = v => Math.round(v * 100) / 100;
 function sendState(t) {
   if (!channel || !connected || t - lastSend < 125) return;
-  lastSend = t;
-  const payload = {
-    i: me.id, r: raceId, x: r2(me.x), z: r2(me.z), a: r2(me.a), v: Math.round(me.speed * 10) / 10,
-    p: me.progress, c: me.cross, ph: phase, f: Math.round(me.f), pit: me.pitMode, dq: me.dq ? 1 : 0
-  };
-  if (isHost && bots.length) {
-    payload.b = bots.map(b => [Number(b.id.slice(1)), r2(b.x), r2(b.z), r2(b.a), Math.round(b.speed * 10) / 10, b.progress, b.cross, Math.round(b.f)]);
-  }
-  channel.send({ type: "broadcast", event: "s", payload });
+  lastSend=t;
+  const payload={i:me.id,r:raceId,x:r2(me.x),z:r2(me.z),a:r2(me.a),v:Math.round(me.speed*10)/10,
+    p:me.progress,c:me.cross,ph:phase,f:Math.round(me.f),pit:me.pitMode,dq:me.dq?1:0};
+  if(isHost&&bots.length) payload.b=bots.map(b=>[Number(b.id.slice(1)),r2(b.x),r2(b.z),r2(b.a),Math.round(b.speed*10)/10,b.progress,b.cross,Math.round(b.f)]);
+  channel.send({type:"broadcast",event:"s",payload});
 }
 
 /* ------------------------------ Course ------------------------------ */
@@ -1725,12 +1791,12 @@ function disqualify(t) {
   setTimeout(() => { if (phase === "finished") showResults(); }, 2200);
 }
 function requestStart() {
-  if (!isHost || phase !== "lobby") return;
-  const ids = Object.keys(people).sort().slice(0, 6);
-  const nb = Math.max(0, Math.min(+$("botsSel").value, 10 - ids.length));
-  const payload = { order: ids, laps: +$("lapsSel").value, rid: Date.now(), host: me.id, nb, lvl: +$("lvlSel").value, trk: $("trackSel").value };
-  if (channel && connected) channel.send({ type: "broadcast", event: "go", payload });
-  onStart(payload);
+  if(!isHost||phase!=="lobby"||!channel||!connected)return;
+  const ids=Object.keys(people).filter(id=>people[id]).sort((a,b)=>(people[a].joinedAt||0)-(people[b].joinedAt||0));
+  const order=ids.slice(0,25);
+  const payload={order,laps:+$("lapsSel").value,rid:Date.now(),host:me.id,
+    nb:Math.max(0,Math.min(+$("botsSel").value,25-order.length)),lvl:+$("lvlSel").value,trk:$("trackSel").value};
+  channel.send({type:"broadcast",event:"go",payload});
 }
 function onStart(pl) {
   if (!pl || phase === "countdown" || phase === "race") return;
@@ -4902,7 +4968,7 @@ function readProfile() {
     const code = cleanCode($("codeInput").value) || genCode();
     $("codeInput").value = code;
     if (!ONLINE) {
-      joinStatus("Le multijoueur n'est pas encore relié à Supabase. Remplis les deux lignes au début du script, ou joue seul en attendant.");
+      joinStatus("Le serveur multijoueur n'est pas disponible pour le moment. Réessaie dans quelques secondes.");
       return;
     }
     joinStatus("Connexion en cours...");
