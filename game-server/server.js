@@ -103,7 +103,7 @@ function handleMessage(ws,raw){
     room.config={trk:requested.trk||room.config.trk,laps:Number(requested.laps)||room.config.laps,bots:nb,lvl:Number(requested.lvl)||room.config.lvl};
     room.racePayload={order:uniqueOrder,laps:room.config.laps,rid:Number(requested.rid)||Date.now(),host:room.hostId,nb,lvl:room.config.lvl,trk:room.config.trk};
     room.raceActive=true;room.states.clear();
-    broadcastRoom(room,{type:"start",payload:room.racePayload});send(ws,{type:"start",payload:room.racePayload});broadcastPlayers(room);return;
+    broadcastRoom(room,{type:"start",payload:room.racePayload},ws);send(ws,{type:"start",payload:room.racePayload});broadcastPlayers(room);return;
   }
   if(msg.type==="lobby"){
     room.raceActive=false;room.racePayload=null;room.states.clear();
