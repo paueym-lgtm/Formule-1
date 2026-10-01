@@ -1,0 +1,12 @@
+{
+  "name": "paulogames-server",
+  "version": "1.0.0",
+  "description": "Serveur multijoueur Paulogames",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
