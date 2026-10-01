@@ -122,6 +122,9 @@
   .opts select{flex:1}
 
   #pitStatus{position:fixed;top:112px;left:50%;transform:translateX(-50%);padding:8px 16px;background:rgba(8,12,20,.82);color:#fff;border:2px solid var(--signal);border-radius:6px;font-weight:800;pointer-events:none;z-index:8;text-align:center;min-width:260px}
+  .mirror{position:fixed;top:50%;width:clamp(150px,20vw,300px);aspect-ratio:384/160;z-index:6;pointer-events:none;border:3px solid #111;border-radius:12px;
+    box-shadow:0 0 0 2px rgba(255,255,255,.14),inset 0 0 14px rgba(0,0,0,.55)}
+  #mirL{left:2vw} #mirR{right:2vw}
   #pitStatus .small{display:block;font-size:12px;color:#cdd5e0;margin-top:3px}
   @media (max-width:600px), (pointer:coarse){
     #lobby{top:10px;left:10px;padding:16px}
@@ -196,6 +199,7 @@
       <option value="monaco">Monaco</option>
       <option value="abudhabi">Abu Dhabi — Yas Marina</option>
       <option value="montreal">Montréal — Gilles-Villeneuve</option>
+      <option value="baku">Bakou — Azerbaïdjan</option>
     </select>
 
     <div class="two">
@@ -246,6 +250,7 @@
   <div><div class="v display" id="stTire">NEUFS</div><div class="k">Pneus</div></div>
 </div>
 <div id="banner" class="display" hidden></div>
+<div class="mirror" id="mirL" hidden></div><div class="mirror" id="mirR" hidden></div>
 <div id="pitStatus" hidden aria-live="polite"><span id="pitStatusMain">PIT LANE</span><span class="small" id="pitStatusSub">Limiteur automatique — arrêt obligatoire</span></div>
 
 <section id="results" class="panel" hidden>
@@ -305,14 +310,12 @@ let STAND_IDX = [];   // recalculé pour chaque circuit : uniquement sur les sec
 // Le point 0 est la ligne de départ, sur la ligne droite entre la Rascasse/Antony Noghes et Sainte-Dévote.
 const TRACKS = {
   monaco: { name: "Monaco", tunnel: [0.443, 0.578],
-    // Relief réel du circuit (le point 0 est la ligne de départ) : Sainte Dévote au creux de la
-    // descente, montée très raide de Beau Rivage, point culminant au Casino (virage 4), puis longue
-    // redescente par Mirabeau / l'épingle du Grand Hôtel / Portier jusqu'au tunnel qui plonge vers la
-    // mer, quai à niveau de la mer jusqu'à la Rascasse (point le plus bas), puis léger regain avant la
-    // ligne de départ. Écart Casino/Rascasse : environ 42 m, comme sur le vrai circuit.
-    elev: [[0.000,6.0],[0.030,3.0],[0.088,2.0],[0.150,16.0],[0.218,31.0],[0.252,44.0],[0.290,39.0],
-           [0.316,33.0],[0.369,25.0],[0.409,17.0],[0.433,10.0],[0.500,6.0],[0.619,3.0],[0.706,2.0],
-           [0.777,2.0],[0.829,2.0],[0.888,0.5],[0.957,2.0],[1.000,6.0]],
+    // Relief relevé sur le profil d'altitude officiel (F1) : départ au pied de Sainte Dévote, montée continue par Beau Rivage
+    // jusqu'au sommet du Casino (virages 3-4, ~42 m plus haut que la Rascasse), longue descente par Mirabeau / Grand Hôtel / Portier,
+    // puis plateau bas (tunnel, port, Rascasse) jusqu'à la ligne.
+    elev: [[0.0,3.1],[0.055,4.7],[0.068,7.1],[0.077,9.3],[0.085,11.3],[0.094,13.8],[0.102,16.2],[0.111,18.9],[0.119,21.5],[0.128,23.9],[0.136,26.2],[0.145,28.7],[0.154,31.3],[0.162,34.0],[0.171,36.6],[0.179,38.7],[0.188,40.4],[0.239,42.0],[0.264,39.9],[0.311,37.9],[0.32,35.2],[0.328,32.8],[0.337,30.3],[0.345,27.9],[0.354,25.6],[0.362,23.3],[0.371,21.4],[0.38,19.7],[0.388,18.0],[0.397,16.2],[0.405,14.5],[0.414,12.4],[0.422,10.1],[0.431,8.4],[0.525,7.1],[0.61,5.1],[0.627,3.1],[0.648,1.4],[0.742,1.2],[0.827,3.1],[0.849,1.5],[0.9,3.3],[0.994,3.1],[1.0,3.1]],
+    // Stands réels (plan officiel) : côté DROIT (côté port), entrée juste après la Rascasse / Anthony Noghes, sortie avant Sainte Dévote.
+    pit: { side: 1, entry: -185, exit: 225 },
     ctrl: [[525.5,747.8],[639.0,637.8],[820.5,456.2],[1038.4,262.6],[1123.1,209.4],[1183.6,274.7],[1256.2,323.1],[1449.8,419.9],[1691.9,553.1],[1933.9,698.3],[2127.5,795.1],[2272.8,891.9],[2418.0,988.7],[2490.6,1037.1],[2587.4,1025.0],[2660.0,940.3],[2696.3,770.9],[2708.4,649.9],[2781.0,613.6],[3023.1,565.2],[3265.1,516.8],[3410.4,499.8],[3434.6,553.1],[3386.2,649.9],[3289.3,746.7],[3228.8,843.5],[3228.8,904.0],[3277.2,928.2],[3349.8,867.7],[3410.4,783.0],[3458.8,770.9],[3555.6,807.2],[3604.0,855.6],[3507.2,916.1],[3265.1,1061.3],[3095.7,1182.4],[2974.7,1242.9],[2781.0,1267.1],[2539.0,1255.0],[2297.0,1163.0],[2054.9,1042.0],[1890.3,945.2],[1837.1,911.3],[1788.7,976.6],[1728.2,940.3],[1691.9,867.7],[1667.7,807.2],[1546.6,722.5],[1353.0,577.3],[1135.2,444.1],[1014.2,492.6],[893.1,613.6],[844.7,698.3],[856.8,770.9],[856.8,807.2],[796.3,916.1],[699.5,1037.1],[639.0,1061.3],[578.5,1025.0],[530.1,1037.1],[493.8,1109.8],[474.4,1255.0],[481.7,1424.4],[518.0,1569.6],[542.2,1666.5],[493.8,1690.7],[360.6,1618.0],[239.6,1521.2],[203.3,1448.6],[215.4,1376.0],[251.7,1279.2],[288.0,1134.0],[360.6,964.5],[481.7,795.1]] },
   // Tracé réel du Circuit de Yas Marina (Abu Dhabi, configuration 2021 : 16 virages, 5,281 km), relevé sur le plan officiel.
   // Le point 0 est la ligne de départ, sur la ligne droite des stands (sens inverse des aiguilles d'une montre).
@@ -320,14 +323,30 @@ const TRACKS = {
   // culmine au grand virage 3, redescend vers l'épingle 5, puis reste très plate : ligne droite du fond (1,1 km) et marina sont les points les plus bas.
   // Éléments réels : l'hôtel Yas Viceroy enjambe la piste entre les virages 13 et 14, et la sortie des stands passe par un tunnel.
   abudhabi: { name: "Abu Dhabi", hotel: { at: 611 / 720, len: 38 }, pitTunnel: true,
+    // Stands réels (plan officiel) : côté DROIT, entrée à la sortie du virage 16, tunnel sous la ligne, puis la voie longe l'extérieur des virages 1-2 et rejoint la piste après le virage 2.
+    // Sortie RÉELLE : la voie contourne le virage 1 par l'extérieur, plonge et passe SOUS la piste (tunnel) juste après le virage 1, ressort à l'INTÉRIEUR (côté gauche) et rejoint la piste avant le virage 2.
+    pit: { side: 1, entry: -190, exit: 552, ramp: 65, rampOut: 62, exitSide: -1, cross: { d0: 336, d1: 384, u0: 418, u1: 484, c0: 372, c1: 440 } },
     elev: [[0.000,2.0],[0.030,2.6],[0.066,5.6],[0.090,7.6],[0.108,8.8],[0.133,10.2],[0.156,11.2],[0.175,9.0],[0.198,5.4],[0.235,2.4],[0.265,0.8],[0.320,0.5],[0.440,0.6],[0.490,1.2],[0.548,1.8],[0.601,2.0],[0.653,2.4],[0.703,3.0],[0.765,2.4],[0.789,2.0],[0.816,1.6],[0.849,1.2],[0.870,1.3],[0.913,1.6],[0.954,2.0],[1.000,2.0]],
     ctrl: [[3020.4,1600.5],[3017.4,1752.5],[3014.3,1904.4],[3011.4,2056.4],[3008.4,2208.4],[3005.4,2360.3],[3003.9,2512.6],[3010.8,2582.2],[3050.3,2641.2],[3101.7,2662.5],[3189.4,2665.1],[3338.8,2656.2],[3487.9,2646.3],[3636.3,2634.9],[3776.8,2604.2],[3872.1,2500.2],[3935.9,2373.5],[4009.1,2250.6],[4117.9,2152.0],[4251.3,2104.2],[4397.5,2105.8],[4527.9,2160.8],[4656.1,2221.0],[4789.2,2269.6],[4928.8,2302.5],[5076.8,2314.9],[5227.7,2324.7],[5377.9,2330.4],[5527.1,2337.3],[5675.5,2343.2],[5823.7,2347.2],[5906.1,2342.0],[5962.4,2317.2],[6004.7,2254.1],[5998.4,2195.7],[5964.9,2150.4],[5893.5,2103.2],[5767.8,2036.8],[5638.4,1979.4],[5508.7,1922.5],[5382.4,1857.8],[5256.5,1791.8],[5130.6,1725.8],[5004.8,1659.7],[4879.1,1593.2],[4753.4,1527.0],[4627.7,1460.5],[4502.1,1393.9],[4376.4,1327.5],[4250.8,1261.0],[4125.2,1194.3],[3999.5,1127.9],[3873.7,1061.7],[3747.4,997.0],[3618.0,939.4],[3489.4,880.1],[3362.6,816.4],[3236.2,752.4],[3105.4,681.9],[2978.9,615.2],[2852.9,549.4],[2727.0,500.0],[2690.9,535.2],[2681.4,614.3],[2662.0,676.3],[2597.2,700.4],[2448.9,716.0],[2300.0,739.8],[2162.4,777.8],[2032.2,833.4],[1908.7,905.1],[1792.6,994.7],[1681.5,1096.3],[1570.5,1198.3],[1459.7,1300.5],[1348.7,1402.5],[1238.0,1505.1],[1127.9,1608.9],[1024.0,1719.0],[928.6,1832.7],[842.2,1950.1],[762.0,2070.1],[681.9,2190.1],[601.9,2310.1],[523.6,2430.9],[500.7,2482.4],[500.0,2566.3],[575.1,2685.9],[706.3,2738.3],[846.4,2715.5],[951.9,2621.4],[1000.3,2488.3],[1036.4,2350.1],[1071.2,2211.3],[1105.2,2072.2],[1142.3,1934.4],[1225.3,1815.6],[1326.2,1704.2],[1430.9,1599.5],[1570.7,1567.2],[1719.0,1555.3],[1806.2,1553.3],[1850.2,1579.6],[1862.4,1615.3],[1862.6,1723.2],[1874.9,1871.3],[1922.0,1933.5],[1978.3,1959.1],[2121.0,1984.0],[2195.1,1980.5],[2248.5,1943.1],[2296.4,1810.7],[2303.1,1662.7],[2306.4,1511.0],[2310.2,1359.3],[2317.5,1209.2],[2361.8,1074.4],[2477.9,994.9],[2610.6,945.3],[2743.4,896.2],[2882.0,861.5],[3012.8,898.5],[3030.4,1040.9],[3029.7,1193.8],[3024.8,1345.0],[3022.0,1497.0]] },
   // Tracé réel du Circuit Gilles-Villeneuve (Montréal, île Notre-Dame : 14 virages, 4,361 km, sens des aiguilles d'une montre),
   // relevé sur le plan officiel fourni (ligne centrale extraite du plan puis mise à l'échelle). Le point 0 est la ligne de départ/arrivée,
   // sur la ligne droite après la chicane du Mur des Champions (virages 13-14), juste avant le virage 1.
-  // Relief : le circuit est bâti sur une île artificielle et est pratiquement plat (pas de points-clés d'altitude).
+  // Relief : voir « elev » ci-dessous.
   montreal: { name: "Montréal",
+    // Relief relevé sur le profil d'altitude officiel (F1) : 12,6 m au plus bas (avant la chicane finale), 17,8 m au plus haut (virages 2-3) ; on garde ces 5,2 m de dénivelé.
+    elev: [[0.0,0.83],[0.024,0.83],[0.048,1.7],[0.072,1.7],[0.092,3.07],[0.116,5.15],[0.14,5.59],[0.164,5.59],[0.188,4.22],[0.212,0.94],[0.236,1.49],[0.26,1.21],[0.28,2.58],[0.304,4.11],[0.328,4.61],[0.352,4.82],[0.4,4.61],[0.448,4.61],[0.472,4.82],[0.492,3.89],[0.54,3.95],[0.588,3.84],[0.612,3.73],[0.636,3.95],[0.66,3.29],[0.68,2.58],[0.704,2.31],[0.728,1.59],[0.752,1.16],[0.776,0.83],[0.8,0.5],[0.824,0.61],[0.848,0.94],[0.872,0.66],[0.892,1.38],[0.916,1.27],[0.94,0.61],[0.964,0.72],[0.988,0.83],[1.0,0.83]],
+    // Stands réels (plan officiel) : côté GAUCHE de la ligne droite (extérieur de la boucle), entrée à la sortie de la chicane du Mur des Champions (virages 13-14), sortie avant le virage 2.
+    pit: { side: -1, entry: -345, exit: 235 },
     ctrl: [[5459.7,1492.7],[5538.7,1511.2],[5616.8,1533.2],[5693.2,1560.8],[5767.6,1593.4],[5840.2,1629.6],[5910.4,1670.3],[5979.9,1712.4],[6049.7,1753.9],[6119.0,1796.2],[6191.8,1829.1],[6260.3,1790.7],[6319.5,1735.2],[6395.2,1713.6],[6458.3,1760.9],[6468.9,1839.9],[6434.2,1912.6],[6384.2,1976.5],[6331.7,2038.4],[6275.5,2097.1],[6217.3,2153.6],[6158.4,2209.5],[6085.3,2242.7],[6009.1,2269.5],[5944.6,2318.7],[5877.9,2364.6],[5801.7,2392.2],[5725.1,2419.0],[5649.6,2448.5],[5572.1,2437.7],[5512.5,2382.7],[5438.3,2355.5],[5359.2,2373.1],[5280.6,2393.7],[5202.2,2414.8],[5123.7,2435.3],[5045.3,2456.6],[4974.0,2494.9],[4905.0,2537.4],[4827.8,2562.1],[4747.0,2570.3],[4666.2,2564.6],[4588.5,2541.2],[4514.2,2508.7],[4440.4,2474.9],[4366.5,2441.4],[4292.1,2408.8],[4220.8,2370.3],[4145.4,2340.5],[4068.7,2353.8],[4031.4,2423.7],[4010.9,2502.0],[3954.5,2558.9],[3879.6,2589.0],[3798.8,2594.0],[3718.3,2583.8],[3639.7,2563.6],[3562.1,2539.9],[3485.3,2513.4],[3408.9,2486.0],[3332.7,2457.9],[3257.2,2428.1],[3185.6,2389.8],[3114.2,2351.4],[3035.2,2333.7],[2956.4,2315.6],[2883.5,2279.8],[2813.0,2239.7],[2743.2,2198.3],[2679.1,2148.5],[2612.0,2102.8],[2546.3,2055.0],[2482.9,2004.4],[2419.8,1953.2],[2357.3,1901.4],[2294.8,1849.5],[2232.5,1797.5],[2169.9,1745.7],[2115.5,1687.0],[2135.9,1610.0],[2140.3,1530.0],[2105.2,1457.5],[2050.4,1397.7],[1988.5,1345.6],[1927.1,1292.5],[1865.6,1239.4],[1801.7,1189.3],[1737.4,1139.7],[1672.4,1091.0],[1607.0,1042.9],[1540.8,996.0],[1473.2,950.9],[1405.3,906.5],[1335.2,865.4],[1264.1,826.3],[1191.6,789.8],[1118.0,755.7],[1042.7,725.2],[965.2,701.3],[886.3,682.0],[807.0,664.8],[727.5,648.1],[648.1,630.9],[568.8,613.5],[500.0,574.9],[521.3,504.8],[600.7,500.0],[678.9,521.5],[754.9,549.9],[832.7,573.2],[913.2,583.5],[994.4,583.6],[1075.1,588.2],[1155.7,597.9],[1236.7,604.0],[1317.8,607.7],[1398.7,603.5],[1477.4,583.4],[1558.0,580.3],[1637.7,596.1],[1717.8,608.5],[1798.8,614.3],[1879.7,620.3],[1960.7,626.2],[2041.4,634.7],[2121.2,649.9],[2200.5,667.4],[2279.7,685.0],[2359.1,702.3],[2438.3,720.0],[2517.6,737.5],[2596.9,755.1],[2676.1,772.7],[2755.4,790.1],[2834.7,807.6],[2914.0,825.2],[2993.3,842.8],[3072.5,860.5],[3151.8,878.0],[3231.0,895.7],[3310.3,913.3],[3389.7,930.6],[3468.7,948.9],[3547.8,967.2],[3627.3,983.9],[3706.7,1001.0],[3785.9,1018.6],[3865.3,1035.9],[3944.5,1053.5],[4023.8,1071.1],[4103.1,1088.7],[4174.1,1120.7],[4190.3,1199.1],[4262.6,1231.3],[4341.9,1248.4],[4421.2,1265.9],[4500.5,1283.5],[4579.8,1300.8],[4659.2,1318.1],[4738.5,1335.3],[4817.8,1352.9],[4897.1,1370.3],[4976.4,1387.7],[5055.7,1405.0],[5135.1,1422.3],[5214.3,1439.9],[5293.6,1457.5],[5373.0,1474.4]] },
+  baku: { name: "Bakou",
+    // Tracé réel du Baku City Circuit (Azerbaïdjan : 20 virages, 6,003 km, sens inverse des aiguilles d'une montre), relevé sur le plan fourni
+    // (ligne centrale extraite de l'image puis mise à l'échelle). Le point 0 est la ligne de départ, sur la grande ligne droite du front de mer.
+    // Relief relevé sur le profil d'altitude fourni (max +2,1 m au niveau du château / virages 13-15, min -24,7 m sur le front de mer),
+    // décalé de +25,9 m pour que le point le plus bas reste au-dessus du sol : on garde les 26,8 m de dénivelé réels.
+    // Stands réels : côté GAUCHE de la ligne droite (côté ville), entrée après le virage 20, sortie avant le virage 1.
+    pit: { side: -1, entry: -370, exit: 200 },
+    elev: [[0.0,1.7],[0.03,1.7],[0.06,1.7],[0.09,2.7],[0.12,2.8],[0.15,2.8],[0.18,2.3],[0.21,2.5],[0.24,3.9],[0.27,3.9],[0.3,2.8],[0.33,1.2],[0.36,2.3],[0.39,2.3],[0.42,2.8],[0.44,2.8],[0.454,3.3],[0.468,6.4],[0.482,11.0],[0.496,10.8],[0.51,15.0],[0.524,20.3],[0.538,24.5],[0.552,26.9],[0.566,28.0],[0.58,27.5],[0.594,26.9],[0.608,26.9],[0.622,25.8],[0.636,22.0],[0.65,15.1],[0.664,8.2],[0.678,4.5],[0.692,2.3],[0.706,1.7],[0.72,1.7],[0.75,1.7],[0.78,2.3],[0.81,2.3],[0.84,2.8],[0.87,2.3],[0.9,2.3],[0.93,2.8],[0.96,2.4],[0.99,1.7],[1.0,1.7]],
+    ctrl: [[6733.4,1696.3],[6820.2,1702.5],[6907.3,1704.6],[6994.3,1704.6],[7081.4,1704.6],[7168.5,1704.6],[7255.6,1704.6],[7342.6,1704.6],[7429.7,1704.6],[7516.8,1704.5],[7603.4,1697.3],[7685.9,1671.7],[7724.5,1596.5],[7727.6,1509.5],[7727.0,1422.4],[7715.9,1336.2],[7713.0,1249.2],[7713.0,1162.1],[7713.0,1075.0],[7713.0,988.0],[7706.2,901.3],[7698.6,814.7],[7698.5,727.7],[7698.0,640.6],[7672.0,559.6],[7595.4,521.0],[7508.8,514.5],[7421.7,514.5],[7334.6,514.5],[7247.5,514.5],[7160.5,514.5],[7073.4,514.5],[6986.3,514.5],[6899.2,514.5],[6812.2,514.5],[6725.1,514.5],[6638.0,514.5],[6551.0,512.6],[6464.8,500.8],[6377.7,500.0],[6290.6,500.0],[6203.5,500.3],[6117.2,510.8],[6030.3,514.5],[5943.2,514.5],[5856.1,514.5],[5769.1,514.5],[5682.0,514.5],[5594.9,514.5],[5507.8,514.5],[5420.8,515.3],[5334.5,527.0],[5247.5,529.0],[5160.4,529.0],[5073.4,529.8],[4989.0,549.2],[4934.7,613.1],[4926.6,699.5],[4926.5,786.6],[4926.5,873.6],[4921.2,960.4],[4912.1,1046.9],[4912.0,1134.0],[4911.7,1221.0],[4875.9,1292.8],[4789.3,1298.2],[4702.2,1298.2],[4615.1,1298.2],[4528.0,1298.2],[4441.0,1300.8],[4355.1,1314.7],[4270.0,1333.3],[4170.4,1352.9],[4083.6,1360.0],[3997.7,1374.2],[3913.4,1395.7],[3845.3,1447.3],[3822.6,1530.2],[3774.8,1596.4],[3691.6,1622.3],[3607.8,1645.9],[3523.3,1666.4],[3439.4,1689.9],[3355.8,1714.1],[3271.4,1735.6],[3187.1,1757.6],[3103.3,1781.0],[3018.0,1798.7],[2931.6,1808.8],[2846.5,1826.9],[2760.3,1838.7],[2694.3,1802.9],[2700.5,1716.5],[2706.9,1629.7],[2718.8,1543.5],[2722.5,1456.5],[2734.3,1370.3],[2731.9,1283.4],[2683.8,1212.9],[2620.0,1153.9],[2542.2,1115.0],[2482.0,1055.0],[2473.5,968.9],[2447.4,888.2],[2373.1,844.9],[2287.1,833.9],[2200.0,832.1],[2113.8,820.3],[2026.8,819.3],[1939.7,820.0],[1853.4,831.5],[1766.6,836.9],[1680.3,848.1],[1593.9,858.4],[1507.2,865.7],[1421.0,876.8],[1334.0,880.3],[1251.2,906.1],[1179.3,954.6],[1117.5,1015.9],[1061.2,1082.3],[1005.4,1149.2],[950.9,1217.1],[896.4,1285.0],[839.1,1350.5],[780.9,1415.2],[741.7,1492.6],[712.6,1574.7],[685.0,1657.3],[655.3,1739.2],[629.8,1822.4],[600.5,1904.4],[571.7,1986.5],[531.4,2063.7],[500.0,2144.1],[532.2,2221.5],[596.3,2280.5],[654.9,2344.8],[709.4,2412.7],[762.2,2481.9],[816.5,2550.0],[872.3,2616.9],[927.0,2684.6],[980.2,2753.5],[1043.0,2833.4],[1096.0,2902.5],[1154.2,2967.1],[1225.4,3016.2],[1311.4,3020.8],[1386.3,2978.5],[1446.5,2915.7],[1503.5,2849.8],[1564.9,2788.1],[1630.2,2730.6],[1697.2,2675.0],[1769.9,2627.2],[1849.0,2591.0],[1932.0,2564.9],[2013.3,2533.5],[2096.2,2507.0],[2177.7,2476.5],[2260.0,2448.0],[2340.5,2415.0],[2422.3,2385.1],[2490.0,2331.7],[2540.3,2260.7],[2585.8,2186.4],[2635.8,2115.2],[2691.4,2048.3],[2760.5,1995.6],[2840.9,1962.9],[2924.5,1938.6],[3009.0,1917.5],[3094.1,1899.3],[3178.1,1876.4],[3262.4,1854.6],[3347.0,1834.2],[3430.2,1808.6],[3514.6,1787.3],[3598.7,1764.8],[3682.7,1741.6],[3767.5,1722.1],[3853.1,1706.2],[3938.7,1690.9],[4025.7,1690.1],[4112.8,1690.1],[4199.9,1690.1],[4287.0,1690.1],[4374.0,1690.1],[4461.1,1690.1],[4548.2,1690.1],[4635.3,1690.1],[4722.3,1690.1],[4809.4,1690.1],[4896.5,1690.1],[4983.6,1690.1],[5070.7,1690.1],[5157.7,1690.1],[5244.8,1690.1],[5331.9,1690.1],[5419.0,1690.1],[5506.1,1690.1],[5593.1,1690.1],[5680.2,1690.1],[5767.3,1690.1],[5854.4,1690.1],[5941.5,1690.1],[6028.5,1690.1],[6115.6,1690.1],[6202.7,1690.1],[6289.8,1690.1],[6376.8,1690.1],[6463.9,1690.1],[6551.0,1690.0],[6638.1,1690.9]] }
 };
 let trackKey = "monaco";
 let CTRL = TRACKS.monaco.ctrl.map(p => [p[0] * SC, p[1] * SC]);
@@ -337,14 +356,30 @@ const TY = new Float32Array(N);   // altitude (m) le long du circuit, pour le re
 // Interpole l'altitude à une fraction (0..1) du tour, à partir des points-clés "elev" du circuit
 // (lissage en escalier arrondi : pas de cassure brutale de pente au passage d'un point-clé à l'autre).
 function elevAt(frac, keys) {
+  // Interpolation cubique monotone (PCHIP, périodique) : la pente est continue d'un point-clé à l'autre.
+  // L'ancien lissage « en escalier » (pente nulle à chaque point-clé) donnait un sol ondulé, surtout au départ de Monaco.
   if (!keys || !keys.length) return 0;
   frac = ((frac % 1) + 1) % 1;
-  let i = 0; while (i < keys.length - 1 && keys[i + 1][0] < frac) i++;
-  const a = keys[i], b = keys[Math.min(i + 1, keys.length - 1)];
-  const span = (b[0] - a[0]) || 1e-6;
-  let t = clamp((frac - a[0]) / span, 0, 1);
-  t = t * t * (3 - 2 * t);
-  return a[1] + (b[1] - a[1]) * t;
+  const n = keys.length;
+  let m = keys._m;
+  if (!m) {
+    const X = [keys[n - 2][0] - 1], Y = [keys[n - 2][1]];
+    for (const k of keys) { X.push(k[0]); Y.push(k[1]); }
+    X.push(keys[1][0] + 1); Y.push(keys[1][1]);
+    const h = [], d = [];
+    for (let i = 0; i < X.length - 1; i++) { h.push((X[i + 1] - X[i]) || 1e-6); d.push((Y[i + 1] - Y[i]) / h[i]); }
+    m = new Array(n);
+    for (let i = 1; i <= n; i++) {
+      const d0 = d[i - 1], d1 = d[i];
+      if (d0 * d1 <= 0) m[i - 1] = 0;
+      else { const w1 = 2 * h[i] + h[i - 1], w2 = h[i] + 2 * h[i - 1]; m[i - 1] = (w1 + w2) / (w1 / d0 + w2 / d1); }
+    }
+    keys._m = m;
+  }
+  let i = 0; while (i < n - 1 && keys[i + 1][0] < frac) i++;
+  const j = Math.min(i + 1, n - 1), ka = keys[i], kb = keys[j], hh = (kb[0] - ka[0]) || 1e-6;
+  const t = clamp((frac - ka[0]) / hh, 0, 1), t2 = t * t, t3 = t2 * t;
+  return (2 * t3 - 3 * t2 + 1) * ka[1] + (t3 - 2 * t2 + t) * hh * m[i] + (-2 * t3 + 3 * t2) * kb[1] + (t3 - t2) * hh * m[j];
 }
 // Hauteur du sol (altitude de la piste) au point le plus proche d'une position (x,z) donnée, en
 // interpolant entre les deux échantillons encadrants. Utilisé pour poser voitures et décor au bon
@@ -399,8 +434,7 @@ function computeWallLimits() {
     for (let i = 0; i < N; i++) { let v = 0; for (let w = -5; w <= 5; w++) v += m[(i + w + N) % N]; out[i] = Math.max(minW - 0.8, Math.min(WALL_D, v / 11)); }
   };
   smooth(r, WDR); smooth(l, WDL);
-  const pitSpan = Math.max(-PIT_ENTRY_REL, PIT_EXIT_REL) + 22;
-  for (let i = 0; i < N; i++) if (Math.abs(pitRelM(i)) < pitSpan) WDR[i] = WALL_D;   // côté stands : inchangé
+  for (let i = 0; i < N; i++) { const r = pitRelM(i); if (r > PIT_ENTRY_REL - 22 && r < PIT_EXIT_REL + 22) { (pitSideAt(r) > 0 ? WDR : WDL)[i] = WALL_D; if (PIT_CROSS && r > PIT_CROSS.c0 - 30 && r < PIT_CROSS.c1 + 30) { WDR[i] = WALL_D; WDL[i] = WALL_D; } } }   // côté stands : rail à distance normale
 }
 function buildTrack() {
   configurePit();
@@ -432,6 +466,12 @@ function buildTrack() {
   }
   const elevKeys = TRACKS[trackKey] && TRACKS[trackKey].elev;
   for (let k = 0; k < N; k++) TY[k] = elevKeys ? elevAt(k / N, elevKeys) : 0;
+  if (elevKeys) {   // lissage gaussien (~38 m) : plus aucune bosse ni cassure de pente
+    const sg = Math.max(1, 38 / (TRACK_LEN / N)), R = Math.ceil(sg * 3), ker = []; let ks = 0;
+    for (let w = -R; w <= R; w++) { const v = Math.exp(-w * w / (2 * sg * sg)); ker.push(v); ks += v; }
+    const src = Float32Array.from(TY);
+    for (let k = 0; k < N; k++) { let v = 0; for (let w = -R; w <= R; w++) v += src[(k + w + N * 4) % N] * ker[w + R]; TY[k] = v / ks; }
+  }
   for (let k = 0; k < N; k++) {
     const a = (k + 1) % N, b = (k - 1 + N) % N;
     TA[k] = Math.atan2(TZ[a] - TZ[b], TX[a] - TX[b]);
@@ -458,7 +498,8 @@ function inTunnel(i) { return TUN_I0 >= 0 && i >= TUN_I0 && i <= TUN_I1; }
 // La voie des stands : entrée APRÈS la ligne, arrêt dans les garages, puis sortie AVANT la ligne.
 // La trajectoire est une vraie courbe indépendante de la piste : elle contourne les garages
 // et revient sur la piste dans le même sens de circulation.
-const PIT_SIDE = 1, PIT_R = 15;
+let PIT_SIDE = 1;
+const PIT_R = 15;
 let PIT_LAT = WALL_D + 5.5, GARAGE_LAT = PIT_LAT + 15.6, WALL_D2 = PIT_LAT + 9;   // Yas Marina : voie plus écartée (cf. configurePit)
 // Voie des stands DROITE, parallèle à la piste, derrière le rail (comme en vrai) :
 //   bretelle d'entrée (108 m avant la ligne) -> voie (de -70 m à +70 m) -> bretelle de sortie (108 m après la ligne)
@@ -474,12 +515,21 @@ const PIT_LANE_A = -70, PIT_LANE_B = 70;   // début / fin du PLAT des stands
 const PIT_TUN_ENTRY = -195, PIT_TUN_EXIT = 195, PIT_TUN_MOUTH = 125, PIT_TUN_H = 5.2;
 let PIT_PATH_A = PIT_LANE_A, PIT_PATH_B = PIT_LANE_B;   // extrémités de la trajectoire de voie (elle inclut les tunnels quand il y en a)
 let PIT_LANE_S_A = 0, PIT_LANE_S_B = 0;                  // abscisses (le long de la trajectoire) du début et de la fin du plat
+let PIT_TUN_S_M = 0;   // abscisse (le long de la voie) de la bouche de sortie du tunnel
+let PIT_SIDE_OUT = 1, PIT_CROSS = null, PIT_CROSS_S = null;   // côté de la bretelle de sortie ; passage sous la piste (Yas Marina)
+const ssm = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+// Côté des stands (pour un point du circuit situé à rel mètres de la ligne) : le côté d'entrée, puis le côté de sortie après le passage sous la piste
+function pitSideAt(rel) { return PIT_CROSS && rel >= (PIT_CROSS.c0 + PIT_CROSS.c1) / 2 ? PIT_SIDE_OUT : PIT_SIDE; }
+// Décalage latéral de la voie par rapport au côté d'entrée : +1 = côté d'entrée, -1 = côté de sortie (elle passe sous la piste entre les deux)
+function pitLatAt(rel) { return PIT_CROSS ? Math.cos(Math.PI * Math.max(0, Math.min(1, (rel - PIT_CROSS.c0) / (PIT_CROSS.c1 - PIT_CROSS.c0)))) : 1; }   // cosinus : virage en S le plus doux possible
 function configurePit() {
-  const t = pitTunnelOn();
-  PIT_ENTRY_REL = t ? PIT_TUN_ENTRY : -108;
-  PIT_EXIT_REL = t ? PIT_TUN_EXIT : 108;
-  PIT_PATH_A = t ? -PIT_TUN_MOUTH : PIT_LANE_A;
-  PIT_PATH_B = t ? PIT_TUN_MOUTH : PIT_LANE_B;
+  const t = pitTunnelOn(), cfg = (TRACKS[trackKey] && TRACKS[trackKey].pit) || {};
+  PIT_SIDE = cfg.side || 1; PIT_SIDE_OUT = cfg.exitSide || PIT_SIDE; PIT_CROSS = cfg.cross || null;
+  PIT_ENTRY_REL = cfg.entry != null ? cfg.entry : (t ? PIT_TUN_ENTRY : -108);
+  PIT_EXIT_REL = cfg.exit != null ? cfg.exit : (t ? PIT_TUN_EXIT : 108);
+  const ramp = cfg.ramp || (t ? 65 : 60);                                   // longueur des bretelles
+  PIT_PATH_A = t ? -PIT_TUN_MOUTH : PIT_ENTRY_REL + ramp;
+  PIT_PATH_B = PIT_EXIT_REL - (cfg.rampOut || ramp);
   PIT_LAT = WALL_D + (t ? 8.6 : 5.5);      // à Yas Marina, 3 m de plus entre le rail de la piste et le mur du tunnel
   GARAGE_LAT = PIT_LAT + 15.6; WALL_D2 = PIT_LAT + 9;
   PIT_TRIG_REL = PIT_ENTRY_REL;
@@ -489,8 +539,16 @@ function configurePit() {
 function pitLaneY(rel) {
   if (!pitTunnelOn()) return trackElevationRel(rel);
   const lane = GROUND_Y + 0.42, ss = t => { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); };
-  if (rel < PIT_LANE_A) { const y0 = trackElevationRel(PIT_PATH_A); return y0 + (lane - y0) * ss((rel - PIT_PATH_A) / (PIT_LANE_A - PIT_PATH_A)); }
-  if (rel > PIT_LANE_B) { const y1 = trackElevationRel(PIT_PATH_B); return lane + (y1 - lane) * ss((rel - PIT_LANE_B) / (PIT_PATH_B - PIT_LANE_B)); }
+  if (rel < PIT_LANE_A) { const y0 = trackElevationRel(-PIT_TUN_MOUTH); return y0 + (lane - y0) * ss((rel + PIT_TUN_MOUTH) / (PIT_LANE_A + PIT_TUN_MOUTH)); }
+  if (rel > PIT_LANE_B) {
+    if (rel <= PIT_TUN_MOUTH) { const y1 = trackElevationRel(PIT_TUN_MOUTH); return lane + (y1 - lane) * ss((rel - PIT_LANE_B) / (PIT_TUN_MOUTH - PIT_LANE_B)); }
+    const C = PIT_CROSS;
+    if (C && rel > C.d0 && rel < C.u1) {                       // passage sous la piste : la voie reste ~5,7 m SOUS la chaussée (tunnel + dalle), puis remonte
+      const depth = 5.7 * (rel < C.d1 ? ss((rel - C.d0) / (C.d1 - C.d0)) : rel <= C.u0 ? 1 : 1 - ss((rel - C.u0) / (C.u1 - C.u0)));
+      return Math.max(lane, trackElevationRel(rel) - depth);
+    }
+    return trackElevationRel(rel);
+  }
   return lane;
 }
 const PIT_HALF_W = 4.5;
@@ -534,24 +592,46 @@ function pitNormalAt(relM) {
   let sx = 0, sz = 0;
   for (let w = -W; w <= W; w++) { const i = (i0 + w + N) % N; sx += Math.cos(TA[i]); sz += Math.sin(TA[i]); }
   const ang = Math.atan2(sz, sx);
-  return { rx: -Math.sin(ang), rz: Math.cos(ang) };
+  return { rx: -Math.sin(ang) * PIT_SIDE, rz: Math.cos(ang) * PIT_SIDE };   // toujours orienté vers le côté des stands
 }
 function ensurePitPath() {
   if (pitPath) return;
   const samples = [];
   let total = 0, prev = null, s0 = 0;
   const nS = Math.round(PIT_PATH_B - PIT_PATH_A);
-  let sA = 0, sB = 0;
+  let sA = 0, sB = 0, sM = 0; const cs = {};
+  // 1) tracé brut : le circuit décalé de PIT_LAT (+ passage sous la piste)
+  const RX = [], RZ = [];
   for (let k = 0; k <= nS; k++) {
-    const rel = PIT_PATH_A + k, t = trackPoseRel(rel), n = pitNormalAt(rel), q = { x: t.x + n.rx * PIT_LAT, z: t.z + n.rz * PIT_LAT };
+    const rel = PIT_PATH_A + k, t = trackPoseRel(rel), n = pitNormalAt(rel), lt = PIT_LAT * pitLatAt(rel);
+    RX.push(t.x + n.rx * lt); RZ.push(t.z + n.rz * lt);
+  }
+  // 2) lissage : le relevé du circuit est une polyligne (un point tous les ~7 m) ; décalé de 27 m il donne des zigzags, surtout dans les virages
+  //    et au passage sous la piste. 4 passes de moyenne glissante les effacent ; les extrémités restent fixes (raccord aux bretelles).
+  const PX = RX.slice(), PZ = RZ.slice(), W = 8;
+  for (let pass = 0; pass < 4; pass++) {
+    const qx = PX.slice(), qz = PZ.slice();
+    for (let k = 0; k <= nS; k++) {
+      const rel = PIT_PATH_A + k;
+      const wgt = ssm(Math.min(k, nS - k) / 30);
+      if (wgt <= 0) continue;
+      let sx = 0, sz = 0;
+      for (let d = -W; d <= W; d++) { const j = Math.max(0, Math.min(nS, k + d)); sx += qx[j]; sz += qz[j]; }
+      PX[k] = qx[k] + (sx / (2 * W + 1) - qx[k]) * wgt; PZ[k] = qz[k] + (sz / (2 * W + 1) - qz[k]) * wgt;
+    }
+  }
+  for (let k = 0; k <= nS; k++) {
+    const rel = PIT_PATH_A + k, q = { x: PX[k], z: PZ[k] };
     if (prev) total += Math.hypot(q.x - prev.x, q.z - prev.z);
     samples.push({ u: k / nS, x: q.x, z: q.z, y: pitLaneY(rel), rel, s: total });
     if (rel === 0) s0 = total;
     if (rel === PIT_LANE_A) sA = total;
     if (rel === PIT_LANE_B) sB = total;
+    if (rel === PIT_TUN_MOUTH) sM = total;
+    if (PIT_CROSS) for (const key of ['d0', 'd1', 'u0', 'u1']) if (rel === PIT_CROSS[key]) cs[key] = total;
     prev = q;
   }
-  PIT_LANE_S_A = sA; PIT_LANE_S_B = sB;
+  PIT_LANE_S_A = sA; PIT_LANE_S_B = sB; PIT_TUN_S_M = sM; PIT_CROSS_S = PIT_CROSS ? cs : null;
   pitPath = { samples, total, p0: samples[0], p3: samples[nS] };
   PIT_TOTAL = total;
   PIT_SERVICE_PROGRESS = s0;   // abscisse de la ligne de départ sur la voie
@@ -559,8 +639,8 @@ function ensurePitPath() {
 }
 function trackElevationRel(relM){
   let d=relM%TRACK_LEN; if(d<0)d+=TRACK_LEN;
-  const keys=TRACKS[trackKey]&&TRACKS[trackKey].elev;
-  return keys ? elevAt(d/TRACK_LEN,keys) : 0;
+  const f=d/TRACK_LEN*N, i0=Math.floor(f)%N, u=f-Math.floor(f);   // même altitude (lissée) que la piste : voie des stands et piste restent alignées
+  return TY[i0]+(TY[(i0+1)%N]-TY[i0])*u;
 }
 function pitPose(progress,lane=0){
   ensurePitPath();
@@ -572,7 +652,7 @@ function pitPose(progress,lane=0){
   const relA=a.rel==null ? PIT_LANE_A : a.rel, relB=b.rel==null ? PIT_LANE_A : b.rel;
   const y=(a.y==null?trackElevationRel(relA):a.y)+((b.y==null?trackElevationRel(relB):b.y)-(a.y==null?trackElevationRel(relA):a.y))*f;
   const ang=Math.atan2(b.z-a.z,b.x-a.x);
-  const rx=-Math.sin(ang), rz=Math.cos(ang);
+  const rx=-Math.sin(ang)*PIT_SIDE, rz=Math.cos(ang)*PIT_SIDE;   // (rx,rz) : vers les garages
   return {idx:0,x:x+rx*lane,z:z+rz*lane,y,a:ang,rx,rz,s};
 }
 function inPitZone(i) {
@@ -580,10 +660,12 @@ function inPitZone(i) {
   // Zone physique élargie (côté stands seulement) autour des deux bretelles.
   return (r>PIT_ENTRY_REL-6 && r<PIT_PATH_A+6) || (r>PIT_PATH_B-6 && r<PIT_EXIT_REL+6);
 }
-function pitWallGap(i) {
+function pitWallGap(i, side) {
   const r=pitRelM(i);
   // Rail et panneaux absents UNIQUEMENT là où passent les bretelles ; le long de la voie, le rail sépare piste et stands.
-  return (r>PIT_ENTRY_REL-6 && r<PIT_PATH_A+2) || (r>PIT_PATH_B-2 && r<PIT_EXIT_REL+6);
+  const a = (r>PIT_ENTRY_REL-6 && r<PIT_PATH_A+2), b = (r>PIT_PATH_B-2 && r<PIT_EXIT_REL+6);
+  if (side === undefined) return a || b;
+  return (side === PIT_SIDE && a) || (side === PIT_SIDE_OUT && b);     // bretelle d'entrée côté d'entrée, bretelle de sortie côté de sortie
 }
 /* ---------------------------------------------------------------------
    DÉPLACEMENT DANS LA VOIE DES STANDS
@@ -614,8 +696,8 @@ function pitGeo() {                        // trajectoires fixes, recalculées s
   const p0 = pitPose(0, 0), p3 = pitPose(PIT_TOTAL, 0);
   pitCache = {
     path: pitPath, n: pitBoxCount, arcs: [],
-    entry: hermiteSeg(e.x + e.rx * PIT_RAMP_LAT, e.z + e.rz * PIT_RAMP_LAT, e.a, p0.x, p0.z, p0.a, 0.9, 0.9),
-    exit: hermiteSeg(p3.x, p3.z, p3.a, x.x + x.rx * PIT_RAMP_LAT, x.z + x.rz * PIT_RAMP_LAT, x.a, 0.9, 0.9)
+    entry: hermiteSeg(e.x + e.rx * PIT_SIDE * PIT_RAMP_LAT, e.z + e.rz * PIT_SIDE * PIT_RAMP_LAT, e.a, p0.x, p0.z, p0.a, 0.9, 0.9),
+    exit: hermiteSeg(p3.x, p3.z, p3.a, x.x + x.rx * PIT_SIDE_OUT * PIT_RAMP_LAT, x.z + x.rz * PIT_SIDE_OUT * PIT_RAMP_LAT, x.a, 0.9, 0.9)
   };
   return pitCache;
 }
@@ -624,7 +706,7 @@ function pitBoxXs(box) { return (box - (pitBoxCount - 1) / 2) * PIT_BOX_W; }   /
 function pitBoxFrame(box) {                // position d'arrêt (et cap : nez vers le fond du box) d'un box
   ensurePitPath();
   const xs = pitBoxXs(box), c0 = pitPose(PIT_SERVICE_PROGRESS + xs, 0);
-  return { x: c0.x + c0.rx * PIT_GARAGE_LANE, z: c0.z + c0.rz * PIT_GARAGE_LANE, y: c0.y, a: c0.a + Math.PI / 2, xs };
+  return { x: c0.x + c0.rx * PIT_GARAGE_LANE, z: c0.z + c0.rz * PIT_GARAGE_LANE, y: c0.y, a: c0.a + PIT_SIDE * Math.PI / 2, xs };
 }
 function pitArc(box) {                     // arc de la voie jusque dans le box
   const g = pitGeo();
@@ -637,8 +719,8 @@ function pitArc(box) {                     // arc de la voie jusque dans le box
 function nearPitArea(x, z, m) {            // vrai si (x,z) est dans (ou à moins de m mètres de) la zone stands + garages
   let best = 1e18, bi = 0;
   for (let i = 0; i < N; i++) { const dx = x - TX[i], dz = z - TZ[i], d = dx * dx + dz * dz; if (d < best) { best = d; bi = i; } }
-  const lat = (x - TX[bi]) * RGX[bi] + (z - TZ[bi]) * RGZ[bi];
-  return Math.abs(pitRelM(bi)) < PIT_EXIT_REL + 4 + m && lat > 6 - m && lat < PIT_LAT + 26 + m;
+  const rb = pitRelM(bi), lat = ((x - TX[bi]) * RGX[bi] + (z - TZ[bi]) * RGZ[bi]) * pitSideAt(rb);
+  return rb > PIT_ENTRY_REL - 4 - m && rb < PIT_EXIT_REL + 4 + m && lat > 6 - m && lat < PIT_LAT + 26 + m;
 }
 function pitTrack(c) {                     // suit la position sur le circuit pendant les stands (sans rails ni collisions)
   const nr = nearest(c.x, c.z, c.idx), prev = c.idx;
@@ -745,7 +827,7 @@ function buildPitLaneRoad() {
     g.fillStyle="#f4f4f4"; g.fillRect(w*.545,0,w*.02,h);
   },true);
   const mat=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3});
-  const count=220;
+  const count=Math.max(220,Math.round(PIT_TOTAL/2));
   for(let k=0;k<=count;k++){
     // La voie suivait auparavant une hauteur FIXE (celle de la ligne de départ) sur toute sa longueur :
     // là où le circuit juste à côté monte ou descend, la voiture (elle, toujours posée à la vraie
@@ -759,10 +841,10 @@ function buildPitLaneRoad() {
   const geo=new THREE.BufferGeometry(); geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
   geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2)); geo.setIndex(idx); scene.add(new THREE.Mesh(geo,mat));
 
-  const addRamp=(seg,y0,y1,hwA,hwB)=>{   // hwA/hwB = demi-largeur côté piste au début/à la fin ; côté extérieur toujours pleine largeur
+  const addRamp=(seg,y0,y1,hwA,hwB,sd)=>{   // hwA/hwB = demi-largeur côté piste au début/à la fin ; côté extérieur toujours pleine largeur
     const pos=[],uv=[],idx=[],n=48; let d=0,pv=null;
     for(let k=0;k<=n;k++){
-      const u=k/n,p=hermiteAt(seg,u),rx=-Math.sin(p.a),rz=Math.cos(p.a),gy=y0+(y1-y0)*u+.12;
+      const u=k/n,p=hermiteAt(seg,u),rx=-Math.sin(p.a)*sd,rz=Math.cos(p.a)*sd,gy=y0+(y1-y0)*u+.12;
       const hw=hwA+(hwB-hwA)*(u*u*(3-2*u));
       if(pv)d+=Math.hypot(p.x-pv.x,p.z-pv.z); pv=p;
       pos.push(p.x-rx*hw,gy,p.z-rz*hw,p.x+rx*PIT_HALF_W,gy,p.z+rz*PIT_HALF_W);uv.push(0,d/6,1,d/6);
@@ -772,10 +854,10 @@ function buildPitLaneRoad() {
     g.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);scene.add(new THREE.Mesh(g,mat));
   };
   // Bretelles : côté piste étroit à la jonction (ne mord pas sur l'asphalte), pleine largeur côté extérieur
-  addRamp(pitRamps().entry,trackElevationRel(PIT_ENTRY_REL),pitPose(0,0).y,1.0,PIT_HALF_W);
-  addRamp(pitRamps().exit,pitPose(PIT_TOTAL,0).y,trackElevationRel(PIT_EXIT_REL),PIT_HALF_W,1.0);
+  addRamp(pitRamps().entry,trackElevationRel(PIT_ENTRY_REL),pitPose(0,0).y,3.2,PIT_HALF_W,PIT_SIDE);
+  addRamp(pitRamps().exit,pitPose(PIT_TOTAL,0).y,trackElevationRel(PIT_EXIT_REL),PIT_HALF_W,3.2,PIT_SIDE_OUT);
   // Marquages peints : barres de limite de vitesse et « PIT » à l'entrée / la sortie
-  (pitTunnelOn()?[PIT_LANE_S_A+8,PIT_LANE_S_B-8]:[12,PIT_TOTAL-12]).forEach(sp=>{const q=pitPose(sp,0);pitDecal(scene,360,28,(g,w,h)=>{g.fillStyle="#f4f4f4";g.fillRect(0,0,w,h);},q.x,q.y+.135,q.z,q.a,PIT_HALF_W*2-.6,.5);});
+  (pitTunnelOn()?[PIT_LANE_S_A+8,PIT_LANE_S_B-8,PIT_TUN_S_M+12,PIT_TOTAL-12]:[12,PIT_TOTAL-12]).forEach(sp=>{const q=pitPose(sp,0);pitDecal(scene,360,28,(g,w,h)=>{g.fillStyle="#f4f4f4";g.fillRect(0,0,w,h);},q.x,q.y+.135,q.z,q.a,PIT_HALF_W*2-.6,.5);});
   (pitTunnelOn()?[PIT_LANE_S_A+20,PIT_LANE_S_B-24]:[24,PIT_TOTAL-30]).forEach(sp=>{const q=pitPose(sp,-1.9);pitDecal(scene,160,120,(g,w,h)=>{g.fillStyle="#f4f4f4";g.font="900 104px Barlow Condensed,Arial,sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText("PIT",w/2,h/2);},q.x,q.y+.135,q.z,q.a,3.4,2.6);});
 }
 // Décalque peint à plat : la hauteur du dessin = sens de marche, la largeur = latéral (lisible pour le pilote)
@@ -810,7 +892,7 @@ function pickStandIndices(count) {
     for (let w = -110; w <= 110; w++) {
       const k = (target + w + N) % N;
       if (used.some(u => Math.min(Math.abs(u - k), N - Math.abs(u - k)) < 2 * W + 6)) continue;
-      if (Math.abs(pitRelM(k)) < Math.max(145, PIT_EXIT_REL + 25)) continue;   // jamais de tribune (ni de public) sur la voie des stands
+      if (Math.abs(pitRelM(k)) < 145 || (pitRelM(k) > PIT_ENTRY_REL - 30 && pitRelM(k) < PIT_EXIT_REL + 30)) continue;   // jamais de tribune (ni de public) sur la voie des stands
       if (inTunnel(k) || inHotel(k)) continue;    // ni dans le tunnel, ni sous l'hôtel
       if (!clear(k)) continue;
       const c = curv(k);
@@ -958,7 +1040,7 @@ function locate(c) {
   // Le long de la voie des stands, seul le côté DROIT (côté stands) s'élargit.
   // Avant, le côté gauche s'élargissait aussi : la voiture traversait le rail visible.
   const side = (c.x - TX[nr.i]) * RGX[nr.i] + (c.z - TZ[nr.i]) * RGZ[nr.i];
-  const limit = (inPitZone(nr.i) && side > 0) ? WALL_D2 : (side > 0 ? WDR[nr.i] : WDL[nr.i]);
+  const limit = (inPitZone(nr.i) && side * pitSideAt(pitRelM(nr.i)) > 0) ? WALL_D2 : (side > 0 ? WDR[nr.i] : WDL[nr.i]);
   let hit = false, crossed = 0;
   if (nr.d > limit) {
     const k = (limit - 1.5) / nr.d;   // 1.5 m : couvre le demi-largeur de la voiture (~1,3 m), elle ne poque plus dans le rail/les panneaux
@@ -983,7 +1065,7 @@ function locate(c) {
       const px = c.x + ca * fw - sa * lat, pz = c.z + sa * fw + ca * lat;
       const nr2 = nearest(px, pz, c.idx);
       const side2 = (px - TX[nr2.i]) * RGX[nr2.i] + (pz - TZ[nr2.i]) * RGZ[nr2.i];
-      const limit2 = (inPitZone(nr2.i) && side2 > 0) ? WALL_D2 : (side2 > 0 ? WDR[nr2.i] : WDL[nr2.i]);
+      const limit2 = (inPitZone(nr2.i) && side2 * pitSideAt(pitRelM(nr2.i)) > 0) ? WALL_D2 : (side2 > 0 ? WDR[nr2.i] : WDL[nr2.i]);
       const over = nr2.d - limit2;
       if (over > worst) worst = over;
     }
@@ -1755,7 +1837,7 @@ function stepPlayerPit(h){
  }
  else {
    const ev=pitMove(me,h,34);
-   setPitStatus("PIT EXIT",me.pitSub<2?(pitTunnelOn()&&me.pitSub===1&&(me.pitProgress||0)>PIT_LANE_S_B?"Tunnel — montée vers la piste":"Sortie du garage — retour en piste"):"Ligne de fusion — rejoignez la piste",true);
+   setPitStatus("PIT EXIT",me.pitSub<2?(pitTunnelOn()&&me.pitSub===1&&(me.pitProgress||0)>PIT_LANE_S_B&&(me.pitProgress||0)<PIT_TUN_S_M?"Tunnel — montée vers la surface":"Sortie du garage — retour en piste"):"Ligne de fusion — rejoignez la piste",true);
    if(ev==="done"){me.pitMode=0;setPitStatus("","",false);}
  }
 }
@@ -1767,7 +1849,7 @@ function physics(h, t) {
   let thr = canDrive && input("up") ? 1 : 0, brk = canDrive && input("down") ? 1 : 0;
   if(canDrive&&!me.pitMode){
   const rel=pitRelativeFromCar(me),nr=nearest(me.x,me.z,me.idx);
-  const right=((me.x-TX[nr.i])*RGX[nr.i]+(me.z-TZ[nr.i])*RGZ[nr.i])>TRACK_W*.16;
+  const right=((me.x-TX[nr.i])*RGX[nr.i]+(me.z-TZ[nr.i])*RGZ[nr.i])*PIT_SIDE>TRACK_W*.16;   // du côté des stands
   if(rel>PIT_TRIG_REL-8&&rel<PIT_TRIG_REL+8&&right&&(steerIn>.05||me.speed<55)) startPlayerPit(rel);
 }
   let apSteer = 0;
@@ -2001,9 +2083,13 @@ function buildScene() {
   }, true);
   const sandMat = new THREE.MeshBasicMaterial({ map: sand, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
   tintMats.push(sandMat);
-  const sandL = ribbon(k => -WDL[k], -(TRACK_W / 2 + KERB - 0.1), 0.06, sandMat, 24);
-  const sandR = ribbon(TRACK_W / 2 + KERB - 0.1, k => WDR[k], 0.06, sandMat, 24);
+  const sandL = ribbon(k => -(WDL[k] + 0.2), -(TRACK_W / 2 + KERB - 0.1), 0.06, sandMat, 24);
+  const sandR = ribbon(TRACK_W / 2 + KERB - 0.1, k => WDR[k] + 0.2, 0.06, sandMat, 24);
   scene.add(sandL, sandR);
+  // Sous-couche de sécurité : même gravier, juste sous la piste, du rail au rail. Si une fente ou un raccord laisse un jour un trou dans la piste,
+  // on voit du gravier au lieu du gazon ou du vide.
+  // (abaissée à -0,5 m et limitée à la largeur de la piste : à y=0 elle affleurait dans les virages en pente, et au plafond des tunnels des stands d'Abu Dhabi)
+  if (!pitTunnelOn()) scene.add(ribbon(-(TRACK_W / 2 + KERB), TRACK_W / 2 + KERB, -0.5, sandMat, 24));
 
   // Asphalte
   const asphalt = makeTexture(256, 256, (g, w, h) => {
@@ -2023,12 +2109,14 @@ function buildScene() {
   kerb.magFilter = THREE.NearestFilter;
   const kerbMat = new THREE.MeshBasicMaterial({ map: kerb, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   tintMats.push(kerbMat);
-  scene.add(ribbon(-(TRACK_W / 2 + KERB), -TRACK_W / 2, 0.14, kerbMat, 6));
-  scene.add(ribbon(TRACK_W / 2, TRACK_W / 2 + KERB, 0.14, kerbMat, 6, k => { const r = pitRelM(k); return (r > PIT_ENTRY_REL - 2 && r < PIT_ENTRY_REL + 26) || (r > PIT_EXIT_REL - 26 && r < PIT_EXIT_REL + 2); }));
+  const kerbGap = sd => k => { const r = pitRelM(k); return (sd === PIT_SIDE && r > PIT_ENTRY_REL - 2 && r < PIT_ENTRY_REL + 26) || (sd === PIT_SIDE_OUT && r > PIT_EXIT_REL - 26 && r < PIT_EXIT_REL + 2); };
+  scene.add(ribbon(-(TRACK_W / 2 + KERB), -TRACK_W / 2, 0.14, kerbMat, 6, kerbGap(-1)));
+  scene.add(ribbon(TRACK_W / 2, TRACK_W / 2 + KERB, 0.14, kerbMat, 6, kerbGap(1)));
 
   // Là où le vibreur est retiré (bretelles des stands), on comble la bande avec du gravier :
   // sans ça on voyait le gazon 2 à 6 m plus bas à travers la piste (un « trou »).
-  scene.add(ribbon(TRACK_W / 2, TRACK_W / 2 + KERB, 0.08, sandMat, 24, k => { const r = pitRelM(k); return !((r > PIT_ENTRY_REL - 4 && r < PIT_ENTRY_REL + 28) || (r > PIT_EXIT_REL - 28 && r < PIT_EXIT_REL + 4)); }));
+  const sandGap = sd => k => { const r = pitRelM(k); return !((sd === PIT_SIDE && r > PIT_ENTRY_REL - 4 && r < PIT_ENTRY_REL + 28) || (sd === PIT_SIDE_OUT && r > PIT_EXIT_REL - 28 && r < PIT_EXIT_REL + 4)); };
+  for (const sd of [...new Set([PIT_SIDE, PIT_SIDE_OUT])]) scene.add(sd > 0 ? ribbon(TRACK_W / 2, TRACK_W / 2 + KERB, 0.08, sandMat, 24, sandGap(sd)) : ribbon(-(TRACK_W / 2 + KERB), -TRACK_W / 2, 0.08, sandMat, 24, sandGap(sd)));
 
   // Rails de sécurité
   const wallTex = makeTexture(128, 32, (g, w, h) => {
@@ -2038,7 +2126,7 @@ function buildScene() {
   const wallMat = new THREE.MeshBasicMaterial({ map: wallTex, side: THREE.DoubleSide });
   tintMats.push(wallMat);
   // Le rail habituel s'arrête là où le tunnel prend le relais (ses propres murs, plus hauts et fermés).
-  scene.add(wallStrip(k => -(WDL[k] + 0.2), 1.3, wallMat, 8, inTunnel), wallStrip(k => WDR[k] + 0.2, 1.3, wallMat, 8, k => pitWallGap(k) || inTunnel(k)));
+  scene.add(wallStrip(k => -(WDL[k] + 0.2), 1.3, wallMat, 8, k => pitWallGap(k, -1) || inTunnel(k)), wallStrip(k => WDR[k] + 0.2, 1.3, wallMat, 8, k => pitWallGap(k, 1) || inTunnel(k)));
 
   // Ligne de départ en damier
   const checker = makeTexture(64, 64, (g, w, h) => {
@@ -2291,36 +2379,74 @@ function buildMowing() {
     return Math.min(w,desired);
   };
 
+  // Plateau sous la voie des stands : le terrain monte jusqu'à l'altitude de la voie (et des garages) sur toute son emprise, puis redescend
+  // en pente douce. C'est le MÊME maillage et la MÊME matière que le reste du terrain : pas de bloc ni de raccord visible.
+  const EXT = { "1": new Float32Array(N), "-1": new Float32Array(N) };
+  {
+    ensurePitPath();
+    const feed = (x, z, hw) => {
+      let bi = 0, bd = 1e18;                                             // recherche sur TOUT le tour (nearest() n'explore qu'une fenêtre)
+      for (let k = 0; k < N; k++) { const d = (x - TX[k]) * (x - TX[k]) + (z - TZ[k]) * (z - TZ[k]); if (d < bd) { bd = d; bi = k; } }
+      const l = (x - TX[bi]) * RGX[bi] + (z - TZ[bi]) * RGZ[bi], sd = l >= 0 ? 1 : -1, v = Math.abs(l) + hw;
+      if (v < WALL_D + 3) return;                                         // sous la piste : pas de plateau
+      const arr = EXT[sd];
+      for (let d = -2; d <= 2; d++) { const k = (bi + d + N) % N; if (v > arr[k]) arr[k] = v; }
+    };
+    const g = pitGeo();
+    for (let sp = 0; sp <= PIT_TOTAL; sp += 2) {
+      const q = pitPose(sp, 0);
+      const inG = Math.abs(sp - PIT_SERVICE_PROGRESS) < (PIT_MAXBOX / 2) * PIT_BOX_W + 14;   // emprise pour le nombre MAXIMAL de garages
+      feed(q.x, q.z, inG ? 25.5 : PIT_HALF_W + 1.5);
+    }
+    for (const seg of [g.entry, g.exit]) for (let u = 0; u <= 1.0001; u += 0.04) { const q = hermiteAt(seg, u); feed(q.x, q.z, PIT_HALF_W + 1.5); }
+    // Yas Marina : pas de plateau là où la voie est en contrebas (tunnels) — le tunnel a ses propres murs
+    if (pitTunnelOn()) {
+      const C = PIT_CROSS, cm = C ? (C.c0 + C.c1) / 2 : 0;
+      for (let i = 0; i < N; i++) {
+        const r = pitRelM(i);
+        if (r >= -PIT_TUN_MOUTH - 4 && r <= PIT_TUN_MOUTH + 4) { EXT["1"][i] = 0; EXT["-1"][i] = 0; }
+        if (C && r >= C.d0 - 4 && r <= C.u1 + 4) { if (r <= cm + 24) EXT[String(PIT_SIDE)][i] = 0; if (r >= cm - 24) EXT[String(PIT_SIDE_OUT)][i] = 0; }
+      }
+    }
+    for (const key of ["1", "-1"]) {
+      const ext = EXT[key], tmp = Float32Array.from(ext);
+      for (let i = 0; i < N; i++) { let m = 0; for (let d = -3; d <= 3; d++) m = Math.max(m, tmp[(i + d + N) % N] * (1 - Math.abs(d) * 0.04)); ext[i] = m; }
+    }
+  }
   const makeSide=side=>{
     const pos=[],uv=[],idx=[]; let arc=0;
+    const ext = EXT[String(side)];
     for(let i=0;i<N;i++){
       const j=(i+1)%N, seg=Math.hypot(TX[j]-TX[i],TZ[j]-TZ[i]);
       if(isTunnelInterior(i) && isTunnelInterior(j)){ arc+=seg; continue; }
-      // Yas Marina : pas de talus sur la zone des tunnels + du plat des stands (le talus recouvrait toute la voie) ;
+      // Yas Marina : pas de terrain dans la zone des tunnels + du plat des stands (la voie y est en contrebas) ;
       // ce sont les murs du tunnel et le mur de soutènement qui tiennent la piste.
-      if(side>0 && pitTunnelOn()){ const ri=pitRelM(i), rj=pitRelM(j); if(ri>=PIT_PATH_A && rj<=PIT_PATH_B && rj>ri){ arc+=seg; continue; } }
+      if(side>0 && pitTunnelOn()){ const ri=pitRelM(i), rj=pitRelM(j); if(ri>=-PIT_TUN_MOUTH && rj<=PIT_TUN_MOUTH && rj>ri){ arc+=seg; continue; } }
+      if(PIT_CROSS){ const ri=pitRelM(i), rj=pitRelM(j), C=PIT_CROSS, cm=(C.c0+C.c1)/2, lo=side===PIT_SIDE?C.d0:cm-24, hi=side===PIT_SIDE?cm+24:C.u1; if(rj>ri && ri>=lo && rj<=hi && (side===PIT_SIDE||side===PIT_SIDE_OUT)){ arc+=seg; continue; } }
 
       const ni=(side>0?WDR[i]:WDL[i])+0.42;
       const nj=(side>0?WDR[j]:WDL[j])+0.42;
       const wi=safeWidth(side,i,clamp(18+TY[i]*0.32,18,34));
       const wj=safeWidth(side,j,clamp(18+TY[j]*0.32,18,34));
-
-      // Même quand un autre tronçon interdit le grand talus, on garde une petite
-      // bande de fondation afin que la piste ne soit jamais suspendue dans le vide.
       const fi = wi>0 ? wi : 1.35;
       const fj = wj>0 ? wj : 1.35;
-      const oi=ni+fi, oj=nj+fj;
-      const yi=GROUND_Y;
-      const yj=GROUND_Y;
+      // Rangée intermédiaire : plateau (côté stands) ou simple doublon du bord (ailleurs)
+      const pi_ = ext[i] > 0, pj_ = ext[j] > 0;
+      const mi = pi_ ? Math.max(ni + 0.5, ext[i]) : ni, mj = pj_ ? Math.max(nj + 0.5, ext[j]) : nj;
+      const ypi = pi_ ? TY[i] - 0.8 : TY[i] - 0.12, ypj = pj_ ? TY[j] - 0.8 : TY[j] - 0.12;   // toujours nettement SOUS la piste, les stands et le gravier
+      const oi = pi_ ? mi + Math.min(14, Math.max(5, 1.5 * (TY[i] - GROUND_Y))) : ni + fi;
+      const oj = pj_ ? mj + Math.min(14, Math.max(5, 1.5 * (TY[j] - GROUND_Y))) : nj + fj;
       const a=pos.length/3;
       pos.push(
-        TX[i]+RGX[i]*side*ni, TY[i]+0.045, TZ[i]+RGZ[i]*side*ni,
-        TX[i]+RGX[i]*side*oi, yi, TZ[i]+RGZ[i]*side*oi,
-        TX[j]+RGX[j]*side*nj, TY[j]+0.045, TZ[j]+RGZ[j]*side*nj,
-        TX[j]+RGX[j]*side*oj, yj, TZ[j]+RGZ[j]*side*oj
+        TX[i]+RGX[i]*side*(ni-0.85), TY[i]-0.12, TZ[i]+RGZ[i]*side*(ni-0.85),
+        TX[i]+RGX[i]*side*mi, ypi,         TZ[i]+RGZ[i]*side*mi,
+        TX[i]+RGX[i]*side*oi, GROUND_Y,    TZ[i]+RGZ[i]*side*oi,
+        TX[j]+RGX[j]*side*(nj-0.85), TY[j]-0.12, TZ[j]+RGZ[j]*side*(nj-0.85),
+        TX[j]+RGX[j]*side*mj, ypj,         TZ[j]+RGZ[j]*side*mj,
+        TX[j]+RGX[j]*side*oj, GROUND_Y,    TZ[j]+RGZ[j]*side*oj
       );
-      uv.push(0,arc/24,fi/5,arc/24,0,(arc+seg)/24,fj/5,(arc+seg)/24);
-      idx.push(a,a+1,a+2,a+1,a+3,a+2);
+      uv.push(0,arc/24,(mi-ni)/5,arc/24,(oi-ni)/5,arc/24, 0,(arc+seg)/24,(mj-nj)/5,(arc+seg)/24,(oj-nj)/5,(arc+seg)/24);
+      idx.push(a,a+1,a+3,a+1,a+4,a+3, a+1,a+2,a+4,a+2,a+5,a+4);
       arc+=seg;
     }
     const geo=new THREE.BufferGeometry();
@@ -2492,7 +2618,7 @@ function buildAds() {
       mat,
       64,
       false,
-      inTunnel
+      k => pitWallGap(k, -1) || inTunnel(k)
     ),
 
     wallStripUV(
@@ -2502,7 +2628,7 @@ function buildAds() {
       mat,
       64,
       true,
-      k => pitWallGap(k) || inTunnel(k)
+      k => pitWallGap(k, 1) || inTunnel(k)
     )
   );
 }
@@ -2512,7 +2638,8 @@ function buildLamps() {
     if (STAND_IDX.some(s => Math.abs(i - s) < 12)) continue;      // pas dans les tribunes
     if (inTunnel(i) || inHotel(i)) continue;                      // le tunnel a son propre éclairage ; pas de mât sous l'hôtel
     for (const side of [-1, 1]) {
-      if (side === PIT_SIDE && Math.abs(pitRelM(i)) < PIT_EXIT_REL + 17) continue;   // pas de poteau sur les bretelles des stands
+      { const rr = pitRelM(i), cm = PIT_CROSS ? (PIT_CROSS.c0 + PIT_CROSS.c1) / 2 : null;
+        if ((side === PIT_SIDE && rr > PIT_ENTRY_REL - 17 && rr < (cm != null ? cm + 20 : PIT_EXIT_REL + 17)) || (side === PIT_SIDE_OUT && rr > (cm != null ? cm - 20 : PIT_ENTRY_REL - 17) && rr < PIT_EXIT_REL + 17)) continue; }   // pas de poteau sur la voie des stands
       const off = side * Math.min(WALL_D + 4, (side > 0 ? WDR[i] : WDL[i]) + 2.5);
       pts.push([TX[i] + RGX[i] * off, TZ[i] + RGZ[i] * off, TY[i]]);
     }
@@ -2770,11 +2897,11 @@ function buildPaddock() {
   // Un garage = un bloc posé le long de la voie des stands, orienté comme la voie à cet endroit.
   // Repère local : x le long de la voie, z vers le fond du box ; la voiture arrêtée est en (0, 1.1).
   for (let k = 0; k < n; k++) {
-    const f = pitBoxFrame(k), lane = f.a - Math.PI / 2, rx = -Math.sin(lane), rz = Math.cos(lane);
+    const f = pitBoxFrame(k), lane = f.a - PIT_SIDE * Math.PI / 2, rx = -Math.sin(lane) * PIT_SIDE, rz = Math.cos(lane) * PIT_SIDE;   // (rx,rz) : de la voie vers le fond du box
     const b = new THREE.Group();
     // f.y est déjà l'altitude absolue du box : on ne l'ajoute pas deux fois.
     b.position.set(f.x - rx * 1.1, f.y - PIT_GROUND_Y, f.z - rz * 1.1);
-    b.rotation.y = -lane;
+    b.rotation.y = PIT_SIDE > 0 ? -lane : -lane - Math.PI;   // côté gauche : le repère du box est retourné (x vers l'arrière, z vers la gauche)
     const c = new THREE.Color(teams[k].color);
     const teamMat = new THREE.MeshStandardMaterial({color:c,roughness:.62,metalness:.05});
     const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); b.add(m); return m; };
@@ -2784,12 +2911,16 @@ function buildPaddock() {
     // On garde une simple dalle fine au niveau du garage ; les murs du garage restent visibles
     // mais la voie de circulation reste complètement libre.
     add(new THREE.BoxGeometry(boxW+.5,0.22,depth+3), floorMat, 0, .1, 0);                    // dalle
+    if (!pitTunnelOn()) {                                                                    // bloc plein sous la dalle, jusqu'au sol (la voie peut être en pente, la dalle est plate)
+      const hBlk = Math.max(0.2, f.y - 0.03 - (GROUND_Y - 0.05));
+      add(new THREE.BoxGeometry(boxW+.5, hBlk, depth+3), concrete, 0, -0.03 - hBlk / 2, 0);
+    }
     add(new THREE.BoxGeometry(boxW+.5,.45,depth+2), dark, 0, 8.5, 0);                        // toit
     add(new THREE.BoxGeometry(boxW+.5,8.2,.35), wallMat, 0, 4.15, 7.7);                      // mur du fond
     add(new THREE.BoxGeometry(boxW+.3,2.1,2.0), glass, 0, 7.0, 5.8);                         // mezzanine vitrée
     add(new THREE.BoxGeometry(boxW+.4,0.16,2.4), trim, 0, 5.95, 5.7);
     add(new THREE.BoxGeometry(.28,8.0,depth), teamMat, -boxW/2, 4, 0);                       // cloison gauche (partagée avec le box voisin)
-    if (k === n - 1) add(new THREE.BoxGeometry(.28,8.0,depth), teamMat, boxW/2, 4, 0);       // dernière cloison
+    if (k === (PIT_SIDE > 0 ? n - 1 : 0)) add(new THREE.BoxGeometry(.28,8.0,depth), teamMat, boxW/2, 4, 0);       // dernière cloison
     add(new THREE.BoxGeometry(boxW-.35,1.15,.42), teamMat, 0, 7.55, -7.35);                  // bandeau
     add(new THREE.BoxGeometry(boxW-.55,5.7,.18), dark, 0, 3.0, 7.45);
     add(new THREE.BoxGeometry(boxW-.5,0.06,10.5), concrete, 0, .24, -1.2);                   // sol du box
@@ -2811,12 +2942,7 @@ function buildPaddock() {
     const faceMat = new THREE.MeshBasicMaterial({map:nameTex});
     const board = new THREE.Mesh(new THREE.BoxGeometry(boxW-.9,1.0,.14), [dark,dark,dark,dark,dark,faceMat]);   // face -z = côté voie des stands
     board.position.set(0, 7.55, -7.63); b.add(board);
-    // voiture exposée, mécaniciens sur les côtés (jamais sur le trajet de la voiture)
-    try {
-      const car = makeCar(teams[k].color, teams[k].name, false).root;
-      car.scale.setScalar(.78); car.position.set(0,0.35,1.1); car.rotation.y = -Math.PI/2; car.traverse(o=>{if(o.isSprite)o.visible=false;});
-      b.add(car); paddockCars[k] = car;
-    } catch (e) {}
+    // (plus de voiture exposée dans le box : la vraie voiture y entre librement ; mécaniciens sur les côtés)
     const p1 = makeHuman3D(c.getHex(), "chef"); p1.position.set(-3.7,.25,-6.2); p1.rotation.y = Math.PI; b.add(p1);
     const p2 = makeHuman3D(c.getHex(), "mécano"); p2.scale.setScalar(.96); p2.position.set(3.7,.25,-6.1); p2.rotation.y = Math.PI; b.add(p2);
     g.add(b);
@@ -3039,7 +3165,7 @@ function buildHotel() {
 function buildPitTunnel() {
   if (!pitTunnelOn()) return;
   ensurePitPath();
-  const g = pitGeo(), sA = PIT_LANE_S_A, sB = PIT_LANE_S_B;
+  const g = pitGeo(), sA = PIT_LANE_S_A, sB = PIT_LANE_S_B, sM = PIT_TUN_S_M;
   const hw = PIT_HALF_W + 0.5, H = PIT_TUN_H, GY = GROUND_Y - 0.05;
   const concrete = makeTexture(128, 128, (c, w, h) => { c.fillStyle = "#9599a0"; c.fillRect(0, 0, w, h); noise(c, w, h, 260, 0.05, 0.08, 3); }, true);
   const wallOut = new THREE.MeshBasicMaterial({ map: concrete, color: 0xc7cbd1, side: THREE.DoubleSide }); tintMats.push(wallOut);
@@ -3060,7 +3186,7 @@ function buildPitTunnel() {
 
   // --- Tunnels : de la bouche (s = 0) au début du plat (sA), et de la fin du plat (sB) à la bouche de sortie (PIT_TOTAL)
   const tunnelPart = (s0, s1) => {
-    const n = Math.max(6, Math.round((s1 - s0) / 2.5)), P = [];
+    const n = Math.max(8, Math.round((s1 - s0) / 1.6)), P = [];
     for (let k = 0; k <= n; k++) P.push(pitPose(s0 + (s1 - s0) * k / n, 0));
     strip(P, q => at(q, -hw, GY), q => at(q, -hw, q.y + H + 0.3), wallOut);                       // paroi extérieure côté piste (jusqu'au sol)
     strip(P, q => at(q, hw, GY), q => at(q, hw, q.y + H + 0.3), wallOut);                         // paroi extérieure côté paddock
@@ -3076,7 +3202,8 @@ function buildPitTunnel() {
     }
   };
   tunnelPart(0, sA);
-  tunnelPart(sB, PIT_TOTAL);
+  tunnelPart(sB, sM);
+  if (PIT_CROSS_S) tunnelPart(PIT_CROSS_S.d0, PIT_CROSS_S.u1);          // passage sous la piste (virage 1)
 
   // --- Portails : bouche d'entrée, fin de descente, début de montée, bouche de sortie (piliers jusqu'au sol)
   const portal = s => {
@@ -3090,25 +3217,12 @@ function buildPitTunnel() {
     const lin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, fw), conc2); lin.position.set(0, H + 0.9, 0); gr.add(lin);
     const band = new THREE.Mesh(new THREE.BoxGeometry(1.64, 0.3, fw + 0.02), yel); band.position.set(0, H + 0.55, 0); gr.add(band);
   };
-  [0, sA, sB, PIT_TOTAL].forEach(portal);
-
-  // --- Soubassement des voies de surface (elles sont posées au niveau de la piste, au-dessus du terrain en pente)
-  const skirt = (seg, y0, y1, hwA, hwB) => {
-    const n = 24, P = [];
-    for (let k = 0; k <= n; k++) {
-      const u = k / n, q = hermiteAt(seg, u);
-      P.push({ x: q.x, z: q.z, rx: -Math.sin(q.a), rz: Math.cos(q.a), y: y0 + (y1 - y0) * u, hl: hwA + (hwB - hwA) * (u * u * (3 - 2 * u)) });
-    }
-    strip(P, q => at(q, -q.hl, q.y + 0.02), q => at(q, -q.hl, GY), wallOut);
-    strip(P, q => at(q, PIT_HALF_W, q.y + 0.02), q => at(q, PIT_HALF_W, GY), wallOut);
-  };
-  skirt(g.entry, trackElevationRel(PIT_ENTRY_REL), pitPose(0, 0).y, 1.0, PIT_HALF_W);
-  skirt(g.exit, pitPose(PIT_TOTAL, 0).y, trackElevationRel(PIT_EXIT_REL), PIT_HALF_W, 1.0);
+  [0, sA, sB, sM].concat(PIT_CROSS_S ? [PIT_CROSS_S.d0, PIT_CROSS_S.u1] : []).forEach(portal);
 
   // --- Mur de soutènement sous le rail de la piste, sur toute la zone en contrebas (tunnels + plat) :
   // la piste est une dalle surélevée, sans ce mur on verrait sous la dalle depuis la voie des stands.
   const WI = [];
-  for (let i = 0; i < N; i++) { const r = pitRelM(i); if (r >= PIT_PATH_A - 8 && r <= PIT_PATH_B + 8) WI.push({ i, r }); }
+  for (let i = 0; i < N; i++) { const r = pitRelM(i); if (r >= -PIT_TUN_MOUTH - 8 && r <= PIT_TUN_MOUTH + 8) WI.push({ i, r }); }
   WI.sort((u, v) => u.r - v.r);
   const WP = WI.map(o => ({ x: TX[o.i] + RGX[o.i] * (WALL_D + 0.5), z: TZ[o.i] + RGZ[o.i] * (WALL_D + 0.5), top: TY[o.i] + 0.02 }));
   strip(WP, q => [q.x, q.top, q.z], q => [q.x, GY, q.z], wallOut);
@@ -3118,19 +3232,13 @@ function buildPitTunnel() {
 // plate-forme pleine (dalle + murs de soutènement jusqu'au sol) sous la voie, sous les bretelles et sous les garages.
 // (À Yas Marina, les tunnels, le mur de soutènement et le sol au niveau du gazon jouent déjà ce rôle.)
 function buildPitFoundation() {
-  if (pitTunnelOn()) return;
+  // Dalle sombre (aire de travail) qui relie le bord de la voie aux garages, sans trou ni herbe entre les deux. Sur tous les circuits.
   ensurePitPath();
-  const GY = GROUND_Y - 0.05, g = pitGeo();
-  // Talus d'herbe (comme le reste du terrain) plutôt que des murs de béton : vu de la piste, la plate-forme se fond dans le décor.
-  const dirtTex = makeTexture(128, 128, (c, w, h) => {
-    const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#6a9658"); gr.addColorStop(1, "#4d7d45");
-    c.fillStyle = gr; c.fillRect(0, 0, w, h); noise(c, w, h, 300, 0.045, 0.055, 3);
-  }, true);
-  const slopeM = new THREE.MeshLambertMaterial({ map: dirtTex, side: THREE.DoubleSide }); tintMats.push(slopeM);
+  const GY = GROUND_Y - 0.05;
   const concTex = makeTexture(128, 128, (c, w, h) => { c.fillStyle = "#8d9299"; c.fillRect(0, 0, w, h); noise(c, w, h, 300, 0.05, 0.08, 3); }, true);
   const wallM = new THREE.MeshBasicMaterial({ map: concTex, color: 0xc7cbd1, side: THREE.DoubleSide }); tintMats.push(wallM);
   const apronTex = makeTexture(128, 128, (c, w, h) => { c.fillStyle = "#4b4f57"; c.fillRect(0, 0, w, h); noise(c, w, h, 400, 0.04, 0.08, 2); }, true);
-  const apronM = new THREE.MeshBasicMaterial({ map: apronTex, side: THREE.DoubleSide }); tintMats.push(apronM);
+  const apronM = new THREE.MeshBasicMaterial({ map: apronTex, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }); tintMats.push(apronM);
   const strip = (P, fa, fb, mat) => {
     const pos = [], idx = [], n = P.length - 1;
     P.forEach(q => pos.push(...fa(q), ...fb(q)));
@@ -3139,40 +3247,10 @@ function buildPitFoundation() {
     scene.add(new THREE.Mesh(geo, mat));
   };
   const at = (q, lat, y) => [q.x + q.rx * lat, y, q.z + q.rz * lat];
-  const K = 1.7;                                    // pente du talus : 1,7 m de large pour 1 m de haut
-  const run = y => Math.max(0.3, (y - GY) * K);
-
-  // 1. Talus sous les deux bretelles
-  const skirt = (seg, y0, y1, hwA, hwB) => {
-    const n = 24, P = [];
-    for (let k = 0; k <= n; k++) {
-      const u = k / n, q = hermiteAt(seg, u);
-      P.push({ x: q.x, z: q.z, rx: -Math.sin(q.a), rz: Math.cos(q.a), y: y0 + (y1 - y0) * u, hl: hwA + (hwB - hwA) * (u * u * (3 - 2 * u)) });
-    }
-    strip(P, q => at(q, -q.hl, q.y + 0.02), q => at(q, -q.hl - run(q.y), GY), slopeM);
-    strip(P, q => at(q, PIT_HALF_W, q.y + 0.02), q => at(q, PIT_HALF_W + run(q.y), GY), slopeM);
-  };
-  skirt(g.entry, trackElevationRel(PIT_ENTRY_REL), pitPose(0, 0).y, 1.0, PIT_HALF_W);
-  skirt(g.exit, pitPose(PIT_TOTAL, 0).y, trackElevationRel(PIT_EXIT_REL), PIT_HALF_W, 1.0);
-
-  // 2. Plate-forme sous la voie et tous les garages
-  const LI = -4.5, LO = 25.5, n = Math.max(6, Math.round(PIT_TOTAL / 4)), P = [];
-  for (let k = 0; k <= n; k++) { const q = pitPose(PIT_TOTAL * k / n, 0); P.push({ x: q.x, z: q.z, rx: q.rx, rz: q.rz, a: q.a, y: q.y - 0.05 }); }
-  strip(P, q => at(q, LI, q.y), q => at(q, LO, q.y), apronM);                       // dessus
-  strip(P, q => at(q, LI, q.y), q => at(q, LI, GY), wallM);                         // côté piste (caché sous le talus de la piste)
-  strip(P, q => at(q, LO, q.y), q => at(q, LO + run(q.y), GY), slopeM);            // côté fond des garages : talus d'herbe
-  for (const [q, dir] of [[P[0], -1], [P[n], 1]]) {                                // têtes de plate-forme : talus dans l'axe de la voie
-    const tx = Math.cos(q.a) * dir, tz = Math.sin(q.a) * dir, r = run(q.y);
-    const c0 = { x: q.x, z: q.z, rx: q.rx, rz: q.rz, y: q.y, d: 0 }, c1 = { x: q.x + tx * r, z: q.z + tz * r, rx: q.rx, rz: q.rz, y: GY, d: 1 };
-    strip([c0, c1], w => at(w, LI, w.y), w => at(w, LO, w.y), slopeM);
-  }
-
-  // 3. Un bloc plein sous la dalle de chaque garage (la voie est en pente, la dalle du garage est horizontale)
-  for (let k = 0; k < pitBoxCount; k++) {
-    const f = pitBoxFrame(k), lane = f.a - Math.PI / 2, rx = -Math.sin(lane), rz = Math.cos(lane), h = Math.max(0.2, f.y - 0.03 - GY);
-    const blk = new THREE.Mesh(new THREE.BoxGeometry(PIT_BOX_W + 0.5, h, 18), wallM);
-    blk.position.set(f.x - rx * 1.1, GY + h / 2, f.z - rz * 1.1); blk.rotation.y = -lane; scene.add(blk);
-  }
+  // Dalle sombre : du bord de la voie (côté piste) jusqu'au fond des garages, uniquement sur la longueur des garages
+  const half = (PIT_MAXBOX / 2) * PIT_BOX_W + 6, sA = PIT_SERVICE_PROGRESS - half, sB = PIT_SERVICE_PROGRESS + half, n = Math.max(4, Math.round((sB - sA) / 3)), P = [];
+  for (let k = 0; k <= n; k++) { const q = pitPose(sA + (sB - sA) * k / n, 0); P.push({ x: q.x, z: q.z, rx: q.rx, rz: q.rz, y: q.y + 0.085 }); }
+  strip(P, q => at(q, PIT_HALF_W - 0.3, q.y), q => at(q, 25.5, q.y), apronM);
 }
 function buildExtras() {
   const stage = (name, fn) => { try { fn(); } catch (e) { console.warn("Décor ignoré (" + name + ") :", e); } };
@@ -3689,11 +3767,12 @@ function buildCarGeometry(color, num, hash, dark) {
   CM.box(body, -1.45, 0.96, 0, 0.95, 0.26, 0.018, cB);                                            // aileron de requin
   CM.ell(body, 0.34, 0.752, 0, 0.42, 0.075, 0.225, cD, 16, 8);                                    // bord du cockpit
   CM.ell(body, 0.34, 0.775, 0, 0.36, 0.05, 0.19, cC, 16, 8);                                      // habitacle
-  CM.cyl(body, [0.56, 0.72, 0], [0.42, 1.08, 0], 0.024, 0.02, cD, 8);                             // pied central
+  const halo = CM.make();                                                                         // halo : maillage séparé (masqué en vue embarquée)
+  CM.cyl(halo, [0.56, 0.72, 0], [0.42, 1.08, 0], 0.024, 0.02, cD, 8);                             // pied central
   for (const sd of [1, -1]) {
-    CM.cyl(body, [0.42, 1.08, sd * 0.01], [0.13, 1.115, sd * 0.30], 0.024, 0.024, cD, 8);
-    CM.cyl(body, [0.13, 1.115, sd * 0.30], [-0.22, 0.90, sd * 0.33], 0.024, 0.024, cD, 8);
-    CM.cyl(body, [-0.22, 0.90, sd * 0.33], [-0.26, 0.76, sd * 0.30], 0.026, 0.026, cD, 8);
+    CM.cyl(halo, [0.42, 1.08, sd * 0.01], [0.13, 1.115, sd * 0.30], 0.024, 0.024, cD, 8);
+    CM.cyl(halo, [0.13, 1.115, sd * 0.30], [-0.22, 0.90, sd * 0.33], 0.024, 0.024, cD, 8);
+    CM.cyl(halo, [-0.22, 0.90, sd * 0.33], [-0.26, 0.76, sd * 0.30], 0.026, 0.026, cD, 8);
   }
   CM.box(body, 0.44, 0.7, 0, 0.16, 0.05, 0.36, cD);                                               // volant / poste de pilotage : tableau
   // Antennes / capteurs
@@ -3722,7 +3801,7 @@ function buildCarGeometry(color, num, hash, dark) {
   CM.box(sw, 0, 0.03, 0.018, 0.13, 0.08, 0.006, rgb("#050608"));                                  // cadre de l'écran
   CM.cyl(sw, [0, 0, -0.02], [0, 0, -0.28], 0.022, 0.022, cM, 8);
 
-  return { body: CM.bake(body), driver: CM.bake(driver), sw: CM.bake(sw) };
+  return { body: CM.bake(body), driver: CM.bake(driver), sw: CM.bake(sw), halo: CM.bake(halo) };
 }
 
 function nameStripTexture(name, cBody, dark) {
@@ -3768,11 +3847,12 @@ function makeCarPro(color, name, mine, num) {
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
   body.add(new THREE.Mesh(G.body, mat));
   const driver = new THREE.Mesh(G.driver, mat); body.add(driver);
+  const haloMesh = new THREE.Mesh(G.halo, mat); body.add(haloMesh);
 
   // Volant (tourne avec la direction) + écran des rapports
-  const steerWheel = new THREE.Group(); steerWheel.position.set(0.62, 0.80, 0);
+  const steerWheel = new THREE.Group(); steerWheel.position.set(0.56, 0.87, 0);
   steerWheel.rotation.order = "ZYX"; steerWheel.rotation.set(0, -Math.PI / 2, -0.44);
-  const swSpin = new THREE.Group(); steerWheel.add(swSpin);
+  const swSpin = new THREE.Group(); swSpin.scale.setScalar(0.6); steerWheel.add(swSpin);   // volant réduit : il ne cache plus la piste
   swSpin.add(new THREE.Mesh(G.sw, mat));
   let dash = null, screenMat;
   if (mine) {
@@ -3783,7 +3863,12 @@ function makeCarPro(color, name, mine, num) {
   } else screenMat = new THREE.MeshBasicMaterial({ color: 0x0b2a1c, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
   const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.118, 0.072), screenMat); screen.position.set(0, 0.03, 0.0215); swSpin.add(screen);
   body.add(steerWheel);
-  const eye = new THREE.Object3D(); eye.position.set(0.12, 1.16, 0); body.add(eye);   // position des yeux du pilote (caméra embarquée)
+  const eye = new THREE.Object3D(); eye.position.set(0.10, 1.06, 0); body.add(eye);
+  // Caméras des rétroviseurs : de chaque côté du cockpit, orientées vers l'arrière et un peu vers l'extérieur
+  const mirL = new THREE.Object3D(), mirR = new THREE.Object3D();
+  mirL.position.set(0.62, 0.86, -0.70); mirL.rotation.y = Math.PI / 2 - 0.22;
+  mirR.position.set(0.62, 0.86, 0.70); mirR.rotation.y = Math.PI / 2 + 0.22;
+  body.add(mirL, mirR);   // position des yeux du pilote (caméra embarquée)
 
   // Roues
   const wheels = [];
@@ -3845,7 +3930,7 @@ function makeCarPro(color, name, mine, num) {
     sprite.scale.set(8, 2, 1); sprite.position.set(0, 3.4, 0); root.add(sprite);
   }
   return { root, body, wheels, brake: mBrake, brakeGlow: glowM, flame: flameM, beam, refl: env ? [[mat, 0.22]] : [], spin: 0, pitch: 0, roll: 0, lastSpeed: 0,
-    driver, steerWheel: swSpin, dash, eye };
+    driver, halo: haloMesh, steerWheel: swSpin, dash, eye, mirL, mirR };
 }
 function updateDash(o) {
   const d = o.dash; if (!d) return;
@@ -3939,6 +4024,7 @@ function placeCar(o, x, z, a, speed, steer, braking, dt, mine, entity) {
   if (o.flame) o.flame.opacity = mine ? Math.min(1, fxPop) : 0;
   if (o.steerWheel) o.steerWheel.rotation.z = -steer * 1.6;              // le volant tourne avec la direction
   if (o.driver) o.driver.visible = !(mine && camS.mode === 2);           // en vue cockpit, on ne voit pas sa propre tête
+  if (o.halo) o.halo.visible = !(mine && camS.mode === 2);               // ni le halo (il barrait la vue et coupait le volant)
   if (mine && o.dash && camS.mode === 2) updateDash(o);
 }
 
@@ -3965,7 +4051,8 @@ function updateCamera(dt, t) {
     if (pitTunnelOn() && me.pitMode && camS.mode !== 2) {
       const pp = me.pitProgress || 0, uu = me.pitU || 0;
       if (me.pitMode === 1 && ((me.pitSub === 1 && uu > 0.55) || (me.pitSub === 2 && pp < PIT_LANE_S_A + 14))) tunT = 1;
-      else if (me.pitMode === 3 && ((me.pitSub === 1 && pp > PIT_LANE_S_B - 14) || (me.pitSub === 2 && uu < 0.45))) tunT = 1;
+      else if (me.pitMode === 3 && me.pitSub === 1 && pp > PIT_LANE_S_B - 14 && pp < PIT_TUN_S_M + 8) tunT = 1;
+      if (me.pitMode === 3 && me.pitSub === 1 && PIT_CROSS_S && pp > PIT_CROSS_S.d0 - 6 && pp < PIT_CROSS_S.u1 + 6) tunT = 1;
     }
     camS.tun = (camS.tun || 0) + (tunT - (camS.tun || 0)) * Math.min(1, dt * 4);
     if (camS.tun > 0.001) { dist += (Math.min(dist, 8) - dist) * camS.tun; hgt += (Math.min(hgt, 2.6) - hgt) * camS.tun; look += (Math.max(look, 11) - look) * camS.tun; }
@@ -4024,6 +4111,43 @@ function updatePitVisuals(t,dt){
   chk(me);for(const b of bots)chk(b);
   for(let k=0;k<paddockCars.length;k++){const o=paddockCars[k];if(o)o.visible=!occ[k];}
 }
+/* ---- Rétroviseurs : vraie vue vers l'arrière (rendu de la scène derrière la voiture, image inversée comme dans un miroir) ---- */
+let mirRT = null, mirCam = null, mirScene = null, mirOrtho = null, mirQuad = null, mirMats = null, mirFlip = 0, mirWasOn = false;
+function initMirrors() {
+  mirRT = [0, 1].map(() => new THREE.WebGLRenderTarget(384, 160, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat }));
+  mirCam = new THREE.PerspectiveCamera(32, 384 / 160, 0.1, 3000);
+  mirOrtho = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  mirMats = mirRT.map(rt => new THREE.MeshBasicMaterial({ map: rt.texture, depthTest: false, depthWrite: false, toneMapped: false }));
+  const g = new THREE.PlaneGeometry(2, 2), uv = g.attributes.uv;
+  for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));   // inversion gauche-droite = effet miroir
+  mirQuad = new THREE.Mesh(g, mirMats[0]); mirQuad.frustumCulled = false;
+  mirScene = new THREE.Scene(); mirScene.add(mirQuad);
+}
+function drawMirrors(on) {
+  const fl = $("mirL"), fr = $("mirR");
+  if (fl.hidden === !!on) { fl.hidden = !on; fr.hidden = !on; }
+  if (!on) { mirWasOn = false; return; }
+  const oc = carObjs[me.id];
+  if (!mirRT || !oc || !oc.mirL) return;
+  oc.root.updateMatrixWorld(true);
+  const marks = [oc.mirL, oc.mirR], frames = [fl, fr];
+  const sh = renderer.shadowMap.autoUpdate; renderer.shadowMap.autoUpdate = false;
+  const skyP = sky.position.clone();
+  for (const i of (mirWasOn ? [mirFlip] : [0, 1])) {      // un seul rétroviseur rafraîchi par image (les deux alternent)
+    marks[i].getWorldPosition(mirCam.position); marks[i].getWorldQuaternion(mirCam.quaternion);
+    sky.position.copy(mirCam.position);
+    renderer.setRenderTarget(mirRT[i]); renderer.clear(); renderer.render(scene, mirCam);
+  }
+  mirFlip ^= 1; mirWasOn = true;
+  renderer.setRenderTarget(null); sky.position.copy(skyP); renderer.shadowMap.autoUpdate = sh;
+  renderer.autoClear = false; renderer.setScissorTest(true);
+  for (let i = 0; i < 2; i++) {
+    const r = frames[i].getBoundingClientRect(), x = r.left + 3, y = H - r.bottom + 3, w = r.width - 6, h = r.height - 6;
+    renderer.setViewport(x, y, w, h); renderer.setScissor(x, y, w, h);
+    mirQuad.material = mirMats[i]; renderer.render(mirScene, mirOrtho);
+  }
+  renderer.setScissorTest(false); renderer.setViewport(0, 0, W, H); renderer.autoClear = true;
+}
 function render3d(t, dt) {
   if (!renderer) return;
   const racing = phase === "countdown" || phase === "race" || phase === "finished";
@@ -4060,6 +4184,7 @@ function render3d(t, dt) {
   stepPitCrew(dt);
   try { updateFlagman(t); } catch (e) {}
   renderer.render(scene, camera);
+  try { drawMirrors(racing && camS.mode === 2); } catch (e) { if (!drawMirrors._w) { drawMirrors._w = 1; console.warn("Rétroviseurs :", e); } }
 }
 function initGL() {
   if (typeof THREE === "undefined") { GL_ERR = "La 3D n'a pas pu se charger. Vérifie ta connexion internet puis recharge la page."; return false; }
@@ -4074,6 +4199,7 @@ function initGL() {
     maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
     camera = new THREE.PerspectiveCamera(66, W / H, 0.5, 5000);
     buildScene();
+    initMirrors();
   } catch (e) { GL_ERR = "Erreur pendant la création du décor 3D : " + (e && e.message ? e.message : e); renderer = null; return false; }
   return true;
 }
