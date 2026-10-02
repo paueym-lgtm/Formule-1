@@ -653,12 +653,37 @@ function pitPose(progress,lane=0){
   const rx=-Math.sin(ang)*PIT_SIDE, rz=Math.cos(ang)*PIT_SIDE;   // (rx,rz) : vers les garages
   return {idx:0,x:x+rx*lane,z:z+rz*lane,y,a:ang,rx,rz,s};
 }
+/* Ouverture du rail pour les bretelles : AUTREFOIS sur toute la longueur de la bretelle (~65 m), ce qui laissait voir le terrain (herbe) derrière
+   les stands. Désormais seulement là où la bretelle franchit réellement la ligne du rail (+ marge). Yas Marina (tunnels) garde l'ancien calcul. */
+function pitGapArr() {
+  ensurePitPath();
+  const c = pitGapArr.c;
+  if (c && c.path === pitPath && c.key === trackKey) return c;
+  const E = new Uint8Array(N), X = new Uint8Array(N), g = pitGeo(), pad = Math.ceil(5.5 / (TRACK_LEN / N));
+  const mark = (seg, arr) => {
+    for (let u = 0; u <= 1.0001; u += 0.01) {
+      const q = hermiteAt(seg, u);
+      let bi = 0, bd = 1e18;
+      for (let k = 0; k < N; k++) { const d = (q.x - TX[k]) * (q.x - TX[k]) + (q.z - TZ[k]) * (q.z - TZ[k]); if (d < bd) { bd = d; bi = k; } }
+      const l = Math.abs((q.x - TX[bi]) * RGX[bi] + (q.z - TZ[bi]) * RGZ[bi]);
+      if (l > WALL_D - 6.5 && l < WALL_D + 7) for (let d = -pad; d <= pad; d++) arr[(bi + d + N) % N] = 1;
+    }
+  };
+  mark(g.entry, E); mark(g.exit, X);
+  return (pitGapArr.c = { path: pitPath, key: trackKey, E, X });
+}
 function inPitZone(i) {
+  if (!pitTunnelOn()) { const G = pitGapArr(); return !!(G.E[i] || G.X[i]); }
   const r=pitRelM(i);
   // Zone physique élargie (côté stands seulement) autour des deux bretelles.
   return (r>PIT_ENTRY_REL-6 && r<PIT_PATH_A+6) || (r>PIT_PATH_B-6 && r<PIT_EXIT_REL+6);
 }
 function pitWallGap(i, side) {
+  if (!pitTunnelOn()) {
+    const G = pitGapArr();
+    if (side === undefined) return !!(G.E[i] || G.X[i]);
+    return (side === PIT_SIDE && !!G.E[i]) || (side === PIT_SIDE_OUT && !!G.X[i]);
+  }
   const r=pitRelM(i);
   // Rail et panneaux absents UNIQUEMENT là où passent les bretelles ; le long de la voie, le rail sépare piste et stands.
   const a = (r>PIT_ENTRY_REL-6 && r<PIT_PATH_A+2), b = (r>PIT_PATH_B-2 && r<PIT_EXIT_REL+6);
@@ -2482,6 +2507,31 @@ function buildMowing() {
   const makeSide=side=>{
     const pos=[],uv=[],idx=[]; let arc=0;
     const ext = EXT[String(side)];
+    // Le plateau (et sa pente) ne doit JAMAIS recouvrir une autre portion de piste située plus bas : on limite sa largeur
+    // dès qu'un autre tronçon (à plus de 65 m le long du tour) plus bas que le plateau passe à moins de CLR mètres.
+    // Sans ça, à Monaco après la chicane de la piscine, le plateau des stands (5 à 16 m d'altitude, jusqu'à 50 m de large)
+    // passait par-dessus la piste (1,2 m) : un mur d'herbe/béton sortait des rails et bouchait la route.
+    const ownSpan = Math.round(65 / (TRACK_LEN / N)), CLR = WALL_D + 4;
+    const platCap = new Float32Array(N).fill(1e9);
+    for (let i = 0; i < N; i++) {
+      if (!(ext[i] > 0)) continue;
+      const ni0 = (side > 0 ? WDR[i] : WDL[i]) + 0.42, top = TY[i] - 0.8, lim = Math.max(ni0 + 0.5, ext[i]) + 14;
+      for (let l = ni0 + 0.5; l <= lim; l += 2) {
+        const px = TX[i] + RGX[i] * side * l, pz = TZ[i] + RGZ[i] * side * l;
+        let hit = false;
+        for (let j = 0; j < N; j += 2) {
+          let d = Math.abs(j - i); d = Math.min(d, N - d); if (d < ownSpan) continue;
+          if (TY[j] > top - 0.3) continue;                                   // autre piste aussi haute que le plateau : pas de recouvrement
+          const dx = px - TX[j], dz = pz - TZ[j];
+          if (dx * dx + dz * dz < CLR * CLR) { hit = true; break; }
+        }
+        if (hit) { platCap[i] = l - 2; break; }
+      }
+    }
+    {
+      const tmp = Float32Array.from(platCap);
+      for (let i = 0; i < N; i++) { let m = 1e9; for (let d = -4; d <= 4; d++) m = Math.min(m, tmp[(i + d + N) % N]); platCap[i] = m; }
+    }
     for(let i=0;i<N;i++){
       const j=(i+1)%N, seg=Math.hypot(TX[j]-TX[i],TZ[j]-TZ[i]);
       if(isTunnelInterior(i) && isTunnelInterior(j)){ arc+=seg; continue; }
@@ -2497,11 +2547,12 @@ function buildMowing() {
       const fi = wi>0 ? wi : 1.35;
       const fj = wj>0 ? wj : 1.35;
       // Rangée intermédiaire : plateau (côté stands) ou simple doublon du bord (ailleurs)
-      const pi_ = ext[i] > 0, pj_ = ext[j] > 0;
-      const mi = pi_ ? Math.max(ni + 0.5, ext[i]) : ni, mj = pj_ ? Math.max(nj + 0.5, ext[j]) : nj;
+      const pi_ = ext[i] > 0 && platCap[i] > ni + 3, pj_ = ext[j] > 0 && platCap[j] > nj + 3;
+      const mi = pi_ ? Math.min(Math.max(ni + 0.5, ext[i]), Math.max(ni + 0.5, platCap[i] - 3)) : ni;
+      const mj = pj_ ? Math.min(Math.max(nj + 0.5, ext[j]), Math.max(nj + 0.5, platCap[j] - 3)) : nj;
       const ypi = pi_ ? TY[i] - 0.8 : TY[i] - 0.12, ypj = pj_ ? TY[j] - 0.8 : TY[j] - 0.12;   // toujours nettement SOUS la piste, les stands et le gravier
-      const oi = pi_ ? mi + Math.min(14, Math.max(5, 1.5 * (TY[i] - GROUND_Y))) : ni + fi;
-      const oj = pj_ ? mj + Math.min(14, Math.max(5, 1.5 * (TY[j] - GROUND_Y))) : nj + fj;
+      const oi = pi_ ? Math.min(mi + Math.min(14, Math.max(5, 1.5 * (TY[i] - GROUND_Y))), Math.max(mi + 1, platCap[i])) : ni + fi;
+      const oj = pj_ ? Math.min(mj + Math.min(14, Math.max(5, 1.5 * (TY[j] - GROUND_Y))), Math.max(mj + 1, platCap[j])) : nj + fj;
       const a=pos.length/3;
       pos.push(
         TX[i]+RGX[i]*side*(ni-0.85), TY[i]-0.12, TZ[i]+RGZ[i]*side*(ni-0.85),
@@ -3315,8 +3366,27 @@ function buildPitFoundation() {
   const at = (q, lat, y) => [q.x + q.rx * lat, y, q.z + q.rz * lat];
   // Dalle sombre : du bord de la voie (côté piste) jusqu'au fond des garages, uniquement sur la longueur des garages
   const half = (PIT_MAXBOX / 2) * PIT_BOX_W + 6, sA = PIT_SERVICE_PROGRESS - half, sB = PIT_SERVICE_PROGRESS + half, n = Math.max(4, Math.round((sB - sA) / 3)), P = [];
-  for (let k = 0; k <= n; k++) { const q = pitPose(sA + (sB - sA) * k / n, 0); P.push({ x: q.x, z: q.z, rx: q.rx, rz: q.rz, y: q.y + 0.085 }); }
-  strip(P, q => at(q, PIT_HALF_W - 0.3, q.y), q => at(q, 25.5, q.y), apronM);
+  for (let k = 0; k <= n; k++) { const q = pitPose(sA + (sB - sA) * k / n, 0); P.push({ x: q.x, z: q.z, rx: q.rx, rz: q.rz, y: q.y + 0.085, far: 25.5 }); }
+  // La dalle est à l'altitude des stands (jusqu'à 5 m) : elle ne doit pas déborder AU-DESSUS d'une autre portion de piste située plus bas
+  // (à Monaco, après la chicane de la piscine, la piste passe à ~25 m des garages et la dalle la recouvrait comme un toit).
+  // On raccourcit donc sa largeur, côté garages, dès qu'un tronçon plus bas passe à moins de CLR mètres.
+  {
+    const CLR = WALL_D + 3, sgn = (() => { const q = P[Math.floor(P.length / 2)]; return 1; })();
+    for (const q of P) {
+      for (let l = PIT_HALF_W + 1; l <= 25.5; l += 1) {
+        const px = q.x + q.rx * l, pz = q.z + q.rz * l; let hit = false;
+        for (let j = 0; j < N; j += 2) {
+          if (TY[j] > q.y - 1.0) continue;
+          const dx = px - TX[j], dz = pz - TZ[j];
+          if (dx * dx + dz * dz < CLR * CLR) { hit = true; break; }
+        }
+        if (hit) { q.far = Math.max(PIT_HALF_W + 0.5, l - 1); break; }
+      }
+    }
+    const f0 = P.map(q => q.far);
+    P.forEach((q, i) => { let m = 1e9; for (let d = -2; d <= 2; d++) m = Math.min(m, f0[Math.max(0, Math.min(P.length - 1, i + d))]); q.far = m; });
+  }
+  strip(P, q => at(q, PIT_HALF_W - 0.3, q.y), q => at(q, q.far, q.y), apronM);
 }
 function buildExtras() {
   const stage = (name, fn) => { try { fn(); } catch (e) { console.warn("Décor ignoré (" + name + ") :", e); } };
