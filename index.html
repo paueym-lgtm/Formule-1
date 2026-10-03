@@ -2923,8 +2923,13 @@ function buildPitInfrastructure(){
       c.fillStyle = "#11151b"; c.fillRect(0, 0, w, h); c.fillStyle = "#ffcf00"; c.fillRect(0, h - 10, w, 10);
       c.fillStyle = "#fff"; c.font = "900 84px Barlow Condensed,Arial,sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(text, w / 2, h / 2 - 4);
     }, true);
-    const board = new THREE.Mesh(new THREE.PlaneGeometry(2 * zx - 0.6, 2.0), new THREE.MeshBasicMaterial({ map: tx, side: THREE.DoubleSide }));
+    // Deux faces distinctes (et non une seule face double) : le texte se lit à l'endroit des DEUX côtés, y compris pour une voiture
+    // qui arrive à contresens ou qui regarde le portique depuis l'autre côté (avant, le texte s'affichait en miroir par derrière).
+    const boardGeo = new THREE.PlaneGeometry(2 * zx - 0.6, 2.0), boardMat = new THREE.MeshBasicMaterial({ map: tx, side: THREE.FrontSide });
+    const board = new THREE.Mesh(boardGeo, boardMat);
     board.position.set(-0.3, TOP - 1.6, 0); board.rotation.y = -Math.PI / 2; gr.add(board);
+    const boardBack = new THREE.Mesh(boardGeo, boardMat);
+    boardBack.position.set(-0.3 + 0.06, TOP - 1.6, 0); boardBack.rotation.y = Math.PI / 2; gr.add(boardBack);
   };
   gantry(g.entry, 0.6, trackElevationRel(PIT_ENTRY_REL), pitPose(0, 0).y, "PIT ENTRY");
   gantry(g.exit, 0.4, pitPose(PIT_TOTAL, 0).y, trackElevationRel(PIT_EXIT_REL), "PIT EXIT");
@@ -3367,16 +3372,19 @@ function buildPitFoundation() {
   // Dalle sombre : du bord de la voie (côté piste) jusqu'au fond des garages, uniquement sur la longueur des garages
   const half = (PIT_MAXBOX / 2) * PIT_BOX_W + 6, sA = PIT_SERVICE_PROGRESS - half, sB = PIT_SERVICE_PROGRESS + half, n = Math.max(4, Math.round((sB - sA) / 3)), P = [];
   for (let k = 0; k <= n; k++) { const q = pitPose(sA + (sB - sA) * k / n, 0); P.push({ x: q.x, z: q.z, rx: q.rx, rz: q.rz, y: q.y + 0.085, far: 25.5 }); }
-  // La dalle est à l'altitude des stands (jusqu'à 5 m) : elle ne doit pas déborder AU-DESSUS d'une autre portion de piste située plus bas
-  // (à Monaco, après la chicane de la piscine, la piste passe à ~25 m des garages et la dalle la recouvrait comme un toit).
-  // On raccourcit donc sa largeur, côté garages, dès qu'un tronçon plus bas passe à moins de CLR mètres.
+  // La dalle ne doit jamais venir se coller contre (ni recouvrir) une AUTRE portion de piste : à Monaco, l'entrée des stands passe à
+  // quelques mètres de la piste qui suit la ligne de départ, et la dalle (jusqu'à 25 m de large) formait un grand triangle gris plat
+  // posé contre les vibreurs, qui ressemblait à un morceau de piste. On la raccourcit côté garages dès qu'un tronçon d'une AUTRE partie
+  // du circuit (à plus de 65 m le long du tour, hauteur quelconque) passe à moins de CLR mètres, soit derrière son rail avec 3 m de marge.
   {
-    const CLR = WALL_D + 3, sgn = (() => { const q = P[Math.floor(P.length / 2)]; return 1; })();
+    const CLR = WALL_D + 3, ownSpan = Math.round(65 / (TRACK_LEN / N));
     for (const q of P) {
+      let i0 = 0, bd = 1e18;
+      for (let k = 0; k < N; k++) { const d = (q.x - TX[k]) ** 2 + (q.z - TZ[k]) ** 2; if (d < bd) { bd = d; i0 = k; } }
       for (let l = PIT_HALF_W + 1; l <= 25.5; l += 1) {
         const px = q.x + q.rx * l, pz = q.z + q.rz * l; let hit = false;
         for (let j = 0; j < N; j += 2) {
-          if (TY[j] > q.y - 1.0) continue;
+          let d = Math.abs(j - i0); d = Math.min(d, N - d); if (d < ownSpan) continue;   // la piste que longe la voie des stands est exclue
           const dx = px - TX[j], dz = pz - TZ[j];
           if (dx * dx + dz * dz < CLR * CLR) { hit = true; break; }
         }
