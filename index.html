@@ -1249,6 +1249,41 @@ function botControl(b, others, skill) {
   const vt = VP[j] * skill * slow, err = v - vt;
   return { thr: err < 0 ? clamp(-err / 3, 0, 1) : 0, brk: err > 0 ? clamp((err - 0.8) / 4, 0, 1) : 0, steer };
 }
+// POWERUP SECRET : autopilot ultra-cheaté, activé par la touche O
+let autopilotEnabled = false;
+function autopilotControl(c) {
+  const ds = TRACK_LEN / N;
+  const v = Math.max(0, c.speed);
+  const here = nearest(c.x, c.z, c.idx);
+  const side = (c.x - TX[here.i]) * RGX[here.i] + (c.z - TZ[here.i]) * RGZ[here.i];
+  const leftSafe = -WDL[here.i] + 3.5;
+  const rightSafe = WDR[here.i] - 3.5;
+
+  // Point cible proche dans les virages : ne coupe pas les rails ni le sable.
+  const look = Math.max(2, Math.round((6 + v * 0.18) / ds));
+  const i = (here.i + look) % N;
+  const lane = clamp(RLO[i], -TRACK_W / 2 + 3.8, TRACK_W / 2 - 3.8);
+  const tx = TX[i] + RGX[i] * lane;
+  const tz = TZ[i] + RGZ[i] * lane;
+  const headingError = wrap(Math.atan2(tz - c.z, tx - c.x) - c.a);
+
+  // Correction forte vers l'intérieur dès que la voiture approche une limite.
+  let safety = 0;
+  if (side < leftSafe) safety = clamp((leftSafe - side) * 0.42, 0, 1);
+  if (side > rightSafe) safety = clamp((rightSafe - side) * 0.42, -1, 0);
+  const steer = clamp(headingError * 2.75 + safety, -1, 1);
+
+  // Reste rapide sur l'asphalte, mais ralentit fermement pendant une récupération.
+  const j = (here.i + Math.max(3, Math.round((7 + v * 0.18) / ds))) % N;
+  const inside = side > leftSafe - 0.7 && side < rightSafe + 0.7;
+  const target = inside ? Math.max(58, VP[j] * 1.65) : 20;
+  const err = v - target;
+  return {
+    thr: inside ? (err < 0 ? 1 : clamp(0.12 - err / 18, 0, 0.12)) : 0,
+    brk: inside ? (err > 4 ? clamp((err - 4) / 8, 0, 1) : 0) : 1,
+    steer
+  };
+}
 // PHYS_END
 
 /* ------------------------------ Joueurs ------------------------------ */
@@ -2036,6 +2071,10 @@ function physics(h, t) {
   if(rel>PIT_TRIG_REL-8&&rel<PIT_TRIG_REL+8&&right&&(steerIn>.05||me.speed<55)) startPlayerPit(rel);
 }
   let apSteer = 0;
+  if (canDrive && autopilotEnabled && !me.dq) {
+    const c = autopilotControl(me);
+    thr = c.thr; brk = c.brk; apSteer = c.steer;
+  }
   if (phase === "finished") {
     // Course terminée : la voiture passe en pilote automatique et continue de rouler pendant que les autres finissent
     if (!me.pitMode) {
@@ -2045,9 +2084,22 @@ function physics(h, t) {
     } else { thr = 0; brk = 0.2; }
   }
   me.thr = thr; me.brk = brk;
-  me.hb = (canDrive && !me.pitMode && !me.dq && input("hb")) ? 1 : 0;
-  if (canDrive && !me.dq) updateTires(me, t);
-  if(canDrive&&me.pitMode)stepPlayerPit(h); else stepCar(me,thr,brk,phase==="finished"?apSteer:steerIn,h);
+  me.hb = (canDrive && !autopilotEnabled && !me.pitMode && !me.dq && input("hb")) ? 1 : 0;
+  if (canDrive && !me.dq && !autopilotEnabled) updateTires(me, t);
+  if (canDrive && autopilotEnabled) { me.tireGrip = 3.2; me.tireBlown = 0; }
+  if(canDrive&&me.pitMode)stepPlayerPit(h); else stepCar(me,thr,brk,(phase==="finished" || autopilotEnabled)?apSteer:steerIn,h);
+  // Garde-fou absolu : le power-up ne peut physiquement pas franchir les bords de l'asphalte.
+  if (canDrive && autopilotEnabled && !me.pitMode) {
+    const q = nearest(me.x, me.z, me.idx);
+    const side = (me.x - TX[q.i]) * RGX[q.i] + (me.z - TZ[q.i]) * RGZ[q.i];
+    const lo = -WDL[q.i] + 2.7, hi = WDR[q.i] - 2.7;
+    const locked = clamp(side, lo, hi);
+    if (locked !== side) {
+      me.x = TX[q.i] + RGX[q.i] * locked;
+      me.z = TZ[q.i] + RGZ[q.i] * locked;
+      me.vx *= 0.70; me.vz *= 0.70;
+    }
+  }
   if(me.pitCrossFlag){me.pitCrossFlag=0;if(phase==="race")onLap(t);}   // ligne franchie dans la voie des stands = tour compté
   if(!me.pitMode){if(separate(me,others))sfxBump(Math.abs(me.speed));const r=locate(me);if(r.hit){camS.shake=1;sfxCrash(clamp(Math.abs(me.speed)/55,.25,1));sparkBurst(me.x,me.z,16);}if(r.crossed&&phase==="race")onLap(t);}
   // Après un tête-à-queue ou un accrochage, la voiture du joueur pouvait rester coincée contre un mur
@@ -2101,19 +2153,32 @@ function toggleFullscreen() {
   } catch (e) {}
 }
 let muted = false;
+function clearDrivingInput() { for (const k in keys) keys[k] = false; for (const k in touch) touch[k] = false; }
+function toggleAutopilot() {
+  autopilotEnabled = !autopilotEnabled;
+  clearDrivingInput();
+  flash(autopilotEnabled ? "AUTOPILOT ACTIVÉ" : "AUTOPILOT DÉSACTIVÉ", 1400);
+}
 addEventListener("keydown", e => {
   const tag = e.target && e.target.tagName;
   if (tag === "INPUT" || tag === "SELECT") return;
+  if ((e.key === "o" || e.key === "O") && !e.repeat) { toggleAutopilot(); e.preventDefault(); return; }
   const k = KEYMAP[e.code];
-  if (k) { keys[k] = true; e.preventDefault(); }
+  if (k) {
+    if (autopilotEnabled) { e.preventDefault(); return; }
+    keys[k] = true; e.preventDefault();
+  }
   if (e.code === "KeyR") respawn();
   if (e.code === "KeyC") camS.mode = (camS.mode + 1) % 3;
   if (e.code === "KeyF" && !e.ctrlKey && !e.metaKey && typeof toggleFullscreen === "function") toggleFullscreen();
   if (e.code === "KeyM") setMuted(!muted);
 });
-addEventListener("keyup", e => { const k = KEYMAP[e.code]; if (k) { keys[k] = false; if (e.code === "Space") e.preventDefault(); } });
-addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
-const input = k => keys[k] || touch[k];
+addEventListener("keyup", e => {
+  const k = KEYMAP[e.code];
+  if (k) { keys[k] = false; if (autopilotEnabled || e.code === "Space") e.preventDefault(); }
+});
+addEventListener("blur", clearDrivingInput);
+const input = k => !autopilotEnabled && (keys[k] || touch[k]);
 function bindTouch(id, name) {
   const el = $(id);
   const on = e => { touch[name] = true; el.classList.add("on"); e.preventDefault(); };
@@ -2749,6 +2814,35 @@ function buildMowing() {
     return new THREE.Mesh(geo,mat);
   };
   scene.add(makeSide(-1),makeSide(1));
+}
+
+// Filet de sécurité sous tout le circuit : un maillage continu relie le bord de
+// la chaussée au plan de sol. Il ne dépend ni des talus, ni des zones de stands,
+// ni des tunnels, donc aucun circuit ne peut laisser voir un trou entre deux pièces.
+function buildTrackUnderside() {
+  const pos = [], idx = [];
+  const edge = 0.48;
+  for (let i = 0; i < N; i++) {
+    const x = TX[i], z = TZ[i], rx = RGX[i], rz = RGZ[i];
+    const l = WDL[i] + edge, r = WDR[i] + edge;
+    pos.push(
+      x - rx * l, TY[i] - 0.16, z - rz * l,
+      x + rx * r, TY[i] - 0.16, z + rz * r,
+      x - rx * l, GROUND_Y - 0.03, z - rz * l,
+      x + rx * r, GROUND_Y - 0.03, z + rz * r
+    );
+  }
+  for (let i = 0; i < N; i++) {
+    const j = (i + 1) % N, a = i * 4, b = j * 4;
+    idx.push(a, b, a + 1, a + 1, b, b + 1);
+    idx.push(a, a + 2, b, a + 2, b + 2, b);
+    idx.push(a + 1, b + 1, a + 3, a + 3, b + 1, b + 3);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  const mat = new THREE.MeshLambertMaterial({ color: 0x43484f, side: THREE.DoubleSide });
+  scene.add(new THREE.Mesh(geo, mat));
 }
 
 function buildAds() {
@@ -3737,6 +3831,7 @@ function buildPitFoundation() {
 function buildExtras() {
   const stage = (name, fn) => { try { fn(); } catch (e) { console.warn("Décor ignoré (" + name + ") :", e); } };
   stage("bandes de tonte", buildMowing);
+  stage("sous-face anti-trous", buildTrackUnderside);
   stage("panneaux", buildAds);
   stage("projecteurs", buildLamps);
   stage("tunnel", buildTunnel);
