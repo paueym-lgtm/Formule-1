@@ -1259,7 +1259,6 @@ function autopilotControl(c) {
   const leftSafe = -WDL[here.i] + 3.5;
   const rightSafe = WDR[here.i] - 3.5;
 
-  // Point cible proche dans les virages : ne coupe pas les rails ni le sable.
   const look = Math.max(2, Math.round((6 + v * 0.18) / ds));
   const i = (here.i + look) % N;
   const lane = clamp(RLO[i], -TRACK_W / 2 + 3.8, TRACK_W / 2 - 3.8);
@@ -1267,13 +1266,11 @@ function autopilotControl(c) {
   const tz = TZ[i] + RGZ[i] * lane;
   const headingError = wrap(Math.atan2(tz - c.z, tx - c.x) - c.a);
 
-  // Correction forte vers l'intérieur dès que la voiture approche une limite.
   let safety = 0;
   if (side < leftSafe) safety = clamp((leftSafe - side) * 0.42, 0, 1);
   if (side > rightSafe) safety = clamp((rightSafe - side) * 0.42, -1, 0);
   const steer = clamp(headingError * 2.75 + safety, -1, 1);
 
-  // Reste rapide sur l'asphalte, mais ralentit fermement pendant une récupération.
   const j = (here.i + Math.max(3, Math.round((7 + v * 0.18) / ds))) % N;
   const inside = side > leftSafe - 0.7 && side < rightSafe + 0.7;
   const target = inside ? Math.max(58, VP[j] * 1.65) : 20;
