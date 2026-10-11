@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Grand Prix 3D</title>
-<link rel="icon" href="logo1.png?v=2">
+<link rel="icon" type="image/png" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600&family=Barlow+Condensed:ital,wght@1,600;1,800&display=swap" rel="stylesheet">
@@ -204,6 +204,7 @@
       <option value="singapore">Singapour — Marina Bay</option>
       <option value="japan">Japon — Suzuka</option>
       <option value="uk">Royaume-Uni — Silverstone</option>
+      <option value="malaysia">Malaisie — Sepang</option>
     </select>
 
     <div class="two">
@@ -424,11 +425,24 @@ const TRACKS = {
     // ~204 m, sommet ~207 m vers Abbey/Farm et vers Luffield/Woodcote, point bas ~196 m vers
     // The Loop/Aintree, Hangar straight ~201 m, Stowe/Vale/Club ~203-206 m.
     elev: [[0.0,203.9],[0.025,204.8],[0.05,205.4],[0.075,206.4],[0.1,207.3],[0.125,207.0],[0.15,205.8],[0.175,206.3],[0.2,204.9],[0.225,203.1],[0.25,202.5],[0.275,201.9],[0.3,200.9],[0.325,199.8],[0.35,200.1],[0.375,202.6],[0.4,202.8],[0.425,198.5],[0.45,198.0],[0.475,197.9],[0.5,196.7],[0.525,196.5],[0.55,198.1],[0.575,200.1],[0.6,201.7],[0.625,203.6],[0.65,205.1],[0.675,205.6],[0.7,206.3],[0.725,206.4],[0.75,206.4],[0.775,206.4],[0.8,206.4],[0.825,205.3],[0.85,203.6],[0.875,203.5],[0.9,203.4],[0.925,202.1],[0.95,202.4],[0.975,202.7],[1.0,203.9]],
-    // Stands réels : côté GAUCHE de la ligne droite Hamilton (le pit building de Silverstone
-    // est bien à gauche en regardant vers Abbey). Entrée ~95 m AVANT la ligne (juste après la
-    // sortie du virage 18 Club), sortie ~250 m APRÈS la ligne (avant l'entrée du virage 1 Abbey).
-    pit: { side: -1, entry: -200, exit: 250, ramp: 80, rampOut: 76 },   // mêmes stands que les autres circuits (voie assez longue pour tous les garages)
+    // Stands réels (plan Silverstone Circuit 2020) : côté DROIT de la ligne droite Hamilton (intérieur du tracé, côté infield) ;
+    // la voie d'entrée coupe l'intérieur du virage 18 (Club) et la voie longe la Hamilton jusqu'à la sortie d'Abbey.
+    // Dans le jeu, la voie reste sur la partie rectiligne : entrée ~150 m avant la ligne, sortie ~400 m après (début d'Abbey).
+    pit: { side: 1, entry: -150, exit: 400, ramp: 90, rampOut: 80 },
     ctrl: [[0.0,-0.0],[387.3,0.6],[774.6,1.2],[1161.9,1.8],[1276.6,27.2],[1366.5,114.7],[1513.3,370.8],[1592.1,492.5],[1713.8,600.4],[2026.0,685.1],[2338.3,769.8],[2407.5,798.2],[2441.4,853.4],[2427.2,915.5],[2246.3,1178.8],[2268.3,1248.0],[2348.7,1269.4],[2474.5,1233.7],[2617.5,1179.8],[2742.3,1105.0],[2818.3,1021.0],[2854.2,619.4],[2890.0,217.7],[2925.8,-184.0],[2961.7,-585.7],[2997.5,-987.4],[2982.2,-1093.8],[2900.4,-1203.4],[2789.5,-1239.8],[2534.4,-1103.3],[2432.4,-1090.4],[2337.1,-1157.9],[2307.9,-1274.4],[2340.3,-1361.5],[2419.2,-1415.5],[2665.0,-1464.4],[2910.8,-1513.3],[3085.7,-1498.7],[3273.2,-1451.0],[3419.2,-1360.1],[3657.4,-1106.1],[3895.5,-852.1],[4122.5,-592.7],[4349.5,-333.3],[4381.4,-191.5],[4320.5,-17.3],[4145.5,212.9],[3901.4,490.9],[3591.9,761.6],[3328.3,984.5],[3220.9,1200.9],[3137.6,1300.1],[2811.9,1409.3],[2674.0,1526.0],[2596.1,1753.5],[2503.1,1856.6],[2345.0,1882.1],[2144.2,1809.2],[1978.1,1762.6],[1579.5,1822.5],[1104.3,1889.4],[629.1,1956.3],[153.9,2023.2],[-321.3,2090.2],[-501.8,2078.6],[-616.7,2007.0],[-677.3,1895.4],[-690.7,1773.2],[-654.8,1676.9],[-529.1,1411.5],[-476.8,1210.1],[-440.4,979.4],[-364.7,603.6],[-412.3,560.5],[-569.2,517.8],[-594.3,460.5],[-579.8,347.1],[-521.2,188.9],[-423.5,51.8],[-366.5,12.9],[-243.8,-0.0]]
+  },
+  // Tracé réel du Sepang International Circuit (Malaisie, 15 virages, 5,543 km, sens horaire), ligne centrale extraite du plan fourni
+  // puis lissée et mise à l'échelle sur la longueur officielle (5 543 m). Le point 0 est la ligne de départ, au milieu de la ligne droite
+  // des stands (~920 m jusqu'au virage 1, qui est un virage à droite suivi du virage 2 à gauche en épingle).
+  malaysia: { name: "Malaisie — Sepang",
+    // Relief : 22 m de dénivelé entre le virage 3 (point bas) et le virage 11 (point haut) [Formula1.com, « Major ups and downs »] ;
+    // légère descente T1 -> T2, descente à partir du T12 (T12-T14) [analyse virage par virage de Z. Khairuddin]. Les valeurs intermédiaires sont interpolées :
+    // ce n'est pas un relevé GPS continu.
+    elev: [[0.0,7.0],[0.06,5.2],[0.1225,3.5],[0.1476,2.5],[0.1997,0.5],[0.245,3.5],[0.2897,6.0],[0.3522,8.5],[0.4022,12.0],[0.4674,13.5],[0.4862,12.5],[0.53,10.5],[0.5732,8.5],[0.5932,14.0],[0.6373,22.5],[0.699,19.5],[0.7352,12.5],[0.761,7.5],[0.85,8.0],[0.9304,9.0],[0.965,8.0],[1.0,7.0]],
+    // Stands réels (plan fourni) : côté DROIT de la ligne droite des stands (intérieur du tracé). Entrée sur la ligne droite juste après l'épingle du virage 15 (déplacée du sommet de l'épingle, où la bretelle était inutilisable),
+    // voie parallèle à la ligne droite, sortie juste avant le virage 1.
+    pit: { side: 1, entry: -300, exit: 400, ramp: 100, rampOut: 70 },
+    ctrl: [[519.4,455.8],[515.1,466.9],[510.8,478.3],[506.2,490.3],[501.5,502.4],[496.9,514.5],[492.2,526.6],[487.6,538.6],[482.9,550.7],[478.3,562.8],[473.6,574.9],[469.0,587.0],[464.4,599.1],[459.7,611.1],[455.1,623.2],[450.5,635.3],[445.8,647.4],[441.2,659.4],[436.6,671.6],[432.0,683.6],[427.6,695.2],[423.6,705.6],[419.6,716.1],[415.6,726.5],[411.7,737.0],[407.7,747.4],[403.0,759.5],[398.3,771.6],[393.7,783.6],[389.1,795.7],[384.3,807.8],[379.8,819.9],[374.8,831.8],[368.8,843.3],[361.3,854.2],[350.5,861.2],[337.3,860.9],[326.0,854.6],[320.0,843.2],[321.2,830.3],[328.0,819.1],[337.8,809.2],[346.6,798.8],[350.6,786.7],[343.6,777.3],[330.4,776.7],[317.2,778.5],[304.5,781.8],[291.7,784.7],[278.0,784.5],[265.3,781.4],[253.6,776.0],[241.9,770.3],[230.2,764.8],[218.6,759.0],[207.0,753.3],[195.5,747.3],[184.9,738.9],[175.5,728.8],[169.1,717.5],[164.9,705.2],[162.1,692.4],[160.2,679.1],[160.6,665.5],[162.7,652.3],[165.1,639.3],[167.6,626.3],[170.0,613.4],[172.5,600.4],[174.9,587.3],[176.7,574.1],[178.3,560.8],[179.9,547.4],[181.5,534.1],[182.1,520.3],[183.0,506.7],[183.1,492.7],[184.0,479.1],[184.1,465.1],[185.0,451.5],[185.0,437.5],[185.0,423.5],[185.0,409.5],[185.0,395.5],[185.8,381.8],[190.6,370.0],[202.8,366.0],[215.9,368.1],[228.7,371.1],[241.4,374.2],[254.2,377.2],[266.9,380.2],[279.6,383.3],[292.4,386.2],[305.2,389.3],[317.9,392.3],[330.7,395.3],[343.4,398.4],[356.1,401.4],[369.1,403.9],[383.1,404.0],[396.2,401.9],[408.4,397.5],[419.2,389.7],[427.8,379.3],[435.2,368.4],[442.0,357.2],[447.7,345.6],[450.8,332.9],[451.0,319.0],[450.9,305.0],[449.0,291.8],[445.7,279.2],[441.3,267.0],[438.5,254.1],[437.2,240.8],[439.3,227.7],[444.0,215.6],[451.1,204.6],[460.6,194.7],[471.5,187.2],[483.2,181.5],[495.0,176.2],[507.3,172.2],[520.1,169.2],[533.5,167.7],[546.3,165.0],[559.0,161.9],[571.6,158.3],[584.0,154.4],[596.5,150.9],[609.0,147.3],[621.6,143.8],[634.1,140.3],[646.6,136.7],[659.1,133.1],[671.7,129.6],[684.3,130.3],[693.4,139.9],[701.6,150.5],[709.9,161.1],[718.2,171.7],[726.0,182.4],[725.7,194.8],[721.6,207.1],[717.3,219.3],[713.1,231.6],[709.0,243.9],[704.6,256.1],[700.5,268.4],[696.4,280.7],[692.0,292.9],[687.8,305.1],[683.4,317.3],[679.0,329.5],[674.6,341.7],[670.1,353.8],[665.8,366.0],[661.4,378.2],[656.9,390.4],[652.5,402.5],[648.1,414.7],[643.8,427.0],[639.6,439.2],[635.2,451.4],[630.9,463.6],[626.7,475.9],[623.7,488.7],[626.1,500.8],[638.0,500.9],[649.5,494.7],[660.8,488.4],[672.2,482.0],[683.6,475.7],[695.5,470.7],[708.6,468.6],[721.7,470.1],[734.2,473.8],[745.9,479.2],[757.4,485.3],[768.3,492.7],[778.3,502.4],[786.8,512.9],[794.4,523.7],[801.2,534.9],[807.8,546.2],[813.5,557.8],[813.0,570.3],[803.8,579.6],[792.3,585.6],[780.5,591.0],[768.8,596.5],[757.1,602.2],[745.4,607.6],[733.7,613.1],[722.0,618.7],[710.2,624.1],[698.5,629.8],[686.8,635.3],[675.1,640.7],[663.4,646.3],[651.7,651.9],[639.9,657.3],[628.4,663.4],[618.5,672.8],[611.4,683.8],[607.1,696.1],[606.0,709.6],[606.0,723.6],[607.0,737.2],[607.0,751.2],[606.8,765.1],[603.8,777.9],[599.5,790.1],[593.4,801.6],[586.4,812.7],[578.2,823.3],[568.7,833.3],[558.3,842.1],[547.2,849.1],[535.1,853.8],[521.9,855.8],[508.3,855.5],[496.4,850.2],[489.6,839.1],[489.1,826.1],[491.6,813.1],[495.1,800.6],[498.7,788.1],[502.1,775.5],[505.7,763.0],[509.3,750.4],[512.7,737.9],[516.3,725.4],[519.8,712.8],[523.4,700.3],[526.9,687.7],[530.5,675.2],[534.1,662.7],[537.7,650.2],[541.2,637.7],[544.8,625.1],[548.4,612.6],[552.0,600.1],[555.5,587.6],[559.1,575.1],[562.7,562.5],[566.3,550.0],[569.9,537.5],[573.4,524.9],[576.8,512.4],[580.2,499.8],[583.7,487.2],[587.1,474.6],[590.6,462.0],[594.0,449.5],[597.4,436.9],[600.9,424.3],[604.4,411.7],[607.8,399.2],[611.3,386.6],[614.8,374.1],[618.4,361.6],[621.9,349.0],[625.4,336.5],[628.9,323.9],[632.5,311.4],[636.0,298.9],[639.6,286.3],[643.1,273.8],[645.0,260.5],[644.8,246.6],[640.3,234.6],[629.0,228.3],[616.6,230.0],[606.0,237.6],[600.2,249.1],[595.3,261.1],[590.4,273.1],[585.4,285.0],[580.5,297.0],[575.8,309.0],[571.3,321.2],[566.6,333.2],[561.9,345.3],[557.3,357.4],[552.6,369.5],[548.0,381.5],[543.4,393.6],[538.7,405.7],[534.2,417.7],[529.9,428.8],[525.6,439.9],[521.3,451.0]]
   },
 };
 let trackKey = "monaco";
@@ -538,8 +552,8 @@ function computeWallLimits() {
 }
 function buildTrack() {
   configurePit();
-  const dense = [], n = CTRL.length, spaCurve = trackKey === "spa", singaporeCurve = trackKey === "singapore", japanCurve = trackKey === "japan", silverstoneCurve = trackKey === "uk";
-  const samplesPerSegment = spaCurve ? 64 : silverstoneCurve ? 24 : singaporeCurve ? 10 : japanCurve ? 24 : 40;
+  const dense = [], n = CTRL.length, spaCurve = trackKey === "spa", singaporeCurve = trackKey === "singapore", japanCurve = trackKey === "japan", silverstoneCurve = trackKey === "uk", malaysiaCurve = trackKey === "malaysia";
+  const samplesPerSegment = spaCurve ? 64 : malaysiaCurve ? 24 : silverstoneCurve ? 24 : singaporeCurve ? 10 : japanCurve ? 24 : 40;
   // Spa possède des points de relevé à intervalles irréguliers. Une Catmull-Rom
   // uniforme peut alors dépasser les points et créer de petites bosses dans les
   // courbes. On utilise ici sa variante centripète (alpha = 0.5), plus stable.
@@ -549,7 +563,7 @@ function buildTrack() {
   };
   for (let i = 0; i < n; i++) {
     const p0 = CTRL[(i - 1 + n) % n], p1 = CTRL[i], p2 = CTRL[(i + 1) % n], p3 = CTRL[(i + 2) % n];
-    if (spaCurve || singaporeCurve || japanCurve || silverstoneCurve) {
+    if (spaCurve || singaporeCurve || japanCurve || silverstoneCurve || malaysiaCurve) {
       const knot = (a, b) => Math.sqrt(Math.max(1e-8, Math.hypot(b[0] - a[0], b[1] - a[1])));
       const t0 = 0, t1 = t0 + knot(p0, p1), t2 = t1 + knot(p1, p2), t3 = t2 + knot(p2, p3);
       for (let j = 0; j < samplesPerSegment; j++) {
@@ -575,8 +589,8 @@ function buildTrack() {
   }
   // La carte FIA donne une longueur de ligne centrale de 7 004 m. On conserve
   // exactement cette longueur après le changement d'interpolation.
-  if ((spaCurve || singaporeCurve || japanCurve || silverstoneCurve) && cum[m] > 0) {
-    const targetLen = spaCurve ? 7004 : japanCurve ? 5815 : silverstoneCurve ? 5891 : 5063;
+  if ((spaCurve || singaporeCurve || japanCurve || silverstoneCurve || malaysiaCurve) && cum[m] > 0) {
+    const targetLen = spaCurve ? 7004 : japanCurve ? 5815 : silverstoneCurve ? 5891 : malaysiaCurve ? 5543 : 5063;
     const fit = targetLen / cum[m];
     for (const q of dense) { q[0] *= fit; q[1] *= fit; }
     for (let i = 0; i <= m; i++) cum[i] *= fit;
