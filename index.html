@@ -203,6 +203,7 @@
       <option value="spa">Belgique — Spa-Francorchamps</option>
       <option value="singapore">Singapour — Marina Bay</option>
       <option value="japan">Japon — Suzuka</option>
+      <option value="uk">Royaume-Uni — Silverstone</option>
     </select>
 
     <div class="two">
@@ -406,6 +407,29 @@ const TRACKS = {
     pit: { side: 1, entry: -200, exit: 250, ramp: 80, rampOut: 76 },
     ctrl: [[-1043.2,-2086.3],[-1141.0,-2347.1],[-1271.4,-2607.9],[-1369.2,-2868.7],[-1401.8,-3031.7],[-1304.0,-3162.1],[-1141.0,-3162.1],[-945.4,-3064.3],[-717.2,-2901.3],[-521.6,-2738.3],[-326.0,-2575.3],[-130.4,-2412.3],[65.2,-2249.3],[260.8,-2053.7],[456.4,-1825.5],[619.4,-1564.7],[717.2,-1304.0],[815.0,-1043.2],[978.0,-717.2],[1141.0,-326.0],[1304.0,65.2],[1499.6,456.4],[1695.1,847.6],[1890.7,1238.8],[2021.1,1564.7],[1988.5,1760.3],[1825.5,1923.3],[1662.5,2021.1],[1532.1,2151.5],[1564.7,2314.5],[1695.1,2444.9],[1760.3,2607.9],[1695.1,2770.9],[1532.1,2901.3],[1336.6,3031.7],[1108.4,3162.1],[880.2,3259.9],[717.2,3259.9],[586.8,3162.1],[619.4,3031.7],[782.4,2901.3],[978.0,2738.3],[1141.0,2542.7],[1206.2,2314.5],[1141.0,2086.3],[1043.2,1825.5],[945.4,1597.3],[815.0,1401.8],[652.0,1271.4],[456.4,1238.8],[260.8,1304.0],[97.8,1467.0],[-32.6,1695.1],[-163.0,1955.9],[-293.4,2216.7],[-456.4,2347.1],[-619.4,2347.1],[-782.4,2249.3],[-912.8,2118.9],[-1010.6,2281.9],[-1043.2,2510.1],[-1108.4,2738.3],[-1238.8,2933.9],[-1401.8,2999.1],[-1564.7,2933.9],[-1727.7,2803.5],[-1890.7,2607.9],[-1969.0,2412.3],[-1923.3,2184.1],[-1792.9,1955.9],[-1629.9,1760.3],[-1434.4,1597.3],[-1206.2,1401.8],[-978.0,1206.2],[-749.8,1010.6],[-586.8,782.4],[-456.4,554.2],[-391.2,326.0],[-358.6,65.2],[-391.2,-195.6],[-456.4,-456.4],[-521.6,-717.2],[-554.2,-978.0],[-554.2,-1173.6],[-521.6,-1369.2],[-521.6,-1564.7],[-652.0,-1727.7],[-815.0,-1858.1],[-945.4,-1988.5],[-1043.2,-2086.3]]
   },
+  // Tracé réel du Circuit de Silverstone (Royaume-Uni, Northamptonshire : configuration Arena GP depuis 2011,
+  // 18 virages, 5,891 km, sens horaire). Relevé depuis le GeoJSON communautaire bacinger/f1-circuits (OSM)
+  // [https://github.com/bacinger/f1-circuits — gb-1948.geojson], recalé sur la longueur FIA officielle
+  // (5,891 km [https://www.fia.com/sites/default/files/decision-document/2026_silverstone_event_-_circuit_map_-_silverstone_2026_0.pdf])
+  // et ancré sur la vraie ligne de départ (validée par alignement de la télémétrie F1 FastF1 2023 Q,
+  // [https://github.com/theOehrly/FastF1] : ligne de chronométrage à 2 821 m avant la ligne de départ).
+  // Ligne de départ = 52.0787° N, 1.0154° W [https://www.speedsport-magazine.com/60462.html].
+  // Le point 0 est la ligne de départ, alignée sur l'axe X, environ 590 m avant le virage 1 (Abbey).
+  uk: { name: "Royaume-Uni — Silverstone",
+    // Relief réel (11,3 m de dénivelé, altitudes absolues 196-207,5 m) relevé sur la télémétrie
+    // GPS officielle F1 (tour le plus rapide de VER, qualifications 2023 Silverstone, FastF1),
+    // puis RECALÉ géographiquement sur notre tracé : la télémétrie F1 démarre à la ligne de
+    // chronométrage (sortie Village/The Loop), pas à la ligne de départ officielle, d'où un
+    // décalage de 2 821 m (48 % du tour) corrigé ici. Ligne de départ (Hamilton straight) à
+    // ~204 m, sommet ~207 m vers Abbey/Farm et vers Luffield/Woodcote, point bas ~196 m vers
+    // The Loop/Aintree, Hangar straight ~201 m, Stowe/Vale/Club ~203-206 m.
+    elev: [[0.0,203.9],[0.025,204.8],[0.05,205.4],[0.075,206.4],[0.1,207.3],[0.125,207.0],[0.15,205.8],[0.175,206.3],[0.2,204.9],[0.225,203.1],[0.25,202.5],[0.275,201.9],[0.3,200.9],[0.325,199.8],[0.35,200.1],[0.375,202.6],[0.4,202.8],[0.425,198.5],[0.45,198.0],[0.475,197.9],[0.5,196.7],[0.525,196.5],[0.55,198.1],[0.575,200.1],[0.6,201.7],[0.625,203.6],[0.65,205.1],[0.675,205.6],[0.7,206.3],[0.725,206.4],[0.75,206.4],[0.775,206.4],[0.8,206.4],[0.825,205.3],[0.85,203.6],[0.875,203.5],[0.9,203.4],[0.925,202.1],[0.95,202.4],[0.975,202.7],[1.0,203.9]],
+    // Stands réels : côté GAUCHE de la ligne droite Hamilton (le pit building de Silverstone
+    // est bien à gauche en regardant vers Abbey). Entrée ~95 m AVANT la ligne (juste après la
+    // sortie du virage 18 Club), sortie ~250 m APRÈS la ligne (avant l'entrée du virage 1 Abbey).
+    pit: { side: -1, entry: -200, exit: 250, ramp: 80, rampOut: 76 },   // mêmes stands que les autres circuits (voie assez longue pour tous les garages)
+    ctrl: [[0.0,-0.0],[387.3,0.6],[774.6,1.2],[1161.9,1.8],[1276.6,27.2],[1366.5,114.7],[1513.3,370.8],[1592.1,492.5],[1713.8,600.4],[2026.0,685.1],[2338.3,769.8],[2407.5,798.2],[2441.4,853.4],[2427.2,915.5],[2246.3,1178.8],[2268.3,1248.0],[2348.7,1269.4],[2474.5,1233.7],[2617.5,1179.8],[2742.3,1105.0],[2818.3,1021.0],[2854.2,619.4],[2890.0,217.7],[2925.8,-184.0],[2961.7,-585.7],[2997.5,-987.4],[2982.2,-1093.8],[2900.4,-1203.4],[2789.5,-1239.8],[2534.4,-1103.3],[2432.4,-1090.4],[2337.1,-1157.9],[2307.9,-1274.4],[2340.3,-1361.5],[2419.2,-1415.5],[2665.0,-1464.4],[2910.8,-1513.3],[3085.7,-1498.7],[3273.2,-1451.0],[3419.2,-1360.1],[3657.4,-1106.1],[3895.5,-852.1],[4122.5,-592.7],[4349.5,-333.3],[4381.4,-191.5],[4320.5,-17.3],[4145.5,212.9],[3901.4,490.9],[3591.9,761.6],[3328.3,984.5],[3220.9,1200.9],[3137.6,1300.1],[2811.9,1409.3],[2674.0,1526.0],[2596.1,1753.5],[2503.1,1856.6],[2345.0,1882.1],[2144.2,1809.2],[1978.1,1762.6],[1579.5,1822.5],[1104.3,1889.4],[629.1,1956.3],[153.9,2023.2],[-321.3,2090.2],[-501.8,2078.6],[-616.7,2007.0],[-677.3,1895.4],[-690.7,1773.2],[-654.8,1676.9],[-529.1,1411.5],[-476.8,1210.1],[-440.4,979.4],[-364.7,603.6],[-412.3,560.5],[-569.2,517.8],[-594.3,460.5],[-579.8,347.1],[-521.2,188.9],[-423.5,51.8],[-366.5,12.9],[-243.8,-0.0]]
+  },
 };
 let trackKey = "monaco";
 let CTRL = TRACKS.monaco.ctrl.map(p => [p[0] * SC, p[1] * SC]);
@@ -514,8 +538,8 @@ function computeWallLimits() {
 }
 function buildTrack() {
   configurePit();
-  const dense = [], n = CTRL.length, spaCurve = trackKey === "spa", singaporeCurve = trackKey === "singapore", japanCurve = trackKey === "japan";
-  const samplesPerSegment = spaCurve ? 64 : singaporeCurve ? 10 : japanCurve ? 24 : 40;
+  const dense = [], n = CTRL.length, spaCurve = trackKey === "spa", singaporeCurve = trackKey === "singapore", japanCurve = trackKey === "japan", silverstoneCurve = trackKey === "uk";
+  const samplesPerSegment = spaCurve ? 64 : silverstoneCurve ? 24 : singaporeCurve ? 10 : japanCurve ? 24 : 40;
   // Spa possède des points de relevé à intervalles irréguliers. Une Catmull-Rom
   // uniforme peut alors dépasser les points et créer de petites bosses dans les
   // courbes. On utilise ici sa variante centripète (alpha = 0.5), plus stable.
@@ -525,7 +549,7 @@ function buildTrack() {
   };
   for (let i = 0; i < n; i++) {
     const p0 = CTRL[(i - 1 + n) % n], p1 = CTRL[i], p2 = CTRL[(i + 1) % n], p3 = CTRL[(i + 2) % n];
-    if (spaCurve || singaporeCurve || japanCurve) {
+    if (spaCurve || singaporeCurve || japanCurve || silverstoneCurve) {
       const knot = (a, b) => Math.sqrt(Math.max(1e-8, Math.hypot(b[0] - a[0], b[1] - a[1])));
       const t0 = 0, t1 = t0 + knot(p0, p1), t2 = t1 + knot(p1, p2), t3 = t2 + knot(p2, p3);
       for (let j = 0; j < samplesPerSegment; j++) {
@@ -551,8 +575,8 @@ function buildTrack() {
   }
   // La carte FIA donne une longueur de ligne centrale de 7 004 m. On conserve
   // exactement cette longueur après le changement d'interpolation.
-  if ((spaCurve || singaporeCurve || japanCurve) && cum[m] > 0) {
-    const targetLen = spaCurve ? 7004 : japanCurve ? 5815 : 5063;
+  if ((spaCurve || singaporeCurve || japanCurve || silverstoneCurve) && cum[m] > 0) {
+    const targetLen = spaCurve ? 7004 : japanCurve ? 5815 : silverstoneCurve ? 5891 : 5063;
     const fit = targetLen / cum[m];
     for (const q of dense) { q[0] *= fit; q[1] *= fit; }
     for (let i = 0; i <= m; i++) cum[i] *= fit;
@@ -1036,6 +1060,24 @@ function buildPitLaneRoad() {
   // Bretelles : côté piste étroit à la jonction (ne mord pas sur l'asphalte), pleine largeur côté extérieur
   addRamp(pitRamps().entry,trackElevationRel(PIT_ENTRY_REL),pitPose(0,0).y,3.2,PIT_HALF_W,PIT_SIDE);
   addRamp(pitRamps().exit,pitPose(PIT_TOTAL,0).y,trackElevationRel(PIT_EXIT_REL),PIT_HALF_W,3.2,PIT_SIDE_OUT);
+  // Assise sous les bretelles : elle comble le vide entre la bretelle et le bord de piste / le talus, pour qu'on ne voie jamais
+  // le terrain (herbe) à travers ou à côté de la fin de la voie des stands.
+  const addRampBase=(seg,y0,y1,sd)=>{
+    const pos=[],idx=[],n=48;
+    for(let k=0;k<=n;k++){
+      const u=k/n,p=hermiteAt(seg,u),gy=y0+(y1-y0)*u+.035;
+      let bi=0,bd=1e18;
+      for(let j=0;j<N;j++){const d=(p.x-TX[j])*(p.x-TX[j])+(p.z-TZ[j])*(p.z-TZ[j]);if(d<bd){bd=d;bi=j;}}
+      const lc=((p.x-TX[bi])*RGX[bi]+(p.z-TZ[bi])*RGZ[bi])*sd;   // écart latéral (côté stands > 0)
+      const a=Math.min(TRACK_W/2+1.2,lc-1), b=lc+PIT_HALF_W+2.5;
+      pos.push(p.x+RGX[bi]*sd*(a-lc),gy,p.z+RGZ[bi]*sd*(a-lc),p.x+RGX[bi]*sd*(b-lc),gy,p.z+RGZ[bi]*sd*(b-lc));
+    }
+    for(let i=0;i<n;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}
+    const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
+    scene.add(new THREE.Mesh(g,baseMat));
+  };
+  addRampBase(pitRamps().entry,trackElevationRel(PIT_ENTRY_REL),pitPose(0,0).y,PIT_SIDE);
+  addRampBase(pitRamps().exit,pitPose(PIT_TOTAL,0).y,trackElevationRel(PIT_EXIT_REL),PIT_SIDE_OUT);
   // Marquages propres : géométrie réelle, toujours alignée sur la tangente de la voie.
   // On évite les gros décals texturés qui se déformaient dans les virages.
   const whiteM=new THREE.MeshBasicMaterial({color:0xf5f5f5,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-12,polygonOffsetUnits:-12});
@@ -2012,7 +2054,7 @@ function resetMe(slot) {
   me.x = s.x; me.z = s.z; me.a = s.a; me.vx = me.vz = me.speed = me.steer = 0;
   me.idx = s.idx; me.dist = 0; me.cross = 0; me.maxCross = 0; me.progress = s.idx;
   me.lapStart = 0; me.lastLap = 0; me.best = 0; me.f = 0; me.thr = me.brk = 0; me.pitCd = 4;
-  me.tireLaps = 0; me.tireGrip = 1; me.tireBlown = 0; me.dq = 0; me.pitMode=0; me.pitProgress=0; me.pitService=0; me.pitCompleted=0; me.nextPitLap=2; me.pitDeadline=0; me.pitSlot=slot; me.pitSawLine=0; me.pitCrossFlag=0;
+  me.tireLaps = 0; me.tireGrip = 1; me.tireBlown = 0; me.dq = 0; me.pitMode=0; me.pitProgress=0; me.pitService=0; me.pitCompleted=0; me.nextPitLap=2; me.pitDeadline=0; me.pitSlot=slot; me.pitSawLine=0; me.pitCrossFlag=0; me.pitBox=Math.min(slot,Math.max(0,pitBoxCount-1)); me.pitSvcDone=0;
 }
 // Usure des pneus : au-delà de 2 tours sans passage aux stands, l'adhérence chute, puis c'est l'éclatement, puis la disqualification
 function tireSeverity(c) {
@@ -2049,6 +2091,7 @@ function updateTires(c, t) {
   }
 }
 function disqualify(t) {
+  me.pitMode=0; setPitStatus("","",false);
   me.dq = 1; me.f = raceNow(t) || 0.001;
   setPhase("finished");
   flash("DISQUALIFIÉ — pneus non changés dans le délai obligatoire", 2600);
@@ -2107,6 +2150,7 @@ function onLap(t) {
   else if (me.cross === laps) { flash("Dernier tour", 1500); sfxLastLap(); }
 }
 function finish(t) {
+  if(me.pitMode>=4){const i=me.idx;me.x=TX[i]+RGX[i]*RLO[i];me.z=TZ[i]+RGZ[i]*RLO[i];me.a=TA[i];me.vx=me.vz=me.speed=0;}   // fini dans la voie des stands : on replace la voiture sur la piste
   me.pitMode=0;setPitStatus("","",false);
   if(me.tireLaps>=3){disqualify(t);return;}
   me.f = raceNow(t);
@@ -2120,6 +2164,7 @@ function respawn() {
   if (phase !== "race" && phase !== "finished") return;
   me.x = TX[me.idx]; me.z = TZ[me.idx]; me.a = TA[me.idx];
   me.vx = me.vz = me.speed = me.steer = 0; me.dist = 0;
+  if (me.pitMode) { me.pitMode = 0; me.pitCrewSpawned = 0; setPitStatus("", "", false); }   // R depuis les stands : retour sur la piste
 }
 function botSkill(b) {
   if (b.f) return 0.35;
@@ -2175,18 +2220,126 @@ function stepPlayerPit(h){
    if(ev==="done"){me.pitMode=0;setPitStatus("","",false);}
  }
 }
+/* ---------------------------------------------------------------------
+   STANDS EN CONDUITE MANUELLE (joueur)
+   Plus de pit automatique : on prend soi-même la bretelle d'entrée, on roule dans la voie des stands
+   (limiteur de vitesse), on se gare dans SON garage, on attend le changement de pneus, puis on ressort
+   et on rejoint la piste par la bretelle de sortie. Les bots, eux, gardent leur trajet automatique.
+   pitMode : 4 = conduite manuelle dans les stands, 5 = arrêt au stand (pneus en cours de changement)
+   --------------------------------------------------------------------- */
+const PIT_LIMIT = 22;              // 80 km/h dans la voie des stands
+const PIT_RAMP_W = 3.6, PIT_LAT_MIN = -3.9, PIT_APRON = 6.2, PIT_BACK = 22.6, PIT_BOX_HW = 3.5;
+let pitCor = null;
+function pitCorridor() {            // ligne médiane des stands : bretelle d'entrée (type 1), voie (2), bretelle de sortie (3)
+  ensurePitPath();
+  if (pitCor && pitCor.path === pitPath && pitCor.n === pitBoxCount) return pitCor;
+  const g = pitGeo(), S = [];
+  const seg = (sg, type, y0, y1) => { for (let k = 0; k <= 48; k++) { const u = k / 48, q = hermiteAt(sg, u); S.push({ x: q.x, z: q.z, a: q.a, y: y0 + (y1 - y0) * u, type, u, s: 0 }); } };
+  seg(g.entry, 1, trackElevationRel(PIT_ENTRY_REL), pitPose(0, 0).y);
+  const sm = pitPath.samples;
+  for (let k = 0; k < sm.length; k += 2) {
+    const a = sm[k], b = sm[Math.min(k + 2, sm.length - 1)], c = sm[Math.max(k - 2, 0)];
+    S.push({ x: a.x, z: a.z, a: Math.atan2(b.z - c.z, b.x - c.x), y: a.y, type: 2, u: 0, s: a.s });
+  }
+  seg(g.exit, 3, pitPose(PIT_TOTAL, 0).y, trackElevationRel(PIT_EXIT_REL));
+  for (const q of S) { q.rx = -Math.sin(q.a) * PIT_SIDE; q.rz = Math.cos(q.a) * PIT_SIDE; }   // (rx,rz) : vers les garages
+  return (pitCor = { path: pitPath, n: pitBoxCount, S });
+}
+function pitNearestSample(S, x, z, from, to) {
+  let bi = from, bd = 1e18;
+  for (let i = from; i < to; i++) { const d = (x - S[i].x) * (x - S[i].x) + (z - S[i].z) * (z - S[i].z); if (d < bd) { bd = d; bi = i; } }
+  return bi;
+}
+// Murs des stands : la voiture reste sur la bretelle / dans la voie, et ne peut quitter la voie que dans SON garage.
+function pitConstrain(c) {
+  const S = pitCorridor().S, sBox = PIT_SERVICE_PROGRESS + pitBoxXs(c.pitBox || 0);
+  let hit = false;
+  for (let pass = 0; pass < 8; pass++) {
+    const ca = Math.cos(c.a), sa = Math.sin(c.a);
+    let best = 0, bx = 0, bz = 0;
+    for (const fw of [0, 3.0, -2.5]) {
+      const px = c.x + ca * fw, pz = c.z + sa * fw, q = S[pitNearestSample(S, px, pz, 0, S.length)];
+      const dx = px - q.x, dz = pz - q.z, tx = Math.cos(q.a), tz = Math.sin(q.a);
+      const lon = dx * tx + dz * tz, lat = dx * q.rx + dz * q.rz;
+      let tl = lat, tn = lon;
+      if (q.type === 2) {
+        if (lat < PIT_LAT_MIN) tl = PIT_LAT_MIN;
+        else if (lat > PIT_APRON) {
+          const ds = q.s + lon - sBox, ad = Math.abs(ds);
+          if (ad > PIT_BOX_HW) { if (ad - PIT_BOX_HW < lat - PIT_APRON) tn = lon - (ds > 0 ? 1 : -1) * (ad - PIT_BOX_HW); else tl = PIT_APRON; }
+          else if (lat > PIT_BACK) tl = PIT_BACK;
+        }
+      } else { tl = clamp(lat, -PIT_RAMP_W, PIT_RAMP_W); }
+      const mx = (tn - lon) * tx + (tl - lat) * q.rx, mz = (tn - lon) * tz + (tl - lat) * q.rz, m = Math.hypot(mx, mz);
+      if (m > best) { best = m; bx = mx; bz = mz; }
+    }
+    if (best < 0.02) break;
+    c.x += bx; c.z += bz; c.vx *= 0.5; c.vz *= 0.5; hit = true;
+  }
+  const q = S[pitNearestSample(S, c.x, c.z, 0, S.length)];
+  c.pitY = q.y;
+  return hit;
+}
+function checkPitEntry() {          // la voiture quitte la piste par la bretelle d'entrée : on passe en conduite « stands »
+  if (me.pitMode || me.dq || phase !== "race") return;
+  const S = pitCorridor().S, i = pitNearestSample(S, me.x, me.z, 0, 49), q = S[i];
+  if (q.u < 0.04) return;
+  const dx = me.x - q.x, dz = me.z - q.z;
+  if (Math.abs(dx * q.rx + dz * q.rz) > PIT_RAMP_W - 0.2) return;
+  const nr = nearest(me.x, me.z, me.idx);
+  if (((me.x - TX[nr.i]) * RGX[nr.i] + (me.z - TZ[nr.i]) * RGZ[nr.i]) * PIT_SIDE < TRACK_W / 2 + KERB - 0.3) return;   // encore sur la piste
+  me.pitMode = 4; me.pitSawLine = 0; me.pitCrossFlag = 0; me.pitSvcDone = 0; me.pitService = 0; me.pitCrewSpawned = 0;
+  me.pitBox = Math.max(0, Math.min(me.pitSlot || 0, pitBoxCount - 1));
+  me.pitY = q.y;
+  flash("PIT ENTRY", 900);
+  setPitStatus("PIT LANE", "Limiteur 80 km/h — gare-toi dans ton garage", true);
+}
+function stepPlayerPitManual(h, t, thr, brk, steerIn) {
+  const S = pitCorridor().S, f = pitBoxFrame(me.pitBox), dBox = Math.hypot(me.x - f.x, me.z - f.z);
+  if (me.pitMode === 5) {           // arrêt au stand : la voiture est immobile le temps du changement de pneus
+    me.speed = 0; me.vx = me.vz = 0; me.steer = 0; me.pitService += h;
+    const co = carObjs[me.id]; if (co) co.pitT = Math.max(co.pitT || 0, PIT_STOP_DUR - me.pitService);
+    if (!me.pitCrewSpawned) { spawnPitCrew(me.x, me.z, me.a); me.pitCrewSpawned = 1; }
+    const sv = me.pitService;
+    setPitStatus("PIT-STOP", sv < .25 ? "Mécaniciens en position" : sv < .85 ? "Roues démontées • pistolets pneumatiques" : sv < 1.45 ? "Nouveaux pneus montés" : sv < 2 ? "Contrôle final • feu vert" : "Libération", true);
+    if (me.pitService >= PIT_STOP_DUR) {
+      me.tireLaps = me.pitSawLine ? 0 : -1; me.tireGrip = 1; me.tireBlown = 0; me.pitCompleted = 0; me.pitDeadline = 0;   // (-1 : la ligne sera encore passée dans la voie des stands, ce tour-là ne compte pas)
+      me.pitMode = 4; me.pitCrewSpawned = 0; me.pitSvcDone = 1; sfxPit();
+      flash("PIT-STOP TERMINÉ — pneus neufs", 1200);
+    }
+    pitTrack(me);
+    return;
+  }
+  // Conduite manuelle avec limiteur de vitesse
+  let t2 = thr, b2 = brk;
+  if (me.speed > PIT_LIMIT) { t2 = 0; b2 = Math.max(b2, clamp((me.speed - PIT_LIMIT) / 4, 0, 0.7)); }
+  stepCar(me, t2, b2, steerIn, h);
+  if (separate(me, others)) sfxBump(Math.abs(me.speed));
+  if (pitConstrain(me) && Math.abs(me.speed) > 6) { camS.shake = 1; sfxCrash(clamp(Math.abs(me.speed) / 55, .25, 1)); sparkBurst(me.x, me.z, 10); }
+  pitTrack(me);
+  // Retour sur la piste : par la bretelle de sortie (ou en ressortant par l'entrée)
+  const q = S[pitNearestSample(S, me.x, me.z, 0, S.length)];
+  if (q.type !== 2) {
+    const nr = nearest(me.x, me.z, me.idx), sd = q.type === 1 ? PIT_SIDE : PIT_SIDE_OUT;
+    if (((me.x - TX[nr.i]) * RGX[nr.i] + (me.z - TZ[nr.i]) * RGZ[nr.i]) * sd < TRACK_W / 2 + KERB - 0.8) {
+      me.pitMode = 0; me.pitCrewSpawned = 0; setPitStatus("", "", false);
+      return;
+    }
+  }
+  // Arrêt dans son garage : pit-stop
+  if (!me.pitSvcDone && dBox < 2.6 && Math.abs(me.speed) < 1.6) {
+    me.pitMode = 5; me.pitService = 0; me.pitCrewSpawned = 0; me.speed = 0; me.vx = me.vz = 0;
+    return;
+  }
+  if (me.pitSvcDone && dBox > 6) me.pitSvcDone = 0;
+  setPitStatus("PIT LANE", me.pitSvcDone ? "Pneus neufs — retourne en piste par la sortie" : dBox < 14 ? "Arrête-toi sur ta case pour le pit-stop" : "Limiteur 80 km/h — gare-toi dans ton garage", true);
+}
 function physics(h, t) {
   const racing = phase === "race" || phase === "finished";
   if (!racing) return;
   const canDrive = phase === "race";
   const steerIn = canDrive ? ((input("right") ? 1 : 0) - (input("left") ? 1 : 0)) : 0;
   let thr = canDrive && input("up") ? 1 : 0, brk = canDrive && input("down") ? 1 : 0;
-  if(canDrive&&!me.pitMode){
-  const rel=pitRelativeFromCar(me),nr=nearest(me.x,me.z,me.idx);
-  const right=((me.x-TX[nr.i])*RGX[nr.i]+(me.z-TZ[nr.i])*RGZ[nr.i])*PIT_SIDE>TRACK_W*.16;   // du côté des stands
-  const free=pitFreeEntry(),loRel=PIT_TRIG_REL-(free?90:8),hiRel=free?Math.max(PIT_TRIG_REL+8,pitFreeLimitRel()):PIT_TRIG_REL+8;   // fenêtre d'entrée élargie (jamais à travers le rail)
-  if(rel>loRel&&rel<hiRel&&right&&(steerIn*PIT_SIDE>.05||me.speed<55)) startPlayerPit(rel);
-}
   let apSteer = 0;
   if (canDrive && autopilotEnabled && !me.dq) {
     const c = autopilotControl(me);
@@ -2204,9 +2357,10 @@ function physics(h, t) {
   me.hb = (canDrive && !autopilotEnabled && !me.pitMode && !me.dq && input("hb")) ? 1 : 0;
   if (canDrive && !me.dq && !autopilotEnabled) updateTires(me, t);
   if (canDrive && autopilotEnabled) { me.tireGrip = 3.2; me.tireBlown = 0; }
-  if(canDrive&&me.pitMode)stepPlayerPit(h); else stepCar(me,thr,brk,(phase==="finished" || autopilotEnabled)?apSteer:steerIn,h);
+  if(canDrive&&me.pitMode>=4)stepPlayerPitManual(h,t,thr,brk,steerIn); else stepCar(me,thr,brk,(phase==="finished" || autopilotEnabled)?apSteer:steerIn,h);
   if(me.pitCrossFlag){me.pitCrossFlag=0;if(phase==="race")onLap(t);}   // ligne franchie dans la voie des stands = tour compté
   if(!me.pitMode){if(separate(me,others))sfxBump(Math.abs(me.speed));const r=locate(me);if(r.hit){camS.shake=1;sfxCrash(clamp(Math.abs(me.speed)/55,.25,1));sparkBurst(me.x,me.z,16);}if(r.crossed&&phase==="race")onLap(t);}
+  if(canDrive&&!me.pitMode&&!autopilotEnabled)checkPitEntry();   // entrée MANUELLE dans la voie des stands
   // Après un tête-à-queue ou un accrochage, la voiture du joueur pouvait rester coincée contre un mur
   // pour le reste de la course (les bots, eux, se replaçaient déjà automatiquement au bout de 3 s).
   // On applique maintenant la même sécurité au joueur : après 3 s quasi à l'arrêt hors pit-stop, on la
@@ -2267,7 +2421,7 @@ function toggleAutopilot() {
 addEventListener("keydown", e => {
   const tag = e.target && e.target.tagName;
   if (tag === "INPUT" || tag === "SELECT") return;
-  if ((e.key === "p" || e.key === "P") && !e.repeat) { toggleAutopilot(); e.preventDefault(); return; }
+  if ((e.key === "o" || e.key === "O") && !e.repeat) { toggleAutopilot(); e.preventDefault(); return; }
   const k = KEYMAP[e.code];
   if (k) {
     if (autopilotEnabled) { e.preventDefault(); return; }
@@ -2568,7 +2722,17 @@ function buildScene() {
   const startG = new THREE.Group(); startG.position.set(TX[0], TY[0], TZ[0]); startG.rotation.y = -TA[0];
   const startLineMat = new THREE.MeshBasicMaterial({ color: 0xf7f7f7, polygonOffset: true, polygonOffsetFactor: -8, polygonOffsetUnits: -8 });
   const line = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.05, TRACK_W - 0.6), startLineMat);
-  // (trait blanc perpendiculaire supprimé : la grille détaillée marque déjà le départ)
+  // Ligne de départ / arrivée en damier, sur tous les circuits
+  {
+    const cell=32, cols=2, rows=Math.round(TRACK_W-0.6);
+    const ct=makeTexture(cell*cols,cell*rows,(g,w,h)=>{
+      for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){g.fillStyle=(i+j)%2?"#0b0b0b":"#f7f7f7";g.fillRect(i*cell,j*cell,cell,cell);}
+    },true);
+    ct.wrapT=THREE.ClampToEdgeWrapping; ct.magFilter=THREE.NearestFilter;
+    const cm=new THREE.MeshBasicMaterial({map:ct,side:THREE.DoubleSide}); tintMats.push(cm);
+    const chk=new THREE.Mesh(new THREE.PlaneGeometry(cols*(TRACK_W-0.6)/rows,TRACK_W-0.6),cm);
+    chk.rotation.x=-Math.PI/2; chk.position.set(0,0.2,0); chk.renderOrder=5; chk.userData.noShadow=true; startG.add(chk);
+  }
 
   // La grille détaillée est construite par buildStartGrid().
   // Un seul système de marquage est utilisé afin d'éviter les doublons/z-fighting.
