@@ -974,8 +974,20 @@ function computeWallLimits() {
     for (let i = 0; i < N; i++) { let v = 1e9; for (let w = -10; w <= 10; w++) v = Math.min(v, a[(i + w + N) % N]); m[i] = v; }
     for (let i = 0; i < N; i++) { let v = 0; for (let w = -5; w <= 5; w++) v += m[(i + w + N) % N]; out[i] = Math.max(minW - 0.8, Math.min(WALL_D, v / 11)); }
   };
+  if (PIT_TIGHT) {   // passage resserré : les rails des AUTRES tronçons qui font face à la voie des stands reculent pour lui laisser la place
+    const lo = PIT_TIGHT.a - 45, hi = PIT_TIGHT.b + 45, tj = [];
+    for (let j = 0; j < N; j++) { const rj = pitRelM(j); if (rj >= lo && rj <= hi) tj.push(j); }
+    for (let i = 0; i < N; i++) {
+      const ri = pitRelM(i); if (ri > PIT_ENTRY_REL - 22 && ri < PIT_EXIT_REL + 22) continue;
+      for (const j of tj) {
+        const dx = TX[j] - TX[i], dz = TZ[j] - TZ[i], d = Math.hypot(dx, dz); if (d > 70) continue;
+        const lim = Math.max(minW - 0.8, d - pitLatLocal(pitRelM(j)) - PIT_HALF_W - 1.2), lat = dx * RGX[i] + dz * RGZ[i];
+        if (lat > 0) r[i] = Math.min(r[i], lim); else l[i] = Math.min(l[i], lim);
+      }
+    }
+  }
   smooth(r, WDR); smooth(l, WDL);
-  for (let i = 0; i < N; i++) { const r = pitRelM(i); if (r > PIT_ENTRY_REL - 22 && r < PIT_EXIT_REL + 22) { (pitSideAt(r) > 0 ? WDR : WDL)[i] = WALL_D; if (PIT_CROSS && r > PIT_CROSS.c0 - 30 && r < PIT_CROSS.c1 + 30) { WDR[i] = WALL_D; WDL[i] = WALL_D; } } }   // côté stands : rail à distance normale
+  for (let i = 0; i < N; i++) { const r = pitRelM(i); if (r > PIT_ENTRY_REL - 22 && r < PIT_EXIT_REL + 22) { (pitSideAt(r) > 0 ? WDR : WDL)[i] = WALL_D - (PIT_LAT - pitLatLocal(r)); if (PIT_CROSS && r > PIT_CROSS.c0 - 30 && r < PIT_CROSS.c1 + 30) { WDR[i] = WALL_D; WDL[i] = WALL_D; } } }   // côté stands : rail à distance normale
 }
 function buildTrack() {
   TRACKS[trackKey]._fit = 1;
@@ -1109,6 +1121,16 @@ function configurePit() {
   PIT_LAT = WALL_D + (t ? 8.6 : 5.5);      // à Yas Marina, 3 m de plus entre le rail de la piste et le mur du tunnel
   GARAGE_LAT = PIT_LAT + 15.6; WALL_D2 = PIT_LAT + 9;
   PIT_TRIG_REL = PIT_ENTRY_REL;
+  PIT_SERVICE_REL = cfg.service || 0;                                       // position des garages le long de la voie (0 = face à la ligne de départ)
+  PIT_TIGHT = cfg.tight || null;                                            // {a,b,lat} : passage resserré (autre tronçon du circuit tout proche), voie rapprochée de la piste entre a et b
+}
+let PIT_SERVICE_REL = 0, PIT_TIGHT = null;
+// Écart latéral réel de la voie à la rel donnée : PIT_LAT, sauf dans un passage resserré où elle se rapproche progressivement de la piste.
+function pitLatLocal(rel) {
+  if (!PIT_TIGHT) return PIT_LAT;
+  const F = 45, a = PIT_TIGHT.a, b = PIT_TIGHT.b;
+  const bump = ssm((rel - (a - F)) / F) * ssm((b + F - rel) / F);
+  return PIT_LAT + (Math.min(PIT_TIGHT.lat, PIT_LAT) - PIT_LAT) * bump;
 }
 // Altitude du sol de la voie : au niveau du sol du décor (un peu au-dessus, pour éviter le scintillement) pour le plat des stands
 // de Yas Marina ; dans les tunnels elle descend (ou remonte) en douceur depuis l'altitude de la piste.
@@ -1218,7 +1240,7 @@ function ensurePitPath() {
   // 1) tracé brut : le circuit décalé de PIT_LAT (+ passage sous la piste)
   const RX = [], RZ = [];
   for (let k = 0; k <= nS; k++) {
-    const rel = PIT_PATH_A + k, t = trackPoseRel(rel), n = pitNormalAt(rel), lt = PIT_LAT * pitLatAt(rel);
+    const rel = PIT_PATH_A + k, t = trackPoseRel(rel), n = pitNormalAt(rel), lt = pitLatLocal(rel) * pitLatAt(rel);
     RX.push(t.x + n.rx * lt); RZ.push(t.z + n.rz * lt);
   }
   // 2) lissage : le relevé du circuit est une polyligne (un point tous les ~7 m) ; décalé de 27 m il donne des zigzags, surtout dans les virages
@@ -1239,7 +1261,7 @@ function ensurePitPath() {
     const rel = PIT_PATH_A + k, q = { x: PX[k], z: PZ[k] };
     if (prev) total += Math.hypot(q.x - prev.x, q.z - prev.z);
     samples.push({ u: k / nS, x: q.x, z: q.z, y: pitLaneY(rel), rel, s: total });
-    if (rel === 0) s0 = total;
+    if (rel === PIT_SERVICE_REL) s0 = total;
     if (rel === PIT_LANE_A) sA = total;
     if (rel === PIT_LANE_B) sB = total;
     if (rel === PIT_TUN_MOUTH) sM = total;
