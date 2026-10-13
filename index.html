@@ -2530,7 +2530,7 @@ addEventListener("keydown", e => {
   if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
 
   // Activer/désactiver l'autopilot avec 3 H rapides
-  if (e.code === "KeyH" && !e.repeat) {
+  if (e.code === "KeyL" && !e.repeat) {
     const now = Date.now();
 
     hPresses.push(now);
@@ -2556,7 +2556,6 @@ addEventListener("keydown", e => {
     e.preventDefault();
   }
 
-  if (e.code === "KeyR") respawn();
   if (e.code === "KeyC") camS.mode = (camS.mode + 1) % 3;
   if (e.code === "KeyF" && !e.ctrlKey && !e.metaKey && typeof toggleFullscreen === "function") toggleFullscreen();
   if (e.code === "KeyM") setMuted(!muted);
