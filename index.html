@@ -2522,15 +2522,41 @@ function toggleAutopilot() {
   clearDrivingInput();
   flash(autopilotEnabled ? "AUTOPILOT ACTIVÉ" : "AUTOPILOT DÉSACTIVÉ", 1400);
 }
+
+let hPresses = [];
+
 addEventListener("keydown", e => {
   const tag = e.target && e.target.tagName;
-  if (tag === "INPUT" || tag === "SELECT") return;
-  if ((e.key === "hhh" || e.key === "HHH") && !e.repeat) { toggleAutopilot(); e.preventDefault(); return; }
-  const k = KEYMAP[e.code];
-  if (k) {
-    if (autopilotEnabled) { e.preventDefault(); return; }
-    keys[k] = true; e.preventDefault();
+  if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+
+  // Activer/désactiver l'autopilot avec 3 H rapides
+  if (e.code === "KeyH" && !e.repeat) {
+    const now = Date.now();
+
+    hPresses.push(now);
+    hPresses = hPresses.filter(t => now - t <= 600);
+
+    if (hPresses.length >= 3) {
+      hPresses = [];
+      toggleAutopilot();
+      e.preventDefault();
+      return;
+    }
   }
+
+  const k = KEYMAP[e.code];
+
+  if (k) {
+    if (autopilotEnabled) {
+      e.preventDefault();
+      return;
+    }
+
+    keys[k] = true;
+    e.preventDefault();
+  }
+});
+
   if (e.code === "KeyR") respawn();
   if (e.code === "KeyC") camS.mode = (camS.mode + 1) % 3;
   if (e.code === "KeyF" && !e.ctrlKey && !e.metaKey && typeof toggleFullscreen === "function") toggleFullscreen();
