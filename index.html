@@ -139,6 +139,348 @@
   }
   @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
 #garageLabels .garageLabel{backdrop-filter:blur(5px);box-shadow:0 8px 18px rgba(0,0,0,.35)}
+
+
+  /* Interface d'accès aux salles : une page plein écran, intégrée au décor du paddock */
+  body.menu-mode #lobby{
+    position:fixed;inset:0;z-index:80;top:0;right:auto;bottom:0;left:0;transform:none;
+    width:100%;max-width:none;max-height:100dvh;overflow-x:hidden;overflow-y:auto;
+    padding:clamp(22px,3.6vw,54px);border:0;border-radius:0;background:transparent;
+    box-shadow:none;color:#f4f5f7;display:grid;place-items:center;
+  }
+  #lobby .lobby-layout{
+    width:min(1330px,100%);margin:auto;display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(410px,.94fr);
+    gap:clamp(34px,6.2vw,92px);align-items:center;
+  }
+  #lobby .lobby-showcase{min-width:0;align-self:center;padding:0 0 3vh}
+  #catalogReturn{
+    display:inline-flex;align-items:center;gap:8px;width:auto;margin:0 0 clamp(46px,8vh,88px);padding:10px 0;
+    border:0;border-bottom:1px solid #ffffff36;background:transparent;color:#c3c8d1;
+    font:600 12px "Barlow",sans-serif;letter-spacing:.3px;transition:color .16s,border-color .16s;
+  }
+  #catalogReturn:hover{color:#fff;border-color:#ff373c}
+  #lobby .lobby-eyebrow{display:flex;align-items:center;gap:10px;color:#bdc2cb;font-size:10px;letter-spacing:2.5px;font-weight:600}
+  #lobby .lobby-eyebrow span{width:23px;height:2px;background:#ff373c;display:inline-block}
+  #lobby h1{font:800 italic clamp(74px,8.2vw,126px)/.82 "Barlow Condensed",sans-serif;letter-spacing:-1.8px;margin:24px 0 24px;color:#f5f6f8}
+  #lobby h1 span{display:block;color:#ff373c}
+  #lobby .lobby-showcase .sub{max-width:450px;margin:0;color:#d0d4dc;font-size:17px;line-height:1.45;font-weight:600}
+  #lobby .lobby-trackline{display:flex;align-items:center;gap:12px;margin-top:28px;color:#8992a1;font-size:9px;font-weight:600;letter-spacing:2px}
+  #lobby .lobby-trackline i{width:54px;height:1px;background:#ffffff2c;display:block}
+  #lobby .opts{display:grid;grid-template-columns:auto minmax(130px,1fr) 43px 43px;align-items:center;gap:9px;max-width:470px;margin:34px 0 0}
+  #lobby .lobby-option-label{margin:0;color:#8e97a6;font-size:10px;text-transform:uppercase;letter-spacing:1.2px}
+  #lobby #moodSel{width:100%;min-width:0;min-height:42px;padding:9px 10px;background:#171a20d9;color:#f1f3f6;border:1px solid #ffffff25;border-radius:2px;font:inherit;font-size:12px}
+  #lobby .lobby-form{min-width:0;width:100%;max-width:570px;justify-self:end;padding:8px 0 8px clamp(26px,3.2vw,48px);border-left:1px solid #ffffff24;position:relative}
+  #lobby #joinView,#lobby #roomView{width:100%;max-width:520px;margin:0 auto}
+  #lobby .lobby-form-heading{margin:0 0 23px}
+  #lobby .lobby-step{display:block;color:#ff555a;font-size:10px;font-weight:600;letter-spacing:2px}
+  #lobby .lobby-step i{color:#697180;font-style:normal;padding:0 4px}
+  #lobby .lobby-form-heading h2{font:700 italic clamp(32px,3.2vw,43px)/.98 "Barlow Condensed",sans-serif;letter-spacing:-.3px;color:#f4f5f7;margin:12px 0 8px}
+  #lobby .lobby-form-heading p{font-size:12px;line-height:1.45;color:#a7aebb;margin:0;max-width:370px}
+  #lobby .setup-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px;row-gap:14px}
+  #lobby .field-group{min-width:0}
+  #lobby .field-wide{grid-column:1/-1}
+  #lobby .field-hint{color:#798292;font-size:10px;font-weight:400;margin-left:5px}
+  #lobby .lobby-form label{display:block;margin:0 0 7px;color:#d1d5dc;font-size:11px;font-weight:600;letter-spacing:.45px}
+  #lobby .lobby-form input[type=text],#lobby .lobby-form input[type=number],#lobby .lobby-form select{
+    display:block;width:100%;min-width:0;min-height:43px;padding:10px 12px;border:1px solid #ffffff28;border-radius:2px;
+    background:rgba(22,25,31,.86);color:#f6f7f9;font:500 13px "Barlow",sans-serif;box-shadow:none;
+  }
+  #lobby .lobby-form input::placeholder{color:#777f8d}
+  #lobby .lobby-form input:focus,#lobby .lobby-form select:focus{outline:none;border-color:#ff373c;box-shadow:0 0 0 1px #ff373c50}
+  #lobby .swatches{min-height:38px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:3px 0 1px}
+  #lobby .lobby-form .swatch{width:30px;height:30px;flex:0 0 30px;border:2px solid #171a20;box-shadow:0 0 0 1px #ffffff52;border-radius:50%;transition:transform .14s,box-shadow .14s}
+  #lobby .lobby-form .swatch:hover{transform:translateY(-2px)}
+  #lobby .lobby-form .swatch[aria-pressed=true]{box-shadow:0 0 0 2px #ff373c,0 0 0 4px #15171c}
+  #lobby .lobby-form .row{gap:7px;min-width:0}
+  #lobby .lobby-form .row input{flex:1;width:0}
+  #lobby .btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:43px;width:100%;padding:11px 14px;margin:0;border:1px solid #ffffff2c;border-radius:2px;font:600 12px "Barlow",sans-serif;letter-spacing:.15px;transition:background .15s,border-color .15s,transform .15s}
+  #lobby .btn span[aria-hidden=true]{font-size:16px;line-height:1}
+  #lobby .btn.primary{justify-content:space-between;background:#ff373c;border-color:#ff373c;color:#fff;padding:13px 16px}
+  #lobby .btn.primary:hover{background:#e72830;border-color:#e72830}
+  #lobby .btn.ghost{background:rgba(18,20,25,.34);color:#e5e8ed}
+  #lobby .btn.ghost:hover{background:#ffffff0e;border-color:#ffffff62}
+  #lobby .btn.small{width:auto;min-width:42px;min-height:42px;padding:8px 10px}
+  #lobby .lobby-form-actions{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:9px;margin-top:22px}
+  #lobby .status{min-height:0;margin:10px 0 0;color:#ff6e72;font-size:12px;line-height:1.4}
+  #lobby .roomhead{align-items:center;margin:0 0 13px;padding:0 0 14px;border-bottom:1px solid #ffffff1c}
+  #lobby .roomhead .code{margin-top:5px;font:800 italic 42px/.95 "Barlow Condensed",sans-serif;letter-spacing:3px;color:#fff}
+  #lobby .room-code-label,#lobby .lobby-players-head{font-size:9px;font-weight:600;letter-spacing:1.8px;color:#8e97a6}
+  #lobby .lobby-players-head{display:flex;justify-content:space-between;gap:12px;margin:12px 0 4px}
+  #lobby #people{border-top:0;max-height:112px;overflow:auto;scrollbar-width:thin;scrollbar-color:#555b66 transparent}
+  #lobby #people li{padding:7px 1px;border-bottom:1px solid #ffffff13;color:#e9ecf1;font-size:12px}
+  #lobby #people .dot{width:11px;height:11px}
+  #lobby #roomView>label{margin-top:13px}
+  #lobby #roomView .two{gap:12px}
+  #lobby .note{margin:10px 0 0;color:#9ea6b4;font-size:11px;line-height:1.5}
+  #lobby #raceNote{padding-left:11px;border-left:2px solid #ff373c}
+  #lobby #startBtn{margin-top:17px}
+  #lobby #leaveBtn{margin-top:8px}
+  #lobby .lobby-controls-note{font-size:10px;color:#777f8d}
+  #lobby :focus-visible{outline:2px solid #ff373c;outline-offset:3px}
+
+  @media(max-width:900px){
+    body.menu-mode #lobby{place-items:start center;padding:24px}
+    #lobby .lobby-layout{width:min(650px,100%);grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}
+    #lobby .lobby-showcase{padding:0}
+    #catalogReturn{margin-bottom:25px}
+    #lobby h1{font-size:clamp(64px,12vw,88px);margin:17px 0}
+    #lobby .lobby-showcase .sub{font-size:15px}
+    #lobby .lobby-trackline{margin-top:16px}
+    #lobby .opts{margin-top:20px}
+    #lobby .lobby-form{max-width:none;justify-self:stretch;border-left:0;border-top:1px solid #ffffff24;padding:24px 0 0}
+    #lobby #joinView,#lobby #roomView{max-width:none}
+  }
+  @media(max-width:520px){
+    body.menu-mode #lobby{padding:17px 18px 24px}
+    #catalogReturn{font-size:11px;margin-bottom:22px}
+    #lobby .lobby-eyebrow{font-size:9px;letter-spacing:1.7px}
+    #lobby h1{font-size:66px;letter-spacing:-.8px;margin:16px 0}
+    #lobby .lobby-showcase .sub{font-size:14px}
+    #lobby .lobby-trackline{font-size:8px}
+    #lobby .opts{grid-template-columns:auto minmax(0,1fr) 40px 40px;gap:7px}
+    #lobby .lobby-option-label{font-size:9px;letter-spacing:.7px}
+    #lobby #moodSel{font-size:11px;padding:8px 6px}
+    #lobby .lobby-form{padding-top:21px}
+    #lobby .lobby-form-heading{margin-bottom:18px}
+    #lobby .lobby-form-heading h2{font-size:35px}
+    #lobby .setup-fields{grid-template-columns:minmax(0,1fr);row-gap:12px}
+    #lobby .field-wide{grid-column:auto}
+    #lobby .lobby-form-actions{grid-template-columns:minmax(0,1fr);gap:8px;margin-top:17px}
+    #lobby .lobby-form .swatch{width:28px;height:28px;flex-basis:28px}
+    #lobby .roomhead .code{font-size:38px}
+  }
+  @media(max-height:760px) and (min-width:901px){
+    body.menu-mode #lobby{padding-top:18px;padding-bottom:18px}
+    #lobby #catalogReturn{margin-bottom:32px}
+    #lobby h1{font-size:clamp(66px,7.2vw,98px);margin:16px 0}
+    #lobby .lobby-form-heading{margin-bottom:16px}
+    #lobby .setup-fields{row-gap:10px}
+    #lobby .lobby-form{padding-top:0;padding-bottom:0}
+  }
+</style>
+
+<style id="lobby-premium-redesign">
+  :root{--ui-red:#ff373c;--ui-paper:#f4f5f7;--ui-ink:#101216;--ui-muted:#a1a8b4;--ui-line:rgba(255,255,255,.12)}
+  #garageBackdrop{background-color:#0c0e12;background-position:center 52%;background-size:cover}
+  #garageBackdrop:after{background:linear-gradient(90deg,rgba(8,10,14,.78) 0%,rgba(8,10,14,.48) 47%,rgba(8,10,14,.62) 100%),linear-gradient(0deg,rgba(8,10,14,.82) 0%,rgba(8,10,14,.10) 58%,rgba(8,10,14,.28) 100%)}
+  body.menu-mode #lobby{position:fixed;inset:0;z-index:80;top:0;right:0;bottom:0;left:0;transform:none;width:100%;max-width:none;max-height:100dvh;overflow-x:hidden;overflow-y:auto;padding:clamp(22px,3.3vw,48px);border:0;border-radius:0;background:transparent;box-shadow:none;color:#f5f6f8;display:flex;align-items:center;justify-content:center}
+  #lobby .lobby-layout{width:min(1320px,100%);min-height:0;margin:auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(400px,470px);gap:clamp(38px,6.6vw,105px);align-items:center}
+  #lobby .lobby-showcase{width:100%;max-width:660px;min-width:0;align-self:center;padding:0}
+  #lobby .lobby-brand{display:flex;align-items:center;gap:10px;color:#f5f6f8;min-height:30px;letter-spacing:1.5px;font-size:12px;font-weight:700}
+  #lobby .lobby-brand svg{width:39px;height:25px;color:var(--ui-red);flex:none}
+  #lobby .lobby-brand b{color:var(--ui-red);font-weight:700}
+  #lobby .lobby-brand i{width:1px;height:17px;background:rgba(255,255,255,.24);margin:0 5px 0 8px}
+  #lobby .lobby-brand small{font-size:9px;letter-spacing:1.8px;font-weight:600;color:#969eaa}
+  #catalogReturn{display:inline-flex;align-items:center;gap:9px;width:auto;margin:29px 0 31px;padding:9px 0;border:0;border-bottom:1px solid rgba(255,255,255,.22);border-radius:0;background:transparent;color:#c8cdd5;font:600 12px "Barlow",sans-serif;letter-spacing:.1px;transition:color .18s,border-color .18s}
+  #catalogReturn span{font-size:17px;line-height:10px;color:#9ba3af}
+  #catalogReturn:hover{color:#fff;border-color:var(--ui-red)}
+  #lobby .lobby-eyebrow{display:flex;align-items:center;gap:9px;color:#aeb5c0;font-size:9px;letter-spacing:2.05px;font-weight:600}
+  #lobby .lobby-eyebrow>span{width:19px;height:2px;background:var(--ui-red);display:inline-block;flex:none}
+  #lobby h1{font:800 italic clamp(62px,6.2vw,94px)/.84 "Barlow Condensed",sans-serif;letter-spacing:-1.7px;margin:19px 0 16px;color:#f7f8fa;white-space:normal}
+  #lobby h1 span{display:block;color:var(--ui-red);margin-top:5px}
+  #lobby .lobby-intro{max-width:400px;margin:0;color:#c1c6cf;font-size:14px;line-height:1.55;font-weight:400}
+  #lobby .lobby-trackline{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:21px;color:#fff;font-size:12px;letter-spacing:0}
+  #lobby .lobby-trackline .track-label{font-size:9px;letter-spacing:1.8px;color:#858e9c;font-weight:600}
+  #lobby .lobby-trackline strong{font-size:13px;line-height:1.3;color:#f0f2f5;font-weight:600}
+  #lobby .driver-preview{width:min(100%,560px);margin-top:19px;overflow:hidden;border:1px solid rgba(255,255,255,.13);border-radius:13px;background:linear-gradient(120deg,rgba(26,29,35,.83),rgba(14,16,21,.62));box-shadow:0 18px 50px rgba(0,0,0,.18);backdrop-filter:blur(9px)}
+  #lobby .driver-preview-head{height:35px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 15px;border-bottom:1px solid rgba(255,255,255,.085);font-size:8px;font-weight:700;letter-spacing:1.7px;color:#a7aebb}
+  #lobby .preview-live{display:flex;align-items:center;gap:7px;color:#828b99;font-size:7px;letter-spacing:1.1px;font-weight:600}
+  #lobby .preview-live i{width:5px;height:5px;display:inline-block;border-radius:50%;background:var(--ui-red);box-shadow:0 0 9px rgba(255,55,60,.55)}
+  #lobby .driver-car-stage{height:118px;position:relative;display:flex;align-items:center;justify-content:center;padding:4px 18px;background:radial-gradient(ellipse at 55% 50%,rgba(255,255,255,.055),transparent 67%)}
+  #lobby .driver-car-stage:after{content:"";position:absolute;left:11%;right:11%;bottom:14px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent)}
+  #lobby .driver-car{width:100%;height:100%;max-width:480px;overflow:visible;filter:drop-shadow(0 8px 10px rgba(0,0,0,.28))}
+  #lobby .driver-preview-foot{display:grid;grid-template-columns:minmax(0,1fr) 74px auto;align-items:center;gap:17px;padding:12px 15px;border-top:1px solid rgba(255,255,255,.08);background:rgba(7,9,13,.24)}
+  #lobby .driver-preview-foot>div{display:flex;flex-direction:column;gap:4px;min-width:0}
+  #lobby .preview-caption{font-size:8px;letter-spacing:1.5px;color:#858e9b;font-weight:600}
+  #lobby #previewDriverName{color:#f3f4f6;font-size:12px;font-weight:600;letter-spacing:.1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #lobby #previewDriverNum{font:700 23px/.9 "Barlow Condensed",sans-serif;color:#f6f7f8}
+  #lobby .preview-color-wrap{display:flex;align-items:center;justify-content:flex-end;gap:7px;color:#abb2bd;font-size:8px;letter-spacing:1px;font-weight:700}
+  #lobby #previewColorDot{width:9px;height:9px;border-radius:50%;background:var(--driver-color);box-shadow:0 0 0 3px rgba(255,255,255,.075);flex:none}
+  #lobby .opts{display:grid;grid-template-columns:auto minmax(140px,225px) 42px 42px;align-items:center;gap:9px;max-width:560px;margin:17px 0 0;padding:0}
+  #lobby .lobby-option-label{margin:0;color:#858e9b;font-size:8px;letter-spacing:1.5px;font-weight:700}
+  #lobby #moodSel{width:100%;min-width:0;min-height:40px;padding:9px 12px;background:rgba(14,16,21,.72);color:#e9ecf1;border:1px solid rgba(255,255,255,.16);border-radius:7px;font:500 11px "Barlow",sans-serif;outline:none}
+  #lobby #moodSel:focus{border-color:var(--ui-red)}
+  #lobby .lobby-form{width:100%;max-width:470px;min-width:0;justify-self:end;position:relative;margin:0;padding:29px 29px 24px;border:1px solid rgba(255,255,255,.13);border-top:2px solid var(--ui-red);border-radius:15px;background:linear-gradient(145deg,rgba(23,26,32,.94),rgba(14,16,21,.93));color:#f2f4f7;box-shadow:0 27px 80px rgba(0,0,0,.38);backdrop-filter:blur(18px) saturate(120%);max-height:calc(100dvh - 56px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#434954 transparent}
+  #lobby #joinView,#lobby #roomView{width:100%;max-width:none;margin:0 auto}
+  #lobby .lobby-form-heading{margin:0 0 25px}
+  #lobby .lobby-step{display:flex;align-items:center;gap:8px;color:#a3abb7;font-size:8px;letter-spacing:1.65px;font-weight:700}
+  #lobby .lobby-step i{width:6px;height:6px;border-radius:50%;background:var(--ui-red);display:inline-block;font-size:0;padding:0}
+  #lobby .lobby-step b{font-weight:500;color:#555d69}
+  #lobby .lobby-form-heading h2{font:700 italic 36px/.98 "Barlow Condensed",sans-serif;letter-spacing:-.4px;color:#f5f6f8;margin:13px 0 8px}
+  #lobby .lobby-form-heading p{font-size:11px;line-height:1.55;color:#9ca5b2;margin:0;max-width:330px}
+  #lobby .setup-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:13px;row-gap:17px}
+  #lobby .field-group{min-width:0}
+  #lobby .field-wide{grid-column:1/-1}
+  #lobby .field-hint{color:#78818e;font-size:9px;font-weight:500;margin-left:5px}
+  #lobby .lobby-form label{display:block;margin:0 0 7px;color:#c5cbd4;font-size:10px;font-weight:600;letter-spacing:.35px}
+  #lobby .lobby-form input[type=text],#lobby .lobby-form input[type=number],#lobby .lobby-form select{display:block;width:100%;min-width:0;min-height:44px;padding:11px 12px;border:1px solid rgba(255,255,255,.12);border-radius:7px;background:#171a20;color:#f4f5f7;font:500 12px "Barlow",sans-serif;box-shadow:none;transition:border-color .16s,background .16s}
+  #lobby .lobby-form input::placeholder{color:#66707e}
+  #lobby .lobby-form input:focus,#lobby .lobby-form select:focus{outline:none;border-color:rgba(255,55,60,.9);background:#1b1e25;box-shadow:0 0 0 3px rgba(255,55,60,.09)}
+  #lobby .swatches{min-height:31px;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:2px 1px 0}
+  #lobby .lobby-form .swatch{width:25px;height:25px;flex:0 0 25px;border:2px solid #171a20;box-shadow:0 0 0 1px rgba(255,255,255,.22);border-radius:50%;transition:transform .16s,box-shadow .16s}
+  #lobby .lobby-form .swatch:hover{transform:translateY(-2px) scale(1.04)}
+  #lobby .lobby-form .swatch[aria-pressed=true]{box-shadow:0 0 0 2px var(--ui-red),0 0 0 4px #171a20}
+  #lobby .lobby-form .row{display:flex;gap:7px;min-width:0}
+  #lobby .lobby-form .row input{flex:1;width:0}
+  #lobby .lobby-form .btn{display:flex;align-items:center;justify-content:center;gap:9px;min-height:44px;width:100%;padding:11px 13px;margin:0;border:1px solid rgba(255,255,255,.14);border-radius:7px;font:600 11px "Barlow",sans-serif;letter-spacing:.1px;transition:background .16s,border-color .16s,transform .16s;white-space:normal}
+  #lobby .lobby-form .btn span[aria-hidden=true]{font-size:16px;line-height:1}
+  #lobby .lobby-form .btn.primary{justify-content:space-between;background:var(--ui-red);border-color:var(--ui-red);color:#fff;padding:13px 15px;box-shadow:0 8px 18px rgba(255,55,60,.12)}
+  #lobby .lobby-form .btn.primary:hover{background:#ed292f;border-color:#ed292f;transform:translateY(-1px)}
+  #lobby .lobby-form .btn.ghost{background:rgba(255,255,255,.025);color:#dce1e8}
+  #lobby .lobby-form .btn.ghost:hover{background:rgba(255,255,255,.065);border-color:rgba(255,255,255,.3)}
+  #lobby .lobby-form .btn.small{width:auto;min-width:42px;min-height:42px;padding:8px 10px}
+  #lobby .lobby-form-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin-top:21px}
+  #lobby .lobby-form-actions .btn.ghost{min-height:39px;border-color:transparent;background:transparent;color:#aeb6c2;font-size:10px}
+  #lobby .lobby-form-actions .btn.ghost:hover{color:#fff;border-color:rgba(255,255,255,.12)}
+  #lobby .status{min-height:0;margin:11px 0 0;color:#ff7c80;font-size:11px;line-height:1.45}
+  #lobby .roomhead{align-items:center;margin:0 0 12px;padding:0 0 14px;border-bottom:1px solid rgba(255,255,255,.1)}
+  #lobby .roomhead .code{margin-top:6px;font:800 italic 42px/.95 "Barlow Condensed",sans-serif;letter-spacing:3px;color:#fff}
+  #lobby .room-code-label,#lobby .lobby-players-head{font-size:8px;font-weight:700;letter-spacing:1.6px;color:#8d96a3}
+  #lobby .lobby-players-head{display:flex;justify-content:space-between;gap:12px;margin:12px 0 4px}
+  #lobby #people{border-top:0;max-height:114px;overflow:auto;scrollbar-width:thin;scrollbar-color:#414752 transparent}
+  #lobby #people li{padding:8px 1px;border-bottom:1px solid rgba(255,255,255,.075);color:#e9ecf1;font-size:11px}
+  #lobby #people .dot{width:10px;height:10px}
+  #lobby #roomView>label{margin-top:14px}
+  #lobby #roomView .two{gap:12px}
+  #lobby .note{margin:10px 0 0;color:#969fac;font-size:10px;line-height:1.5}
+  #lobby #raceNote{padding-left:10px;border-left:2px solid var(--ui-red)}
+  #lobby #startBtn{margin-top:17px}
+  #lobby #leaveBtn{margin-top:8px}
+  #lobby .lobby-controls-note{font-size:9px;color:#737d8b}
+  #lobby :focus-visible{outline:2px solid var(--ui-red);outline-offset:3px}
+  @media(max-width:980px){
+    body.menu-mode #lobby{align-items:flex-start;justify-content:center;padding:22px}
+    #lobby .lobby-layout{width:min(650px,100%);grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}
+    #lobby .lobby-showcase{max-width:none}
+    #catalogReturn{margin:19px 0 22px}
+    #lobby h1{font-size:clamp(60px,10vw,82px);margin:15px 0}
+    #lobby .lobby-intro{font-size:13px}
+    #lobby .driver-preview{max-width:600px}
+    #lobby .opts{margin-top:13px}
+    #lobby .lobby-form{max-width:none;justify-self:stretch;max-height:none;overflow:visible;padding:25px}
+  }
+  @media(max-width:520px){
+    body.menu-mode #lobby{padding:16px 15px 26px}
+    #lobby .lobby-layout{gap:20px}
+    #lobby .lobby-brand{font-size:11px;gap:8px}
+    #lobby .lobby-brand svg{width:34px}
+    #lobby .lobby-brand small{font-size:7px;letter-spacing:1.1px}
+    #catalogReturn{margin:17px 0 20px;font-size:11px}
+    #lobby .lobby-eyebrow{font-size:8px;letter-spacing:1.25px}
+    #lobby h1{font-size:62px;letter-spacing:-1px;margin:14px 0}
+    #lobby .lobby-intro{font-size:12px;max-width:300px}
+    #lobby .lobby-trackline{margin-top:17px}
+    #lobby .lobby-trackline strong{font-size:12px}
+    #lobby .driver-preview{margin-top:14px;border-radius:10px}
+    #lobby .driver-preview-head{height:31px;padding:0 11px;font-size:7px}
+    #lobby .preview-live{font-size:6px}
+    #lobby .driver-car-stage{height:88px;padding:3px 7px}
+    #lobby .driver-preview-foot{padding:10px 11px;gap:9px;grid-template-columns:minmax(0,1fr) 50px auto}
+    #lobby .preview-caption{font-size:7px}
+    #lobby #previewDriverName{font-size:11px}
+    #lobby #previewDriverNum{font-size:20px}
+    #lobby .preview-color-wrap{font-size:7px;gap:5px}
+    #lobby .opts{grid-template-columns:auto minmax(0,1fr) 40px;gap:7px;margin-top:12px}
+    #lobby .lobby-option-label{font-size:7px;letter-spacing:1px}
+    #lobby #moodSel{font-size:10px;min-height:38px;padding:8px}
+    #lobby .lobby-form{padding:22px 18px;border-radius:12px}
+    #lobby .lobby-form-heading{margin-bottom:19px}
+    #lobby .lobby-form-heading h2{font-size:33px}
+    #lobby .setup-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:10px;row-gap:15px}
+    #lobby .lobby-form label{font-size:9px}
+    #lobby .lobby-form input[type=text],#lobby .lobby-form input[type=number],#lobby .lobby-form select{font-size:11px;padding:10px 9px;min-height:42px}
+    #lobby .lobby-form .swatch{width:23px;height:23px;flex-basis:23px}
+    #lobby .swatches{gap:9px}
+    #lobby .lobby-form-actions{margin-top:18px}
+    #lobby .lobby-form-actions .btn.primary{font-size:11px}
+  }
+  @media(max-width:360px){
+    #lobby .setup-fields{grid-template-columns:minmax(0,1fr)}
+    #lobby .field-wide{grid-column:auto}
+    #lobby .driver-preview-head .preview-live{display:none}
+    #lobby .lobby-brand small{display:none}
+  }
+  @media(max-height:760px) and (min-width:981px){
+    body.menu-mode #lobby{padding-top:18px;padding-bottom:18px}
+    #lobby .lobby-layout{gap:38px}
+    #lobby .lobby-brand{min-height:22px}
+    #catalogReturn{margin:15px 0 19px}
+    #lobby h1{font-size:clamp(54px,5.1vw,72px);margin:12px 0}
+    #lobby .lobby-intro{font-size:12px}
+    #lobby .lobby-trackline{margin-top:14px}
+    #lobby .driver-preview{margin-top:12px}
+    #lobby .driver-car-stage{height:86px}
+    #lobby .driver-preview-foot{padding:9px 13px}
+    #lobby .opts{margin-top:12px}
+    #lobby .lobby-form{padding:23px 25px 19px}
+    #lobby .lobby-form-heading{margin-bottom:18px}
+    #lobby .lobby-form-heading h2{font-size:31px}
+    #lobby .setup-fields{row-gap:12px}
+  }
+  @media(prefers-reduced-motion:reduce){#lobby *{transition:none!important}}
+
+  /* Configuration compacte : tous les contrôles remplacent l'aperçu de la voiture. */
+  body.menu-mode #lobby{align-items:flex-start;justify-content:center;padding:clamp(18px,2.5vh,30px) clamp(18px,4vw,64px);}
+  #lobby .lobby-layout{display:block;width:min(1050px,100%);margin:auto;}
+  #lobby .lobby-showcase{width:100%;max-width:none;padding:0;}
+  #lobby .lobby-brand{margin-bottom:0;}
+  #lobby #catalogReturn{margin:15px 0 19px;}
+  #lobby .lobby-eyebrow{font-size:8px;letter-spacing:2px;}
+  #lobby h1{display:flex;align-items:baseline;gap:.18em;font-size:clamp(48px,5.2vw,70px);line-height:.92;letter-spacing:-1px;margin:12px 0 10px;}
+  #lobby h1 span{display:inline;margin:0;}
+  #lobby .lobby-intro{font-size:12px;max-width:560px;}
+  #lobby .lobby-trackline{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:9px;margin-top:14px;padding-bottom:13px;border-bottom:1px solid rgba(255,255,255,.12);}
+  #lobby .lobby-trackline .track-label{font-size:8px;}
+  #lobby .lobby-trackline strong{font-size:11px;}
+  #lobby .lobby-form{width:100%;max-width:none;justify-self:stretch;margin:17px 0 0;padding:22px clamp(17px,2.3vw,29px) 20px;border:1px solid rgba(255,255,255,.13);border-top:2px solid var(--ui-red);border-radius:12px;background:linear-gradient(135deg,rgba(22,25,31,.91),rgba(12,14,19,.88));box-shadow:0 22px 65px rgba(0,0,0,.27);backdrop-filter:blur(14px);max-height:none;overflow:visible;}
+  #lobby .lobby-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:9px;width:100%;max-width:none;margin:0 0 20px;padding:0 0 15px;border-bottom:1px solid rgba(255,255,255,.09);}
+  #lobby .lobby-toolbar .lobby-option-label{margin-right:2px;}
+  #lobby .lobby-toolbar #moodSel{width:200px;max-width:100%;flex:0 1 220px;min-height:39px;}
+  #lobby #soundBtn{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;min-width:40px;min-height:40px;padding:0;}
+  #lobby #fsBtn{display:inline-flex!important;align-items:center;justify-content:center;gap:8px;width:auto;min-width:126px;min-height:40px;padding:0 13px;border-color:rgba(255,255,255,.15);border-radius:7px;background:rgba(255,255,255,.035);font-size:10px;}
+  #lobby #fsBtn .fs-icon{font-size:17px;line-height:1;}
+  #lobby #joinView,#lobby #roomView{max-width:none;}
+  #lobby .lobby-form-heading{margin:0 0 18px;}
+  #lobby .lobby-form-heading h2{font-size:31px;margin:9px 0 6px;}
+  #lobby .lobby-form-heading p{max-width:560px;}
+  #lobby .setup-fields{grid-template-columns:minmax(180px,1fr) minmax(235px,1.25fr) minmax(88px,.48fr) minmax(155px,.88fr);column-gap:13px;row-gap:12px;}
+  #lobby .setup-fields .field-wide{grid-column:auto;}
+  #lobby .lobby-form label{font-size:10px;}
+  #lobby .lobby-form .swatches{min-height:43px;gap:8px;}
+  #lobby .lobby-form .swatch{width:22px;height:22px;flex-basis:22px;}
+  #lobby .lobby-form-actions{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:10px;margin-top:18px;}
+  #lobby .lobby-form-actions .btn{min-height:42px;}
+  #lobby .status{margin-top:8px;}
+  #fsBtnGame:not([hidden]){display:flex!important;}
+  @media(max-width:900px){
+    body.menu-mode #lobby{align-items:flex-start;justify-content:center;padding:20px 20px 28px;}
+    #lobby .lobby-layout{width:min(760px,100%);}
+    #lobby h1{font-size:clamp(49px,8vw,66px);}
+    #lobby .lobby-form{max-width:none;max-height:none;overflow:visible;padding:21px;}
+    #lobby .setup-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+    #lobby .setup-fields .field-wide{grid-column:1/-1;}
+  }
+  @media(max-width:540px){
+    body.menu-mode #lobby{padding:15px 13px 24px;}
+    #lobby .lobby-brand small{display:none;}
+    #lobby #catalogReturn{margin:14px 0 17px;}
+    #lobby h1{font-size:clamp(43px,12vw,59px);gap:.14em;}
+    #lobby .lobby-intro{font-size:12px;}
+    #lobby .lobby-trackline{align-items:flex-start;flex-direction:column;gap:5px;}
+    #lobby .lobby-form{margin-top:13px;padding:18px 15px;border-radius:10px;}
+    #lobby .lobby-toolbar{gap:8px;margin-bottom:17px;padding-bottom:13px;}
+    #lobby .lobby-toolbar .lobby-option-label{width:100%;}
+    #lobby .lobby-toolbar #moodSel{flex:1 1 150px;width:auto;}
+    #lobby #fsBtn{min-width:42px;width:42px;padding:0;}
+    #lobby #fsBtnLabel{display:none;}
+    #lobby .setup-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:10px;row-gap:13px;}
+    #lobby .setup-fields .field-wide{grid-column:1/-1;}
+    #lobby .lobby-form-actions{grid-template-columns:minmax(0,1fr);gap:8px;margin-top:17px;}
+    #lobby .lobby-form-heading h2{font-size:30px;}
+  }
+  @media(max-width:350px){#lobby .setup-fields{grid-template-columns:minmax(0,1fr);}#lobby .setup-fields .field-wide{grid-column:auto;}}
+
 </style>
 </head>
 <body class="menu-mode">
@@ -186,94 +528,134 @@
 <canvas id="gauge" hidden aria-label="Compteur de vitesse"></canvas>
 
 <!-- Accueil et salle -->
-<audio id="menuMusic" preload="auto" loop aria-label="Musique d'accueil">
-</audio>
+<audio id="menuMusic" src="audio.mp3" preload="auto" loop autoplay playsinline aria-label="Musique d'accueil"></audio>
 
-<section id="lobby" class="panel" hidden>
-  <button id="catalogReturn" type="button">← Retour aux circuits</button>
-  <h1 class="display">Grand Prix</h1>
-  <p class="sub" id="lobbyTrackName">Course de F1 en 3D, seul ou entre amis</p>
-  <div class="opts">
-    <select id="moodSel" aria-label="Ambiance de la course">
-      <option value="day">☀️ Plein jour</option>
-      <option value="sunset">🌇 Coucher de soleil</option>
-      <option value="night">🌙 Nuit</option>
-    </select>
-    <button class="btn ghost small" id="soundBtn" type="button" aria-label="Activer ou couper le son">🔊</button>
-    <button class="btn ghost small" id="fsBtn" type="button" aria-label="Plein écran" title="Plein écran">⛶</button>
-  </div>
-
-  <div id="joinView">
-    <label for="nameInput">Ton pseudo</label>
-    <input id="nameInput" type="text" maxlength="14" autocomplete="off" placeholder="Ex. Max">
-
-    <label id="colorLabel">Ta couleur</label>
-    <div class="swatches" id="swatches" role="group" aria-labelledby="colorLabel"></div>
-
-    <label for="numInput">Ton numéro (1 à 99, écrit sur la voiture)</label>
-    <input id="numInput" type="number" inputmode="numeric" min="1" max="99" step="1" placeholder="Auto" style="max-width:120px">
-
-    <label for="codeInput">Code de la salle</label>
-    <div class="row">
-      <input id="codeInput" type="text" maxlength="6" autocomplete="off" placeholder="Ex. K7QF" style="text-transform:uppercase">
-      <button class="btn ghost small" id="diceBtn" type="button" aria-label="Générer un code">🎲</button>
-    </div>
-
-    <button class="btn primary" id="joinBtn" type="button">Entrer dans la salle</button>
-    <button class="btn ghost" id="soloBtn" type="button">Jouer seul contre les bots</button>
-    <p class="status" id="joinStatus" role="status"></p>
-  </div>
-
-  <div id="roomView" hidden>
-    <div class="roomhead">
-      <div class="code display" id="roomCode"></div>
-      <button class="btn ghost small" id="copyBtn" type="button">Copier le lien</button>
-    </div>
-    <ul id="people"></ul>
-
-    <label for="trackSel">Circuit</label>
-    <select id="trackSel">
-      <option value="monaco">Monaco</option>
-      <option value="abudhabi">Abu Dhabi — Yas Marina</option>
-      <option value="montreal">Montréal — Gilles-Villeneuve</option>
-      <option value="baku">Bakou — Azerbaïdjan</option>
-      <option value="spa">Belgique — Spa-Francorchamps</option>
-      <option value="singapore">Singapour — Marina Bay</option>
-      <option value="japan">Japon — Suzuka</option>
-      <option value="uk">Royaume-Uni — Silverstone</option>
-      <option value="malaysia">Malaisie — Sepang</option>
-    </select>
-
-    <div class="two">
-      <div>
-        <label for="lapsSel">Tours</label>
-        <select id="lapsSel">
-          <option value="3">3 tours</option>
-          <option value="5">5 tours</option>
-          <option value="8">8 tours</option>
-        </select>
+<section id="lobby" class="panel" hidden aria-label="Préparation de la course">
+  <div class="lobby-layout">
+    <div class="lobby-showcase">
+      <div class="lobby-brand" aria-label="Grand Prix 3D">
+        <svg viewBox="0 0 55 34" aria-hidden="true"><path d="M1 28 19 5h32L33 28H22l13-16H24L11 28Z" fill="currentColor"/><path d="m41 22 6-8h7l-6 8z" fill="currentColor"/></svg>
+        <span>GRAND PRIX <b>3D</b></span>
+        <i aria-hidden="true"></i>
+        <small>RACING SIMULATOR</small>
       </div>
-      <div>
-        <label for="botsSel">Bots</label>
-        <select id="botsSel">
-          <option value="0">Aucun</option>
-          <option value="3">3 bots</option>
-          <option value="5" selected>5 bots</option>
-          <option value="7">7 bots</option>
+      <button id="catalogReturn" type="button"><span aria-hidden="true">←</span> Retour aux circuits</button>
+      <div class="lobby-eyebrow"><span aria-hidden="true"></span> TON PROCHAIN DÉPART COMMENCE ICI</div>
+      <h1 class="display">GRAND PRIX <span>3D</span></h1>
+      <p class="lobby-intro">Prépare ta monoplace. Retrouve tes amis. Prends le départ.</p>
+      <div class="lobby-trackline">
+        <span class="track-label">CIRCUIT SÉLECTIONNÉ</span>
+        <strong id="lobbyTrackName">Course de F1 en 3D, seul ou entre amis</strong>
+      </div>
+
+      <div class="lobby-form">
+      <div class="opts lobby-toolbar">
+        <label class="lobby-option-label" for="moodSel">AMBIANCE</label>
+        <select id="moodSel" aria-label="Ambiance de la course">
+          <option value="day">Plein jour</option>
+          <option value="sunset">Coucher de soleil</option>
+          <option value="night">Nuit</option>
         </select>
+        <button class="btn ghost small" id="soundBtn" type="button" aria-label="Activer ou couper le son" title="Son">🔊</button>
+        <button class="btn ghost small fs-action" id="fsBtn" type="button" aria-label="Activer le plein écran" title="Plein écran"><span class="fs-icon" aria-hidden="true">⛶</span><span id="fsBtnLabel">Plein écran</span></button>
+      </div>
+      <div id="joinView">
+        <div class="lobby-form-heading">
+          <span class="lobby-step"><i aria-hidden="true"></i> ÉTAPE 01 <b>/</b> TON PROFIL</span>
+          <h2>Prêt pour la grille&nbsp;?</h2>
+          <p>Personnalise ta voiture, puis crée ou rejoins une salle.</p>
+        </div>
+        <div class="setup-fields">
+          <div class="field-group field-wide">
+            <label for="nameInput">Nom du pilote</label>
+            <input id="nameInput" type="text" maxlength="14" autocomplete="off" placeholder="Ex. Max">
+          </div>
+          <div class="field-group field-wide">
+            <label id="colorLabel">Couleur de la monoplace</label>
+            <div class="swatches" id="swatches" role="group" aria-labelledby="colorLabel"></div>
+          </div>
+          <div class="field-group">
+            <label for="numInput">Numéro <span class="field-hint">01–99</span></label>
+            <input id="numInput" type="number" inputmode="numeric" min="1" max="99" step="1" placeholder="Auto">
+          </div>
+          <div class="field-group">
+            <label for="codeInput">Code de salle</label>
+            <div class="row">
+              <input id="codeInput" type="text" maxlength="6" autocomplete="off" placeholder="Ex. K7QF" style="text-transform:uppercase">
+              <button class="btn ghost small" id="diceBtn" type="button" aria-label="Générer un code" title="Générer un code">↻</button>
+            </div>
+          </div>
+        </div>
+        <div class="lobby-form-actions">
+          <button class="btn primary" id="joinBtn" type="button">Entrer dans la salle <span aria-hidden="true">↗</span></button>
+          <button class="btn ghost" id="soloBtn" type="button">Jouer seul contre les bots <span aria-hidden="true">→</span></button>
+        </div>
+        <p class="status" id="joinStatus" role="status"></p>
+      </div>
+
+      <div id="roomView" hidden>
+        <div class="lobby-form-heading">
+          <span class="lobby-step"><i aria-hidden="true"></i> ÉTAPE 02 <b>/</b> SALLE DE COURSE</span>
+          <h2>La grille est prête.</h2>
+          <p>Retrouve les pilotes, ajuste les paramètres et lance la course.</p>
+        </div>
+        <div class="roomhead">
+          <div><span class="room-code-label">CODE DE LA SALLE</span><div class="code display" id="roomCode"></div></div>
+          <button class="btn ghost small" id="copyBtn" type="button">Copier le lien</button>
+        </div>
+        <div class="lobby-players-head"><span>PILOTES CONNECTÉS</span><span>MAX. 25</span></div>
+        <ul id="people"></ul>
+
+        <label for="trackSel">Circuit</label>
+        <select id="trackSel">
+          <option value="monaco">Monaco</option>
+          <option value="abudhabi">Abu Dhabi — Yas Marina</option>
+          <option value="montreal">Montréal — Gilles-Villeneuve</option>
+          <option value="baku">Bakou — Azerbaïdjan</option>
+          <option value="spa">Belgique — Spa-Francorchamps</option>
+          <option value="singapore">Singapour — Marina Bay</option>
+          <option value="japan">Japon — Suzuka</option>
+          <option value="uk">Royaume-Uni — Silverstone</option>
+          <option value="malaysia">Malaisie — Sepang</option>
+        </select>
+
+        <div class="two">
+          <div>
+            <label for="lapsSel">Tours</label>
+            <select id="lapsSel">
+              <option value="3">3 tours</option>
+              <option value="5">5 tours</option>
+              <option value="8">8 tours</option>
+            </select>
+          </div>
+          <div>
+            <label for="botsSel">Bots</label>
+            <select id="botsSel">
+              <option value="0">Aucun</option>
+              <option value="3">3 bots</option>
+              <option value="5" selected>5 bots</option>
+              <option value="7">7 bots</option>
+            </select>
+          </div>
+        </div>
+        <label for="lvlSel">Niveau des bots</label>
+        <select id="lvlSel">
+          <option value="0.88">Normal</option>
+          <option value="0.95" selected>Fort</option>
+          <option value="1">Redoutable</option>
+        </select>
+
+        <p class="note" id="raceNote"></p>
+        <button class="btn primary" id="startBtn" type="button">Lancer la course <span aria-hidden="true">→</span></button>
+        <button class="btn ghost" id="leaveBtn" type="button">Quitter la salle</button>
+        <p class="note lobby-controls-note">Accélérer / freiner : ↑ ↓ ou Z S. Tourner : ← → ou Q D. C : caméra, R : recentrer, F : plein écran. Tape TURBO pour activer l’autopilote et OK pour l’arrêter. M : son.</p>
       </div>
     </div>
-    <label for="lvlSel">Niveau des bots</label>
-    <select id="lvlSel">
-      <option value="0.88">Normal</option>
-      <option value="0.95" selected>Fort</option>
-      <option value="1">Redoutable</option>
-    </select>
 
-    <p class="note" id="raceNote"></p>
-    <button class="btn primary" id="startBtn" type="button">Lancer la course</button>
-    <button class="btn ghost" id="leaveBtn" type="button">Quitter la salle</button>
-    <p class="note">Accélérer et freiner : ↑ ↓ ou Z S. Tourner : ← → ou Q D. C change la caméra, R te remet sur la piste, M coupe le son.</p>
+      
+    </div>
+
+    
   </div>
 </section>
 
@@ -1244,7 +1626,8 @@ buildTrack();
 
 // Trajectoire idéale : une bande élastique qui se tend entre les bords de la piste
 const RLO = new Float32Array(N);   // décalage latéral de la trajectoire idéale
-const VP = new Float32Array(N);    // vitesse cible en chaque point (m/s)
+const VP = new Float32Array(N);    // vitesse cible des bots en chaque point (m/s)
+const AP_CURVE_RADIUS = new Float32Array(N); // rayon de courbure mesuré pour l’autopilote, en mètres
 function racingLine() {
   RLO.fill(0);
   const lim = TRACK_W / 2 - 3.2;
@@ -1267,6 +1650,7 @@ function racingLine() {
     const cross = Math.abs(abx * acz - abz * acx);
     const A = Math.hypot(abx, abz), B = Math.hypot(LX[c] - LX[i], LZ[c] - LZ[i]), C = Math.hypot(acx, acz);
     const R = cross > 1e-6 ? A * B * C / (2 * cross) : 1e9;
+    AP_CURVE_RADIUS[i] = R;
     v[i] = Math.min(VMAX_BOT, Math.sqrt(0.92 * ALAT * R));
   }
   for (let pass = 0; pass < 3; pass++) {
@@ -1361,6 +1745,13 @@ function slotPose(slot) {
 // Une voiture : c.x, c.z, c.a (cap), c.vx, c.vz, c.speed, c.steer
 function stepCar(c, thr, brk, steerIn, h) {
   const off = c.dist > OFFD;
+  // Boost de course réservé au joueur lorsque l'autopilote est actif : les bots
+  // et la conduite manuelle gardent exactement la physique normale.
+  const aiBoost = c === me && autopilotEnabled;
+  const motorAcc = aiBoost ? 25 : ACC;
+  const enginePower = aiBoost ? 2500 : PWR;
+  const aeroDrag = aiBoost ? 0.00042 : DRAG;
+  const rollingDrag = aiBoost ? 0.012 : 0.03;
   const ca = Math.cos(c.a), sa = Math.sin(c.a);
   const sp = c.vx * ca + c.vz * sa, av = Math.abs(sp);
   const grip = c.tireGrip || 1;
@@ -1371,12 +1762,12 @@ function stepCar(c, thr, brk, steerIn, h) {
   const f = Math.cos(c.a), g = Math.sin(c.a), rx = -g, rz = f;
   let vf = c.vx * f + c.vz * g, vl = c.vx * rx + c.vz * rz;
   if (hb) thr *= 0.25;                                              // roues arrière bloquées : le moteur ne pousse presque plus
-  if (thr > 0) vf += Math.min(ACC, PWR / Math.max(vf, 1)) * thr * h;
+  if (thr > 0) vf += Math.min(motorAcc, enginePower / Math.max(vf, 1)) * thr * h;
   if (brk > 0) {
     if (vf > 0.5) { vf -= BRK * brk * h; if (vf < 0) vf = 0; }
     else { vf -= 8 * brk * h; if (vf < -12) vf = -12; }
   }
-  vf -= DRAG * vf * Math.abs(vf) * h + 0.03 * vf * h;
+  vf -= aeroDrag * vf * Math.abs(vf) * h + rollingDrag * vf * h;
   if (off) { vf -= vf * 0.6 * h; if (vf > 28) vf -= (vf - 28) * 2 * h; }
   if (hb && vf > 0.5) { vf -= 16 * h; if (vf < 0) vf = 0; }         // le frein à main ralentit aussi un peu
   vl *= Math.exp(-(off ? 3 : 9) * (hb ? 0.22 : 1) * h);           // adhérence latérale très réduite : la voiture glisse
@@ -1483,67 +1874,165 @@ function botControl(b, others, skill) {
   const vt = VP[j] * skill * slow, err = v - vt;
   return { thr: err < 0 ? clamp(-err / 3, 0, 1) : 0, brk: err > 0 ? clamp((err - 0.8) / 4, 0, 1) : 0, steer };
 }
-// POWERUP SECRET : autopilot ultra-cheaté, activé par la touche O
+// Autopilote de course : suivi de trajectoire, anticipation des virages et gestion du trafic.
 let autopilotEnabled = false;
-function autopilotControl(c) {
-  const ds = TRACK_LEN / N, v = Math.max(0, c.speed);
+function autopilotControl(c, traffic = others, dt = 1 / 60) {
+  const ds = TRACK_LEN / N;
+  const v = Math.max(0, Number.isFinite(c.speed) ? c.speed : Math.hypot(c.vx || 0, c.vz || 0));
+  const near = nearest(c.x, c.z, Number.isFinite(c.idx) ? c.idx : 0);
+  const at = near.i;
+  const trackSide = (c.x - TX[at]) * RGX[at] + (c.z - TZ[at]) * RGZ[at];
+  const grip = Math.max(1, Number.isFinite(c.tireGrip) ? c.tireGrip : 1.76);
 
-  // Vise suffisamment loin, mais pas assez pour couper les virages.
-  const i = (c.idx + Math.max(2, Math.round((8 + v * 0.30) / ds))) % N;
+  // Cherche la cible en mètres le long de la trajectoire, plutôt qu'en nombre fixe de points.
+  // Cela rend le pilotage régulier sur les circuits dont les segments sont plus ou moins denses.
+  const lookDistance = clamp(13 + v * 0.36, 15, 68);
+  let aim = at, traveled = 0;
+  const maxLookSteps = Math.min(Math.floor(N / 5), Math.max(4, Math.ceil(lookDistance / Math.max(0.7, ds * 0.65)) + 6));
+  for (let step = 0; step < maxLookSteps && traveled < lookDistance; step++) {
+    const next = (aim + 1) % N;
+    const ax = TX[aim] + RGX[aim] * RLO[aim], az = TZ[aim] + RGZ[aim] * RLO[aim];
+    const bx = TX[next] + RGX[next] * RLO[next], bz = TZ[next] + RGZ[next] * RLO[next];
+    traveled += Math.hypot(bx - ax, bz - az);
+    aim = next;
+  }
 
-  // Garde une marge importante avant les bords de piste.
-  const edge = 3.7;
-  const lat = clamp(
-    RLO[i],
-    -TRACK_W / 2 + edge,
-    TRACK_W / 2 - edge
-  );
+  // Limites de couloir calculées depuis les vraies limites du circuit : aucune cible ne doit
+  // demander à la voiture de couper un vibreur ou de viser derrière une barrière.
+  const laneLimitL = clamp(Math.min(TRACK_W / 2 - 2.5, (WDL[aim] || TRACK_W / 2) - 2.0), 0.8, TRACK_W / 2 - 2.0);
+  const laneLimitR = clamp(Math.min(TRACK_W / 2 - 2.5, (WDR[aim] || TRACK_W / 2) - 2.0), 0.8, TRACK_W / 2 - 2.0);
+  const baseLane = clamp(RLO[aim], -laneLimitL, laneLimitR);
 
-  const tx = TX[i] + RGX[i] * lat;
-  const tz = TZ[i] + RGZ[i] * lat;
-  const d = wrap(Math.atan2(tz - c.z, tx - c.x) - c.a);
+  // Anticipe les voitures selon leur progression sur le circuit (pas seulement selon l'angle
+  // de la voiture), puis choisit le côté qui offre le plus de place. Le décalage est lissé
+  // pour éviter les coups de volant à gauche/droite quand deux voitures se croisent à l'écran.
+  let threat = null;
+  let desiredDodge = 0;
+  for (const o of traffic || []) {
+    if (!o || o === c || o.f || o.dq || o.pitMode || !Number.isFinite(o.x) || !Number.isFinite(o.z)) continue;
+    const dx = o.x - c.x, dz = o.z - c.z;
+    const euclidean = Math.hypot(dx, dz);
+    if (euclidean > Math.max(95, v * 0.85)) continue;
+    const oi = nearest(o.x, o.z, Number.isFinite(o.idx) ? o.idx : at).i;
+    let gap = ((oi - at + N) % N) * ds;
+    if (gap > TRACK_LEN / 2) gap -= TRACK_LEN;
+    // On ignore les voitures clairement derrière ou qui ne sont pas sur le tronçon voisin.
+    if (gap < -3 || gap > Math.max(85, v * 0.9)) continue;
+    const otherSide = (o.x - TX[oi]) * RGX[oi] + (o.z - TZ[oi]) * RGZ[oi];
+    const otherSpeed = Math.max(0, Number.isFinite(o.speed) ? o.speed : Math.hypot(o.vx || 0, o.vz || 0));
+    const closing = v - otherSpeed;
+    const sameLane = Math.abs(otherSide - baseLane) < 5.3;
+    const closingSoon = closing > 2.5 && gap < Math.max(58, v * 0.82);
+    const nearby = gap < Math.max(24, v * 0.30);
+    if (!sameLane || (!closingSoon && !nearby)) continue;
+    if (!threat || gap < threat.gap) threat = { car: o, gap, side: otherSide, speed: otherSpeed, euclidean };
+  }
 
-  // Récupération vers l’intérieur lorsqu’on approche du bord.
-  const here = nearest(c.x, c.z, c.idx);
-  const side =
-    (c.x - TX[here.i]) * RGX[here.i] +
-    (c.z - TZ[here.i]) * RGZ[here.i];
+  let dodgeTarget = 0;
+  if (threat) {
+    const clearance = 4.8; // espace latéral souhaité pour dépasser proprement
+    const passRight = clamp(threat.side - clearance, -laneLimitL, laneLimitR);
+    const passLeft = clamp(threat.side + clearance, -laneLimitL, laneLimitR);
+    const roomRight = Math.abs(passRight - threat.side) >= 3.2 && passRight < baseLane - 0.2;
+    const roomLeft = Math.abs(passLeft - threat.side) >= 3.2 && passLeft > baseLane + 0.2;
+    if (roomRight || roomLeft) {
+      // Prend le côté où l'écart est le plus important ; en cas d'égalité, garde le côté
+      // qui nécessite le moins de déplacement depuis la trajectoire idéale.
+      if (roomRight && roomLeft) {
+        const rightRoom = passRight + laneLimitL;
+        const leftRoom = laneLimitR - passLeft;
+        dodgeTarget = (rightRoom > leftRoom + 0.4 || (Math.abs(rightRoom - leftRoom) <= 0.4 && Math.abs(passRight - baseLane) < Math.abs(passLeft - baseLane))) ? passRight - baseLane : passLeft - baseLane;
+      } else dodgeTarget = roomRight ? passRight - baseLane : passLeft - baseLane;
+    }
+  }
+  if (!Number.isFinite(c.apDodgeOffset)) c.apDodgeOffset = 0;
+  const dodgeRate = Math.min(1, Math.max(0, dt) * (threat ? 3.6 : 1.8));
+  c.apDodgeOffset += (dodgeTarget - c.apDodgeOffset) * dodgeRate;
+  const desiredLane = clamp(baseLane + c.apDodgeOffset, -laneLimitL, laneLimitR);
 
-  const safeSide = side > 0
-    ? WDR[here.i] - 3.0
-    : -WDL[here.i] + 3.0;
+  const tx = TX[aim] + RGX[aim] * desiredLane;
+  const tz = TZ[aim] + RGZ[aim] * desiredLane;
+  const dx = tx - c.x, dz = tz - c.z;
+  const L = Math.max(4, Math.hypot(dx, dz));
+  const alpha = wrap(Math.atan2(dz, dx) - c.a);
+  const tangentError = wrap(TA[aim] - c.a);
+  const onTrack = near.d < TRACK_W / 2 + KERB + 0.7 && (Number.isFinite(c.dist) ? c.dist : near.d) < TRACK_W / 2 + KERB + 0.7;
 
-  const recovery = Math.abs(side) > Math.abs(safeSide)
-    ? clamp((safeSide - side) * 0.34, -1, 1)
-    : 0;
+  // Pure-pursuit : calcule la courbure requise pour rejoindre la ligne visée. La commande
+  // est normalisée avec le grip réellement appliqué à la voiture, donc elle évite le sous-virage
+  // à haute vitesse et ne braque pas à fond au moindre écart.
+  const pathCurvature = 2 * Math.sin(alpha) / L;
+  const steeringDemand = pathCurvature * Math.max(v, 8) ** 2 / Math.max(20, ALAT * grip * 0.92);
+  let steer = clamp(steeringDemand + clamp(tangentError * 0.16, -0.20, 0.20) + clamp((desiredLane - trackSide) * 0.045, -0.24, 0.24), -1, 1);
 
-  const steer = clamp(d * 3.05 + recovery, -1, 1);
+  // Si la cible passe derrière la voiture ou si elle est en dehors de la piste avec le nez
+  // mal orienté, on réaligne d'abord le cap ; la poursuite pure seule peut alors choisir le
+  // mauvais sens de braquage. À l'arrêt, cela lui permet aussi de repartir dans le bon sens.
+  let recovering = false;
+  if (Math.abs(alpha) > 2.05 || (!onTrack && Math.abs(tangentError) > 1.0)) {
+    recovering = true;
+    let turnError = tangentError;
+    if (Math.abs(turnError) > 2.75) {
+      const curveSign = wrap(TA[(at + 4) % N] - TA[(at - 4 + N) % N]);
+      turnError = (Math.sign(curveSign) || Math.sign(trackSide) || 1) * Math.abs(turnError);
+    }
+    steer = clamp(turnError * 1.25 - clamp(trackSide * 0.07, -0.30, 0.30), -1, 1);
+  }
 
-  // Le boost n’est appliqué que lorsque la voiture est clairement sur la piste.
-  const j = (
-    c.idx + Math.max(3, Math.round((9 + v * 0.22) / ds))
-  ) % N;
+  // Planification de vitesse : vise très haut sur les lignes droites (jusqu'à 145 m/s),
+  // mais garde une marge réelle dans les courbes. L'ancienne version prenait 1,33× la vitesse
+  // calculée sans réserve : au moindre écart, les pneus n'avaient plus assez de grip.
+  const AP_MAX_SPEED = 145;  // m/s, soit 522 km/h dans les longues lignes droites
+  const AP_BRAKE = 34;        // décélération de planification, volontairement sous les 46 m/s² réels
+  const brakingDistance = Math.min(TRACK_LEN * 0.46, Math.max(70, v * 0.55 + (v * v) / (2 * AP_BRAKE)));
+  const samples = Math.min(Math.floor(N / 2), Math.max(4, Math.ceil(brakingDistance / ds)));
+  let targetSpeed = AP_MAX_SPEED;
+  for (let step = 0; step <= samples; step++) {
+    const k = (at + step) % N;
+    const distanceAhead = step * ds;
+    // Utilise le rayon géométrique mesuré, pas VP seul : VP est plafonné pour les bots,
+    // et ce plafond masquait les grands virages en les faisant passer pour des lignes droites.
+    const radius = Number.isFinite(AP_CURVE_RADIUS[k]) ? Math.max(1, AP_CURVE_RADIUS[k]) : 1e9;
+    const safeLateralAccel = ALAT * grip * 0.72; // réserve pour les erreurs de trajectoire et les corrections
+    const cornerSpeed = Math.min(AP_MAX_SPEED, Math.max(12, Math.sqrt(safeLateralAccel * radius)));
+    const allowedNow = Math.sqrt(cornerSpeed * cornerSpeed + 2 * AP_BRAKE * distanceAhead);
+    if (allowedNow < targetSpeed) targetSpeed = allowedNow;
+  }
 
-  const onTrack = c.dist < Math.max(
-    2,
-    Math.min(WDL[here.i], WDR[here.i]) - 2.0
-  );
+  if (!onTrack) targetSpeed = Math.min(targetSpeed, near.d > OFFD ? 25 : 48);
+  if (recovering) targetSpeed = Math.min(targetSpeed, 28);
 
-  const target = onTrack
-    ? Math.max(64, VP[j] * 1.82)
-    : 30;
+  // Si le dépassement n'est pas possible tout de suite, suit la voiture de devant à une
+  // distance calculée par freinage, au lieu de la percuter ou de zigzaguer derrière elle.
+  if (threat) {
+    const lateralSeparation = Math.abs(threat.side - desiredLane);
+    const hasClearedLane = lateralSeparation >= 3.5 && Math.abs(c.apDodgeOffset) > 1.6;
+    if (!hasClearedLane) {
+      const safeGap = 8 + Math.min(22, v * 0.13);
+      const usableGap = Math.max(0, threat.gap - safeGap);
+      const followingSpeed = Math.sqrt(threat.speed * threat.speed + 2 * 27 * usableGap);
+      targetSpeed = Math.min(targetSpeed, Math.max(10, followingSpeed));
+    }
+  }
 
-  const err = v - target;
-
-  return {
-    thr: onTrack
-      ? (err < 1 ? 1 : clamp(0.16 - err / 20, 0, 0.16))
-      : 0.18,
-    brk: onTrack
-      ? (err > 4 ? clamp((err - 4) / 9, 0, 1) : 0)
-      : 1,
-    steer
-  };
+  // Contrôle de gaz avec compensation exacte de la traînée de stepCar(). Sans cette
+  // compensation, le régulateur perdait sa vitesse de pointe ou oscillait gaz/frein.
+  const speedError = targetSpeed - v;
+  const motorAtSpeed = Math.min(25, 2500 / Math.max(v, 1));
+  const dragAtSpeed = 0.00042 * v * Math.abs(v) + 0.012 * v;
+  const throttleToHoldSpeed = clamp(dragAtSpeed / Math.max(1, motorAtSpeed), 0, 0.95);
+  let thr = 0, brk = 0;
+  if (speedError > 0.65) {
+    const gain = v > 80 ? 0.11 : 0.18;
+    thr = clamp(throttleToHoldSpeed + speedError * gain, 0.15, 1);
+  } else if (speedError >= -0.9) {
+    thr = throttleToHoldSpeed;
+  } else {
+    brk = clamp((-speedError - 0.6) / 8.2, 0, 1);
+  }
+  if (threat && threat.gap < 10) brk = Math.max(brk, 0.85);
+  if (!onTrack && near.d > OFFD + 1.5) brk = Math.max(brk, 0.18);
+  return { thr, brk, steer };
 }
 // PHYS_END
 
@@ -2450,7 +2939,7 @@ function physics(h, t) {
   let thr = canDrive && input("up") ? 1 : 0, brk = canDrive && input("down") ? 1 : 0;
   let apSteer = 0;
   if (canDrive && autopilotEnabled && !me.dq) {
-    const c = autopilotControl(me);
+    const c = autopilotControl(me, others, h);
     thr = c.thr; brk = c.brk; apSteer = c.steer;
   }
   if (phase === "finished") {
@@ -2464,7 +2953,7 @@ function physics(h, t) {
   me.thr = thr; me.brk = brk;
   me.hb = (canDrive && !autopilotEnabled && !me.pitMode && !me.dq && input("hb")) ? 1 : 0;
   if (canDrive && !me.dq && !autopilotEnabled) updateTires(me, t);
-  if (canDrive && autopilotEnabled) { me.tireGrip = 3.2; me.tireBlown = 0; }
+  if (canDrive && autopilotEnabled) { me.tireGrip = 1.76; me.tireBlown = 0; }
   if(canDrive&&me.pitMode>=4)stepPlayerPitManual(h,t,thr,brk,steerIn); else stepCar(me,thr,brk,(phase==="finished" || autopilotEnabled)?apSteer:steerIn,h);
   if(me.pitCrossFlag){me.pitCrossFlag=0;if(phase==="race")onLap(t);}   // ligne franchie dans la voie des stands = tour compté
   if(!me.pitMode){if(separate(me,others))sfxBump(Math.abs(me.speed));const r=locate(me);if(r.hit){camS.shake=1;sfxCrash(clamp(Math.abs(me.speed)/55,.25,1));sparkBurst(me.x,me.z,16);}if(r.crossed&&phase==="race")onLap(t);}
@@ -2511,51 +3000,94 @@ const keys = { up: false, down: false, left: false, right: false, hb: false };
 const touch = { up: false, down: false, left: false, right: false, hb: false };
 const KEYMAP = { ArrowUp: "up", KeyW: "up", ArrowDown: "down", KeyS: "down", ArrowLeft: "left", KeyA: "left", ArrowRight: "right", KeyD: "right", Space: "hb" };
 // KeyW/KeyA/KeyS/KeyD sont les touches physiques : ça donne ZQSD sur un clavier AZERTY.
-function toggleFullscreen() {
-  // The embedded preview owns its viewport; this optional original control is disabled.
-  return;
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+      return;
+    }
+    const root = document.documentElement;
+    const request = root.requestFullscreen || root.webkitRequestFullscreen;
+    if (!request) {
+      flash("PLEIN ÉCRAN NON DISPONIBLE", 1500);
+      return;
+    }
+    await request.call(root);
+  } catch (error) {
+    console.warn("Le navigateur a refusé le plein écran", error);
+    flash("PLEIN ÉCRAN BLOQUÉ PAR LE NAVIGATEUR", 1700);
+  }
 }
+function updateFullscreenButtons() {
+  const active = !!document.fullscreenElement;
+  const lobbyButton = $("fsBtn"), gameButton = $("fsBtnGame"), label = $("fsBtnLabel");
+  if (label) label.textContent = active ? "Quitter le plein écran" : "Plein écran";
+  [lobbyButton, gameButton].forEach(button => {
+    if (!button) return;
+    button.setAttribute("aria-pressed", String(active));
+    button.setAttribute("aria-label", active ? "Quitter le plein écran" : "Activer le plein écran");
+    button.title = active ? "Quitter le plein écran" : "Plein écran";
+  });
+}
+document.addEventListener("fullscreenchange", updateFullscreenButtons);
 let muted = false;
 function clearDrivingInput() { for (const k in keys) keys[k] = false; for (const k in touch) touch[k] = false; }
-function toggleAutopilot() {
-  autopilotEnabled = !autopilotEnabled;
+function setAutopilot(enabled) {
+  const next = !!enabled;
+  if (autopilotEnabled === next) {
+    flash(next ? "AUTOPILOT DÉJÀ ACTIF" : "AUTOPILOT DÉJÀ ARRÊTÉ", 1000);
+    return;
+  }
+  autopilotEnabled = next;
+  if (typeof me !== "undefined" && me) me.apDodgeOffset = 0;
   clearDrivingInput();
-  flash(autopilotEnabled ? "AUTOPILOT ACTIVÉ" : "AUTOPILOT DÉSACTIVÉ", 1400);
+  flash(autopilotEnabled ? "AUTOPILOT ACTIVÉ · TURBO" : "AUTOPILOT DÉSACTIVÉ", 1400);
 }
-
-let hPresses = [];
-
+// Les commandes sont tapées directement au clavier : TURBO active, OK arrête.
+// On met en attente les préfixes pour que le R de « turbo » ne réinitialise pas la voiture,
+// et que le O de « ok » ne déclenche pas une action isolée.
+let autopilotCommandBuffer = "", autopilotCommandAt = 0;
+function handleAutopilotCommandKey(e) {
+  if (e.ctrlKey || e.altKey || e.metaKey || typeof e.key !== "string" || !/^[a-z]$/i.test(e.key)) return false;
+  const now = performance.now();
+  if (now - autopilotCommandAt > 1250) autopilotCommandBuffer = "";
+  autopilotCommandAt = now;
+  const combined = (autopilotCommandBuffer + e.key.toLowerCase()).slice(-5);
+  if (combined.endsWith("turbo")) {
+    autopilotCommandBuffer = "";
+    setAutopilot(true);
+    e.preventDefault();
+    return true;
+  }
+  if (combined.endsWith("ok")) {
+    autopilotCommandBuffer = "";
+    setAutopilot(false);
+    e.preventDefault();
+    return true;
+  }
+  let suffix = "";
+  for (let len = Math.min(4, combined.length); len > 0; len--) {
+    const candidate = combined.slice(-len);
+    if (["turbo", "ok"].some(command => command.startsWith(candidate))) { suffix = candidate; break; }
+  }
+  if (suffix) {
+    autopilotCommandBuffer = suffix;
+    e.preventDefault();
+    return true;
+  }
+  autopilotCommandBuffer = "";
+  return false;
+}
 addEventListener("keydown", e => {
   const tag = e.target && e.target.tagName;
-  if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
-
-  // Activer/désactiver l'autopilot avec 3 H rapides
-  if (e.code === "Keyé" && !e.repeat) {
-    const now = Date.now();
-
-    hPresses.push(now);
-    hPresses = hPresses.filter(t => now - t <= 600);
-
-    if (hPresses.length >= 3) {
-      hPresses = [];
-      toggleAutopilot();
-      e.preventDefault();
-      return;
-    }
-  }
-
+  if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA" || e.isComposing) return;
+  if (handleAutopilotCommandKey(e)) return;
   const k = KEYMAP[e.code];
-
   if (k) {
-    if (autopilotEnabled) {
-      e.preventDefault();
-      return;
-    }
-
-    keys[k] = true;
-    e.preventDefault();
+    if (autopilotEnabled) { e.preventDefault(); return; }
+    keys[k] = true; e.preventDefault();
   }
-
+  if (e.code === "KeyR" && !autopilotEnabled) respawn();
   if (e.code === "KeyC") camS.mode = (camS.mode + 1) % 3;
   if (e.code === "KeyF" && !e.ctrlKey && !e.metaKey && typeof toggleFullscreen === "function") toggleFullscreen();
   if (e.code === "KeyM") setMuted(!muted);
@@ -5297,12 +5829,35 @@ function drawMini() {
 /* ------------------------------ Son : tout est fabriqué par le navigateur (aucun fichier à télécharger) ------------------------------ */
 let audio = null;
 let menuMusicEl = null;
-function startMenuMusic(){
+let menuMusicBlocked = false;
+let menuMusicRequest = false;
+function startMenuMusic(fromUserGesture = false){
   if(!menuMusicEl) menuMusicEl=$("menuMusic");
-  if(!menuMusicEl || muted) return;
-  menuMusicEl.volume=0.32;
-  const p=menuMusicEl.play();
-  if(p && p.catch) p.catch(()=>{}); // le navigateur peut bloquer l'autoplay avant le premier clic
+  // La musique accompagne l'accueil, le choix du circuit et la préparation de la salle,
+  // puis s'arrête dès que le compte à rebours / la course commence.
+  if(!menuMusicEl || muted || (phase !== "menu" && phase !== "lobby")) return;
+  if(!menuMusicEl.paused && !menuMusicEl.ended) return;
+  // Ne pas retenter 60 fois/s si le navigateur bloque l'autoplay avec le son.
+  // Le prochain clic / appui clavier relancera alors la lecture dans un geste utilisateur.
+  if(menuMusicBlocked && !fromUserGesture) return;
+  if(menuMusicRequest) return;
+  menuMusicEl.volume = 0.32;
+  menuMusicRequest = true;
+  let playPromise;
+  try { playPromise = menuMusicEl.play(); }
+  catch (err) { menuMusicRequest = false; menuMusicBlocked = true; return; }
+  if(playPromise && typeof playPromise.then === "function") {
+    playPromise.then(() => {
+      menuMusicRequest = false;
+      menuMusicBlocked = false;
+    }).catch(() => {
+      menuMusicRequest = false;
+      menuMusicBlocked = true;
+    });
+  } else {
+    menuMusicRequest = false;
+    menuMusicBlocked = false;
+  }
 }
 function stopMenuMusic(){
   if(!menuMusicEl) menuMusicEl=$("menuMusic");
@@ -5310,6 +5865,10 @@ function stopMenuMusic(){
   menuMusicEl.pause();
   try{menuMusicEl.currentTime=0;}catch(e){}
 }
+// Tentative d'autoplay à l'ouverture, puis reprise immédiate au premier geste utilisateur
+// si les règles du navigateur empêchent la lecture automatique avec le son.
+document.addEventListener("pointerdown", () => startMenuMusic(true), { passive: true });
+document.addEventListener("keydown", () => startMenuMusic(true));
 function noiseBuf(ac, sec, brown) {
   const n = Math.floor(ac.sampleRate * sec), b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0);
   let last = 0;
@@ -5814,6 +6373,19 @@ function readProfile() {
   try { preferenceStore.setItem("gp_name", me.name); preferenceStore.setItem("gp_color", me.color); } catch (e) {}
   if (scene && renderer) { try { buildPaddock(); } catch (e) { console.warn("Mise à jour du garage joueur impossible", e); } }
 }
+function syncDriverPreview() {
+  const card = $("driverPreview");
+  if (!card) return;
+  const color = me.color || "#e10600";
+  card.style.setProperty("--driver-color", color);
+  const name = ((($("nameInput") && $("nameInput").value) || me.name || "Pilote").trim()).slice(0, 14);
+  $("previewDriverName").textContent = name || "PILOTE";
+  const rawNum = ($("numInput") && $("numInput").value) || me.num;
+  const num = parseInt(rawNum, 10);
+  $("previewDriverNum").textContent = Number.isFinite(num) && num > 0 ? String(num).padStart(2, "0") : "—";
+  const ix = COLORS.findIndex(c => c.toLowerCase() === String(color).toLowerCase());
+  $("previewColorName").textContent = ix >= 0 ? COLOR_NAMES[ix].toUpperCase() : "PERSONNALISÉE";
+}
 (function initMenu() {
   const sw = $("swatches");
   COLORS.forEach((c, i) => {
@@ -5824,6 +6396,7 @@ function readProfile() {
       me.color = c;
       try { preferenceStore.setItem("gp_color", me.color); } catch (e) {}
       [...sw.children].forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      syncDriverPreview();
       // La voiture déjà affichée est recréée immédiatement avec la nouvelle couleur.
       if (scene && carObjs[me.id]) {
         scene.remove(carObjs[me.id].root);
@@ -5848,6 +6421,7 @@ function readProfile() {
       me.color = inp.value;
       try { preferenceStore.setItem("gp_color", me.color); } catch (e) {}
       [...sw.children].forEach(x => x.setAttribute && x.setAttribute("aria-pressed", String(x === lab)));
+      syncDriverPreview();
       if (channel && connected) { try { channel.track(presencePayload()); } catch (e) {} }
     });
     lab.appendChild(inp);
@@ -5861,9 +6435,12 @@ function readProfile() {
     me.num = Number.isFinite(v) ? Math.max(1, Math.min(99, v)) : 0;
     if (Number.isFinite(v) && v !== me.num) ni.value = String(me.num);
     try { preferenceStore.setItem("gp_num", String(me.num)); } catch (e) {}
+    syncDriverPreview();
     if (channel && connected) { try { channel.track(presencePayload()); } catch (e) {} }
   });
   $("nameInput").value = me.name;
+  $("nameInput").addEventListener("input", syncDriverPreview);
+  syncDriverPreview();
   const fromUrl = cleanCode(new URLSearchParams(location.search).get("salle"));
   if (fromUrl) $("codeInput").value = fromUrl;
   $("diceBtn").addEventListener("click", () => { $("codeInput").value = genCode(); });
@@ -5891,7 +6468,7 @@ function readProfile() {
   });
   $("startBtn").addEventListener("click", () => {
     if (!isHost || phase !== "lobby") return;
-    initAudio(); stopMenuMusic(); requestStart();
+    initAudio(); requestStart();
   });
   $("joinBtn").addEventListener("click", () => { initAudio(); startMenuMusic(); });
   $("soloBtn").addEventListener("click", () => { initAudio(); startMenuMusic(); });
