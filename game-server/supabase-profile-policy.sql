@@ -7,4 +7,5 @@ CREATE POLICY "Players can update their own driver profile"
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 REVOKE UPDATE ON public.profiles FROM authenticated;
+REVOKE UPDATE (username, credits, upgrades, logo, owned_logos, id, created_at) ON public.profiles FROM authenticated;
 GRANT UPDATE (name, color, num) ON public.profiles TO authenticated;
