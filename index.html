@@ -6831,7 +6831,7 @@ async function careerApi(path, options={}){
   const readProfile=async(userId)=>{
     const {data,error}=await careerSupabase.from("profiles").select("*").eq("id",userId).maybeSingle();
     if(error)fail(error);if(!data)throw new Error("Profil introuvable dans Supabase. Vérifie le déclencheur de création de profil.");
-    return {id:data.id,username:data.username,name:data.name||"Pilote",color:data.color||"#e10600",num:Number(data.num)||0,cash:Number(data.credits)||0,upgrades:data.upgrades||{},logo:data.logo||"none",ownedLogos:data.owned_logos||[],createdAt:data.created_at,isAdmin:String(data.username||"").trim().toLowerCase()==="paueym};
+    return {id:data.id,username:data.username,name:data.name||"Pilote",color:data.color||"#e10600",num:Number(data.num)||0,cash:Number(data.credits)||0,upgrades:data.upgrades||{},logo:data.logo||"none",ownedLogos:data.owned_logos||[],createdAt:data.created_at,isAdmin:String(data.username||"").trim().toLowerCase()==="paueym"};
   };
   const currentUser=async()=>{
     const {data,error}=await careerSupabase.auth.getUser();if(error||!data.user)throw new Error("Connecte-toi pour continuer.");return data.user;
@@ -6861,7 +6861,7 @@ async function careerApi(path, options={}){
   if(path==="/api/profile"&&method==="PUT"){
     const user=await currentUser();
     const {data,error}=await careerSupabase.from("profiles").update({name:String(body.name||"Pilote").slice(0,14),color:isHexColor(body.color)?body.color:"#e10600",num:clamp(Number(body.num)||0,0,99)}).eq("id",user.id).select("*").single();
-    if(error)fail(error);return {user:{id:data.id,username:data.username,name:data.name,color:data.color,num:Number(data.num)||0,cash:Number(data.credits)||0,upgrades:data.upgrades||{},logo:data.logo||"none",ownedLogos:data.owned_logos||[],createdAt:data.created_at,isAdmin:String(data.username||"").trim().toLowerCase()==="paueym},message:"Profil sauvegardé dans Supabase."};
+    if(error)fail(error);return {user:{id:data.id,username:data.username,name:data.name,color:data.color,num:Number(data.num)||0,cash:Number(data.credits)||0,upgrades:data.upgrades||{},logo:data.logo||"none",ownedLogos:data.owned_logos||[],createdAt:data.created_at,isAdmin:String(data.username||"").trim().toLowerCase()==="paueym"},message:"Profil sauvegardé dans Supabase."};
   }
   if(path==="/api/shop/purchase"&&method==="POST"){
     const {data,error}=await careerSupabase.rpc("career_purchase_item",{p_item_id:String(body.itemId||"")});
