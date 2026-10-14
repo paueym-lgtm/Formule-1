@@ -116,7 +116,7 @@ BEGIN
   IF uid IS NULL THEN RAISE EXCEPTION 'Connecte-toi pour continuer.'; END IF;
   IF coalesce(trim(p_run_id),'')='' OR length(p_run_id)>120 THEN RAISE EXCEPTION 'Identifiant de course invalide.'; END IF;
   IF p_position<1 OR p_position>99 THEN RAISE EXCEPTION 'Position de course invalide.'; END IF;
-  prize:=CASE WHEN coalesce(p_disqualified,false) THEN 0 WHEN p_position=1 THEN 1000000 WHEN p_position=2 THEN 500000 WHEN p_position=3 THEN 100000 ELSE 0 END;
+  prize:=CASE WHEN coalesce(p_disqualified,false) THEN 0 WHEN p_position=1 THEN 1000 WHEN p_position=2 THEN 500 WHEN p_position=3 THEN 100 ELSE 0 END;
   INSERT INTO public.player_race_rewards(player_id,run_id,position,amount)
     VALUES(uid,p_run_id,p_position,prize) ON CONFLICT(player_id,run_id) DO NOTHING RETURNING amount INTO inserted_amount;
   IF FOUND THEN
