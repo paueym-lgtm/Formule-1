@@ -6823,11 +6823,15 @@ function careerApiUrl(path){return CAREER_API_BASE+path;}
 async function careerApi(path, options={}){
   const method=String(options.method||"GET").toUpperCase();
   let body={};try{body=options.body?JSON.parse(options.body):{};}catch(_){}
-  const fail=(e)=>{throw new Error(e?.message||"Erreur Supabase. Réessaie dans un instant.");};
+  const fail=(e)=>{
+    const message=String(e?.message||"Erreur Supabase. Réessaie dans un instant.");
+    if(/career_purchase_item|career_equip_logo|career_admin_list_accounts|career_admin_set_cash|schema cache|permission denied for function/i.test(message))throw new Error("Les fonctions SQL de la boutique ou de l’administration ne sont pas installées. Dans Supabase > SQL Editor, exécute le fichier game-server/supabase-full-setup.sql du dépôt GitHub, puis réessaie. Détail : "+message);
+    throw new Error(message);
+  };
   const readProfile=async(userId)=>{
     const {data,error}=await careerSupabase.from("profiles").select("*").eq("id",userId).maybeSingle();
     if(error)fail(error);if(!data)throw new Error("Profil introuvable dans Supabase. Vérifie le déclencheur de création de profil.");
-    return {id:data.id,username:data.username,name:data.name||"Pilote",color:data.color||"#e10600",num:Number(data.num)||0,cash:Number(data.credits)||0,upgrades:data.upgrades||{},logo:data.logo||"none",ownedLogos:data.owned_logos||[],createdAt:data.created_at,isAdmin:false};
+    return {id:data.id,username:data.username,name:data.name||"Pilote",color:data.color||"#e10600",num:Number(data.num)||0,cash:Number(data.credits)||0,upgrades:data.upgrades||{},logo:data.logo||"none",ownedLogos:data.owned_logos||[],createdAt:data.created_at,isAdmin:String(data.username||"").trim().toLowerCase()==="paueym};
   };
   const currentUser=async()=>{
     const {data,error}=await careerSupabase.auth.getUser();if(error||!data.user)throw new Error("Connecte-toi pour continuer.");return data.user;
@@ -6857,7 +6861,7 @@ async function careerApi(path, options={}){
   if(path==="/api/profile"&&method==="PUT"){
     const user=await currentUser();
     const {data,error}=await careerSupabase.from("profiles").update({name:String(body.name||"Pilote").slice(0,14),color:isHexColor(body.color)?body.color:"#e10600",num:clamp(Number(body.num)||0,0,99)}).eq("id",user.id).select("*").single();
-    if(error)fail(error);return {user:{id:data.id,username:data.username,name:data.name,color:data.color,num:Number(data.num)||0,cash:Number(data.credits)||0,upgrades:data.upgrades||{},logo:data.logo||"none",ownedLogos:data.owned_logos||[],createdAt:data.created_at,isAdmin:false},message:"Profil sauvegardé dans Supabase."};
+    if(error)fail(error);return {user:{id:data.id,username:data.username,name:data.name,color:data.color,num:Number(data.num)||0,cash:Number(data.credits)||0,upgrades:data.upgrades||{},logo:data.logo||"none",ownedLogos:data.owned_logos||[],createdAt:data.created_at,isAdmin:String(data.username||"").trim().toLowerCase()==="paueym},message:"Profil sauvegardé dans Supabase."};
   }
   if(path==="/api/shop/purchase"&&method==="POST"){
     const {data,error}=await careerSupabase.rpc("career_purchase_item",{p_item_id:String(body.itemId||"")});
@@ -6871,7 +6875,18 @@ async function careerApi(path, options={}){
     const {data,error}=await careerSupabase.rpc("career_award_reward",{p_run_id:String(body.runId||"").slice(0,120),p_position:Number(body.position)||0,p_disqualified:body.disqualified===true});
     if(error)fail(error);return data;
   }
-  // Les fonctions d’administration restent derrière le serveur.
+  if(path==="/api/admin/accounts"&&method==="GET"){
+    const {data,error}=await careerSupabase.rpc("career_admin_list_accounts");
+    if(error)fail(error);return data;
+  }
+  const adminCashParts=path.split("/");
+  if(adminCashParts.length===6&&adminCashParts[1]==="api"&&adminCashParts[2]==="admin"&&adminCashParts[3]==="accounts"&&adminCashParts[5]==="cash"&&method==="PATCH"){
+    const cash=Number(body.cash);
+    if(!Number.isSafeInteger(cash)||cash<0)throw new Error("Le solde doit être un nombre entier positif.");
+    const {data,error}=await careerSupabase.rpc("career_admin_set_cash",{p_username:decodeURIComponent(adminCashParts[4]),p_cash:cash});
+    if(error)fail(error);return data;
+  }
+  // Les fonctions d’administration utilisent des fonctions SQL protégées par Supabase.
   const headers={"Accept":"application/json",...(options.body?{"Content-Type":"application/json"}:{}),...(careerToken?{"Authorization":"Bearer "+careerToken}:{}),...(options.headers||{})};
   let response;try{response=await fetch(careerApiUrl(path),{...options,headers,cache:"no-store"});}catch(_){throw new Error("Fonction d’administration indisponible. Les comptes, profils et achats utilisent directement Supabase.");}
   let data={};try{data=await response.json();}catch(_){}
@@ -6966,8 +6981,8 @@ async function careerRestoreSession(){
     const {data,error}=await careerSupabase.auth.getSession();if(error)throw error;
     const session=data.session;if(!session){careerToken=null;careerAccount=null;careerAccountName=null;careerIsAdmin=false;careerUpdateHud();return;}
     careerToken=session.access_token;
-    const result=await careerApi("/api/me");careerIsAdmin=false;careerAccount=result.user;careerAccountName=careerAccount.username;
-    try{localStorage.setItem(CAREER_TOKEN_KEY,careerToken);}catch(_){}careerApplyDriverProfile(careerAccount);careerUpdateHud();
+    const result=await careerApi("/api/me");careerIsAdmin=!!(result.user&&result.user.isAdmin);careerAccount=careerIsAdmin?null:result.user;careerAccountName=careerIsAdmin?"paueym":careerAccount?.username||null;
+    try{localStorage.setItem(CAREER_TOKEN_KEY,careerToken);}catch(_){}if(careerAccount)careerApplyDriverProfile(careerAccount);careerUpdateHud();
   }catch(e){careerToken=null;careerAccount=null;careerAccountName=null;careerIsAdmin=false;try{localStorage.removeItem(CAREER_TOKEN_KEY);}catch(_){}careerUpdateHud();}
 }
 async function careerSaveAccountProfile(silent=false){
