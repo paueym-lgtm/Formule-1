@@ -8,7 +8,7 @@ function showCatalog(category) {
   catalogCategory=category||catalogCategory;
   if(!catalogItems().some(c=>c.key===catalogSelection))catalogSelection=catalogItems()[0].key;
   $('pdHome').hidden=true;$('pdCatalog').hidden=false;$('paddock').hidden=false;$('lobby').hidden=true;
-  menuMode(true);$('pdCatalogLabel').textContent=catalogCategory==='gp'?'':'';
+  menuMode(true);
   $('pdCatalogTitle').textContent=catalogCategory==='gp'?'Grand Prix':'Autres circuits';
   $('pdSearch').value='';renderCatalog();renderCatalogDetail();
   $('paddock').scrollTop=0;
@@ -46,7 +46,6 @@ function renderCatalogDetail(){
  $('pdElevationLabel').textContent='Dénivelé';
  $('pdPitSide').textContent=(tr.pit?.side||1)===-1?'Gauche':'Droite';
  $('pdPitLegend').hidden=!tr.pit?.mapped;
- $('pdFidelity').textContent='';
  
  $('pdReady').disabled=phase==='lobby'&&!isHost;
  requestAnimationFrame(drawCatalogMap);
@@ -117,12 +116,3 @@ $('pdSourcesClose').onclick=()=>{$('pdSources').hidden=true;$('pdSourcesOpen').f
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('pdSources').hidden)$('pdSourcesClose').click();});
 new ResizeObserver(drawCatalogMap).observe($('pdTrackMap'));
 updateCatalogFromTrack();showPaddockHome();
-window.render_game_to_text=()=>JSON.stringify({
- phase,ui:!$('paddock').hidden?($('pdHome').hidden?'catalog':'paddock'):!$('lobby').hidden?'setup':phase,
- category:catalogCategory,selectedCircuit:catalogSelection,track:trackKey,
- availableGrandPrix:gpCatalog.map(c=>c.key),otherCircuits:['malaysia'],
- coordinates:'metres; x east / z south for imported geographic tracks, y height above simulation base',
- player:{x:+me.x.toFixed(2),z:+me.z.toFixed(2),speed:+me.speed.toFixed(2),lap:me.lap,pitMode:me.pitMode||0,trackIndex:me.idx},
- circuitLength:+TRACK_LEN.toFixed(2),pit:{side:PIT_SIDE,entry:PIT_ENTRY_REL,exit:PIT_EXIT_REL,length:PIT_TOTAL},
- bots:bots.length,webgl:!!renderer,error:GL_ERR||null
-});

@@ -120,3 +120,38 @@ body.menu-mode #numInput{padding:9px 11px;font:inherit;border:1px solid #3a4250;
 .pd-foot{border:0}
 #perfHud{display:none!important}
 @media(max-width:600px){.pd-detail{padding:14px 0 0!important;border-left:0!important}.pd-map-wrap{min-height:230px!important}}
+
+/* ===== Accueil : identité PG (jaune) ===== */
+:root{--garage-red:#f5c400}
+.pd-logo-sm{height:26px;width:auto;display:block;flex:none}
+.pd-brand svg{display:none}
+.pd-hero h1{margin:0 0 6px;display:block;font-style:normal}
+.pd-hero .pd-logo{display:block;width:clamp(260px,34vw,520px);height:auto;filter:drop-shadow(0 10px 34px rgba(245,196,0,.22));animation:pdIn .7s cubic-bezier(.2,.7,.2,1) both}
+.pd-hero .pd-title{display:block;margin-top:18px;font:600 italic clamp(15px,1.5vw,20px)/1 "Barlow Condensed",sans-serif;letter-spacing:7px;color:#c9ced8;text-transform:uppercase}
+.pd-hero .pd-title b{color:var(--garage-red);font-weight:700}
+.pd-hero{margin-bottom:44px}
+.pd-categories{max-width:600px;grid-template-columns:1fr 1fr;gap:12px}
+.pd-category{min-height:104px;padding:20px 22px 18px;background:rgba(12,14,18,.78);border:1px solid #ffffff2e;border-left:3px solid #ffffff2e;animation:pdIn .7s .12s cubic-bezier(.2,.7,.2,1) both}
+.pd-category+.pd-category{animation-delay:.2s}
+.pd-category:first-child{border-left:3px solid var(--garage-red)}
+.pd-category:hover,.pd-category:focus-visible{border-color:var(--garage-red);background:rgba(28,28,22,.94);transform:translateY(-2px)}
+.pd-category{transition:background .16s,border-color .16s,transform .16s}
+.pd-category strong{font-size:36px;letter-spacing:.3px}
+.pd-category small{display:block;letter-spacing:.4px}
+.pd-category:after{content:"→";position:absolute;right:20px;bottom:16px;font-size:20px;color:#ffffff66;transition:color .16s,transform .16s}
+.pd-category:hover:after{color:var(--garage-red);transform:translateX(4px)}
+.pd-ready{color:#111;font-weight:700}
+.pd-ready:hover{background:#ffd21a}
+.pd-ready:disabled{color:#9aa0ab}
+.pd-track[aria-pressed=true]{background:#2a2812}
+body.menu-mode #lobby .btn.primary{color:#111;font-weight:700}
+body.menu-mode #lobby{--ui-red:#f5c400}
+body.menu-mode #lobby h1{display:none}
+body.menu-mode #lobby .lobby-brand{margin-bottom:14px}
+body.menu-mode #lobby .lobby-trackline{margin-bottom:14px}
+.pd-foot-hint{display:none}
+@keyframes pdIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.pd-hero .pd-logo,.pd-category{animation:none}}
+@media(max-width:600px){.pd-hero .pd-logo{width:min(78vw,340px)}.pd-category strong{font-size:27px}.pd-hero .pd-title{letter-spacing:4px}.pd-category{min-height:116px}.pd-category:after{bottom:12px;right:12px}}
+#careerNav .career-shop-btn{background:#f5c400;border-color:#f5c400;color:#111}
+#careerNav .career-shop-btn:hover{background:#ffd21a}
