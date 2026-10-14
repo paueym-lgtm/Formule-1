@@ -6967,7 +6967,7 @@ async function careerLogin(){
   const btn=$("careerLoginBtn");btn.disabled=true;btn.textContent="Connexion…";
   try{
     const result=await careerApi("/api/login",{method:"POST",body:JSON.stringify({username,password})});careerAcceptSession(result);
-    if(careerIsAdmin){careerSetStatus("careerAuthStatus","Connexion admin vérifiée par le serveur.","success");careerShowModal("adminModal");return;}
+    if(careerIsAdmin){careerSetStatus("careerAuthStatus","Connexion admin vérifiée par Supabase.","success");careerShowModal("adminModal");return;}
     careerApplyDriverProfile(careerAccount);await careerRenderAccountPanel();careerRenderShop();careerSetStatus("careerProfileStatus","Connexion réussie : profil, portefeuille et achats chargés depuis le serveur.","success");await careerContinuePendingPurchase();
   }catch(e){careerSetStatus("careerAuthStatus",e.message,"error");}
   finally{btn.disabled=false;btn.textContent="Se connecter";}
