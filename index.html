@@ -482,6 +482,98 @@
   @media(max-width:350px){#lobby .setup-fields{grid-template-columns:minmax(0,1fr);}#lobby .setup-fields .field-wide{grid-column:auto;}}
 
 </style>
+
+<style id="careerStyles">
+:root{--career-red:#ff373c;--career-panel:#14171d;--career-line:#ffffff1b;--career-muted:#98a1af;--career-gold:#ffcf00}
+#careerNav{position:fixed;z-index:140;top:70px;right:26px;display:flex;align-items:center;gap:8px;padding:7px;background:rgba(14,16,20,.89);border:1px solid #ffffff20;box-shadow:0 14px 42px #0005;backdrop-filter:blur(14px);color:#fff}
+body:not(.menu-mode) #careerNav{display:none}
+#careerNav button{border:1px solid #ffffff20;background:#ffffff06;color:#e7e9ed;padding:10px 13px;font:600 11px "Barlow",sans-serif;letter-spacing:.2px;white-space:nowrap;transition:.16s}
+#careerNav button:hover{border-color:#ffffff65;background:#ffffff12;color:#fff}
+#careerNav .career-shop-btn{background:var(--career-red);border-color:var(--career-red);color:white}
+#careerNav .career-shop-btn:hover{background:#e5262e}
+#careerNav .career-shop-btn i{font-style:normal;margin-left:8px}
+.career-money{display:flex;align-items:center;gap:9px;padding:0 12px 0 4px;border-right:1px solid #ffffff20;min-width:115px}
+.career-money-icon{width:30px;height:30px;border:1px solid #ffcf0040;background:#ffcf0013;display:grid;place-items:center;color:var(--career-gold);font-weight:800;font-size:16px}
+.career-money small{display:block;color:#929ba9;font-size:8px;font-weight:600;letter-spacing:1.5px}
+.career-money strong{display:block;font:700 15px "Barlow Condensed",sans-serif;white-space:nowrap;margin-top:2px}
+#adminBtn[hidden]{display:none!important}
+#careerOverlay{position:fixed;inset:0;z-index:220;display:grid;place-items:center;padding:22px;color:#f4f5f8;font-family:"Barlow","Arial",sans-serif}
+#careerOverlay[hidden],.career-modal[hidden]{display:none!important}
+.career-scrim{position:absolute;inset:0;background:rgba(3,5,8,.78);backdrop-filter:blur(9px)}
+.career-modal{z-index:1;position:relative;width:min(590px,100%);max-height:min(92dvh,920px);overflow:auto;background:linear-gradient(145deg,#1a1e25,#111318 65%);border:1px solid #ffffff24;border-top:3px solid var(--career-red);box-shadow:0 28px 100px #000b;padding:clamp(20px,3vw,34px);scrollbar-color:#414751 #171a20}
+.career-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.career-eyebrow{display:block;font-size:9px;letter-spacing:2px;color:#ff686c;font-weight:700}
+.career-modal h2{font:800 italic clamp(34px,4vw,48px)/1 "Barlow Condensed",sans-serif;margin:8px 0 0;color:#f7f8fa}
+.career-close{flex:none;border:1px solid #ffffff23;background:#ffffff06;color:#dce0e7;width:37px;height:37px;font-size:24px;line-height:1}
+.career-close:hover{background:#ffffff12;color:white}
+.career-muted{font-size:12px;line-height:1.55;color:#a5adba;margin:10px 0 18px}
+.career-modal label{display:block;font-size:10px;letter-spacing:.4px;color:#c9ced7;margin:13px 0 7px;font-weight:600}
+.career-modal input,.career-modal select{width:100%;min-width:0;background:#0e1116;color:#f7f8fa;border:1px solid #ffffff22;border-radius:3px;min-height:43px;padding:10px 12px;font:13px "Barlow",sans-serif;outline:none}
+.career-modal input:focus,.career-modal select:focus{border-color:var(--career-red);box-shadow:0 0 0 2px #ff373c20}
+.career-modal-actions{display:flex;gap:9px;margin-top:18px}
+.career-modal-actions button,.career-admin-edit button{flex:1;min-height:43px;background:var(--career-red);border:1px solid var(--career-red);color:#fff;font:700 11px "Barlow",sans-serif;padding:11px 14px;transition:.15s}
+.career-modal-actions button:hover,.career-admin-edit button:hover{background:#e5262e}
+.career-modal-actions .career-secondary{background:#ffffff05;border-color:#ffffff28;color:#d9dde5}
+.career-modal-actions .career-secondary:hover{background:#ffffff10;border-color:#ffffff60}
+.career-status{min-height:16px;margin:10px 0 0;color:#ff878b;font-size:11px;line-height:1.45}
+.career-profile-card{display:flex;align-items:center;gap:12px;padding:14px;background:#ffffff06;border:1px solid #ffffff17;margin:18px 0}
+.career-profile-chip{width:46px;height:46px;display:grid;place-items:center;color:#fff;font:800 italic 25px "Barlow Condensed",sans-serif;background:#ff373c;flex:none}
+.career-profile-card div:nth-child(2){flex:1;min-width:0}
+.career-profile-card b,.career-profile-card small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.career-profile-card b{font-size:13px}.career-profile-card small{font-size:10px;color:#8e98a8;margin-top:5px}
+.career-profile-card>strong{color:var(--career-gold);font:800 17px "Barlow Condensed",sans-serif;white-space:nowrap}
+.career-local-note{margin:20px 0 0;padding-top:13px;border-top:1px solid #ffffff16;color:#8892a2;font-size:10px;line-height:1.6}
+.career-local-note b{color:#dce0e7}
+.career-warning{padding:12px;background:#ffcf0010;border:1px solid #ffcf0026;color:#d6d0bb}
+.career-shop-modal{width:min(1120px,100%);padding:clamp(17px,2.2vw,28px)}
+.career-shop-balance{display:flex;align-items:center;gap:14px;padding:10px 13px;background:#ffffff05;border:1px solid #ffffff17;margin:15px 0}
+.career-shop-balance>span{font-size:8px;letter-spacing:1.6px;color:#a1a9b7;font-weight:700}
+.career-shop-balance>strong{font:800 22px "Barlow Condensed",sans-serif;color:var(--career-gold);margin-left:auto;white-space:nowrap}
+.career-shop-balance>small{font-size:10px;color:#8e98a8;max-width:210px;text-align:right}
+.career-shop-layout{display:grid;grid-template-columns:minmax(280px,1.05fr) minmax(290px,.95fr);gap:19px;min-height:370px}
+.career-shop-list{min-width:0;display:flex;flex-direction:column;gap:10px}
+.career-buy-selected{min-height:43px;border:1px solid var(--career-red);background:var(--career-red);color:white;font:800 10px "Barlow",sans-serif;letter-spacing:.45px;padding:11px 14px;transition:.15s}.career-buy-selected:hover:not(:disabled){background:#e5262e}.career-buy-selected:disabled{background:#ffffff07;border-color:#ffffff17;color:#808998;cursor:not-allowed}
+.career-shop-filters{display:flex;gap:6px;flex-wrap:wrap}
+.career-shop-filters button{border:1px solid #ffffff20;background:#ffffff04;color:#9fa7b5;padding:8px 11px;font:600 9px "Barlow",sans-serif}
+.career-shop-filters button.active{background:#ff373c18;border-color:#ff373c88;color:#ff797d}
+#careerShopItems{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-content:start;overflow:auto;max-height:390px;padding:1px 3px 3px 0}
+.career-shop-item{position:relative;display:flex;flex-direction:column;min-height:154px;padding:12px;text-align:left;background:linear-gradient(145deg,#1c2027,#14171c);border:1px solid #ffffff17;color:#f1f3f7;cursor:pointer;transition:transform .14s,border-color .14s,background .14s}
+.career-shop-item:hover{transform:translateY(-2px);border-color:#ffffff55;background:#22262e}
+.career-shop-item.selected{border-color:var(--career-red);box-shadow:inset 0 0 0 1px #ff373c28}
+.career-shop-item.owned{border-color:#28b87955}
+.career-shop-item .store-icon{font-size:20px;margin-bottom:9px}
+.career-shop-item strong{font-size:12px;line-height:1.2}
+.career-shop-item small{color:#9da5b3;font-size:9px;line-height:1.35;margin-top:5px;flex:1}
+.career-shop-item .store-price{display:flex;justify-content:space-between;align-items:center;gap:5px;margin-top:9px;color:var(--career-gold);font:800 14px "Barlow Condensed",sans-serif}
+.career-shop-item .store-price em{font:700 8px "Barlow",sans-serif;font-style:normal;color:#7ee0ad}
+.career-inline-buy{margin-top:9px;width:100%;min-height:31px;border:1px solid var(--career-red);background:var(--career-red);color:#fff;font:800 9px "Barlow",sans-serif;letter-spacing:.6px;cursor:pointer}.career-inline-buy:hover:not(:disabled){background:#e5262e}.career-inline-buy:disabled{border-color:#ffffff17;background:#ffffff07;color:#7e8795;cursor:not-allowed}.career-api-warning{padding:11px 12px;margin:12px 0;background:#ffcf0010;border:1px solid #ffcf0030;color:#e8d9a2;font-size:11px;line-height:1.5}.career-api-warning[hidden]{display:none!important}
+.career-car-display{min-width:0;border:1px solid #ffffff17;background:linear-gradient(165deg,#1d2128,#101216);display:flex;flex-direction:column}
+.career-car-stage{height:278px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 58%,#39404b 0,#1b1e25 42%,#101216 78%)}
+#shopCarCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:2;touch-action:pan-y}
+.career-stage-tag{position:absolute;z-index:3;top:13px;left:14px;font-size:8px;letter-spacing:1.5px;color:#9fa8b8}
+.career-stage-floor{position:absolute;width:72%;height:45%;left:14%;bottom:-17%;border-radius:50%;border:1px solid #ffffff17;transform:perspective(200px) rotateX(63deg);box-shadow:0 -17px 38px #ff373c09}
+.career-stage-shadow{position:absolute;width:56%;height:13%;left:22%;bottom:15%;border-radius:50%;background:#0009;filter:blur(18px);z-index:1}
+.career-car-caption{display:flex;align-items:center;gap:12px;padding:13px 15px;border-top:1px solid #ffffff14}
+.career-car-caption>div{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.career-car-caption small{font-size:8px;letter-spacing:1.4px;color:#8993a2}
+.career-car-caption strong{font:800 italic 22px "Barlow Condensed",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.career-car-caption span:not(.career-car-num){font-size:9px;color:#a4acb8;line-height:1.4}
+.career-car-num{display:grid;place-items:center;width:44px;height:44px;border:1px solid #ffffff2a;font:800 italic 25px "Barlow Condensed",sans-serif;color:white;flex:none}
+.career-shop-message{min-height:34px;padding:10px 14px;border-top:1px solid #ffffff13;font-size:10px;line-height:1.5;color:#adb5c1}
+.career-shop-message.success{color:#7ee0ad}.career-shop-message.error{color:#ff9296}
+#careerAdminAccounts{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;max-height:180px;overflow:auto;margin:15px 0}
+.career-admin-account{padding:11px;background:#ffffff06;border:1px solid #ffffff14;min-width:0}
+.career-admin-account strong{display:block;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.career-admin-account small{display:block;margin-top:5px;color:#a1a9b6;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.career-admin-account b{display:block;color:var(--career-gold);font:800 17px "Barlow Condensed",sans-serif;margin-top:8px}
+.career-admin-edit{border-top:1px solid #ffffff18;padding-top:10px}
+@media(max-width:760px){
+ #careerNav{top:64px;right:10px;gap:5px;padding:5px}.career-money{min-width:82px;padding-right:7px;gap:6px}.career-money-icon{width:25px;height:25px}.career-money small{font-size:7px}.career-money strong{font-size:13px}#careerNav button{font-size:9px;padding:9px 9px}
+ .career-shop-layout{grid-template-columns:1fr;gap:12px}.career-shop-list{order:2}.career-car-display{order:1}.career-car-stage{height:220px}#careerShopItems{max-height:230px;grid-template-columns:1fr 1fr}.career-shop-item{min-height:118px}.career-shop-modal{max-height:94dvh}.career-shop-balance{gap:7px}.career-shop-balance>small{max-width:125px;font-size:9px}
+}
+@media(max-width:440px){#careerNav{left:8px;right:8px;top:60px;justify-content:flex-end} .career-money{margin-right:auto}.career-modal-actions{flex-direction:column}.career-modal{padding:18px}.career-shop-balance>span{max-width:48px;line-height:1.4}.career-shop-balance>small{display:none}}
+</style>
+
 </head>
 <body class="menu-mode">
 <div id="garageBackdrop" aria-hidden="true"></div>
@@ -659,6 +751,47 @@
   </div>
 </section>
 
+
+<div id="careerNav" aria-label="Carrière du pilote">
+  <div class="career-money"><span class="career-money-icon">€</span><span><small>PORTEFEUILLE</small><strong id="careerBalance">0 €</strong></span></div>
+  <button id="accountBtn" type="button">Compte</button>
+  <button id="shopBtn" type="button" class="career-shop-btn"><span>▦</span> Boutique <i>↗</i></button>
+  <button id="adminBtn" type="button" hidden>Admin</button>
+</div>
+<div id="careerOverlay" hidden>
+  <div class="career-scrim" id="careerScrim"></div>
+  <section class="career-modal" id="accountModal" role="dialog" aria-modal="true" aria-labelledby="careerAccountTitle" hidden>
+    <header class="career-modal-head"><div><span class="career-eyebrow">PAULOGAMES · DRIVER CLUB</span><h2 id="careerAccountTitle">Mon compte</h2></div><button class="career-close" data-career-close type="button" aria-label="Fermer">×</button></header>
+    <p class="career-muted">Ton compte, ton profil, ton argent et tes achats sont sauvegardés sur le serveur et accessibles sur tes autres appareils.</p><p id="careerServerStatus" class="career-status" role="status">Vérification du serveur de comptes…</p>
+    <div id="careerAuthForm">
+      <label for="careerUsername">Identifiant</label><input id="careerUsername" maxlength="20" autocomplete="username" placeholder="ex. PaulRacing">
+      <label for="careerPassword">Mot de passe</label><input id="careerPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8 caractères minimum">
+      <div class="career-modal-actions"><button id="careerLoginBtn" type="button">Se connecter</button><button id="careerRegisterBtn" type="button" class="career-secondary">Créer un compte</button></div>
+      <p id="careerAuthStatus" class="career-status" role="status"></p>
+    </div>
+    <div id="careerAccountDetails" hidden>
+      <div class="career-profile-card"><div class="career-profile-chip" id="careerProfileChip">01</div><div><b id="careerProfileName">Pilote</b><small id="careerProfileMeta">Compte sauvegardé</small></div><strong id="careerDetailsCash">0 €</strong></div>
+      <p id="careerAccountHint" class="career-muted"></p>
+      <div class="career-modal-actions"><button id="careerSaveProfileBtn" type="button">Sauvegarder le profil</button><button id="careerLogoutBtn" type="button" class="career-secondary">Déconnexion</button></div>
+      <p id="careerProfileStatus" class="career-status" role="status"></p>
+    </div>
+    <p class="career-local-note"><b>Compte serveur :</b> les données sont enregistrées côté serveur. Si le serveur de comptes n’est pas encore configuré, la fenêtre indiquera clairement comment le corriger.</p>
+  </section>
+  <section class="career-modal career-shop-modal" id="shopModal" role="dialog" aria-modal="true" aria-labelledby="careerShopTitle" hidden>
+    <header class="career-modal-head"><div><span class="career-eyebrow">R&D · PERFORMANCE · LIVERY</span><h2 id="careerShopTitle">Boutique pilote</h2></div><button class="career-close" data-career-close type="button" aria-label="Fermer">×</button></header>
+    <div class="career-shop-balance"><span>TON BUDGET</span><strong id="careerShopBalance">0 €</strong><small id="careerShopAccountNote">Connecte-toi pour enregistrer tes achats.</small></div>
+    <div class="career-shop-layout"><div class="career-shop-list"><div class="career-shop-filters"><button type="button" data-shop-filter="all" class="active">Tout</button><button type="button" data-shop-filter="performance">Performance</button><button type="button" data-shop-filter="livery">Logos</button></div><div id="careerShopItems"></div><button id="careerBuySelected" class="career-buy-selected" type="button" disabled>Sélectionne un article</button></div>
+      <aside class="career-car-display"><div class="career-car-stage"><span class="career-stage-tag">LIVE CONFIGURATION</span><canvas id="shopCarCanvas" aria-label="Monoplace 3D en rotation"></canvas><div class="career-stage-floor"></div><span class="career-stage-shadow"></span></div><div class="career-car-caption"><div><small>TA MONOPlace</small><strong id="careerCarCaption">TEAM EDITION</strong><span id="careerCarSpecs">Pneus standard · Freins standard</span></div><span class="career-car-num" id="careerCarNumber">00</span></div><div id="careerShopMessage" class="career-shop-message" role="status">Sélectionne un article pour voir son effet.</div></aside>
+    </div>
+    <p class="career-local-note"><b>Récompenses de course :</b> 1er · 1 000 000 € &nbsp; / &nbsp; 2e · 500 000 € &nbsp; / &nbsp; 3e · 100 000 €. Les autres places ne rapportent rien.</p>
+  </section>
+  <section class="career-modal" id="adminModal" role="dialog" aria-modal="true" aria-labelledby="careerAdminTitle" hidden>
+    <header class="career-modal-head"><div><span class="career-eyebrow">ADMINISTRATION SERVEUR</span><h2 id="careerAdminTitle">Administration</h2></div><button class="career-close" data-career-close type="button" aria-label="Fermer">×</button></header>
+    <div id="careerAdminGate"><p class="career-local-note career-warning"><b>Accès protégé :</b> connecte-toi depuis « Compte » avec l’identifiant <code>admin</code> et le mot de passe administrateur défini dans les variables du serveur. Écrire admin sur l’accueil n’accorde pas les droits.</p><div class="career-modal-actions"><button id="careerAdminLoginOpen" type="button">Ouvrir la connexion admin</button></div></div>
+    <div id="careerAdminContent" hidden><p class="career-muted">Comptes centralisés sur le serveur. Toute modification de solde est appliquée à la base de données.</p><div class="career-modal-actions"><button id="careerAdminLogout" type="button" class="career-secondary">Déconnexion administrateur</button></div><div id="careerAdminAccounts"></div><div class="career-admin-edit"><label for="careerAdminUser">Compte ciblé</label><select id="careerAdminUser"></select><label for="careerAdminCash">Nouveau solde (€)</label><input id="careerAdminCash" type="number" min="0" step="1000" value="0"><button id="careerAdminSetCash" type="button">Appliquer le solde</button><p id="careerAdminStatus" class="career-status" role="status"></p></div></div>
+  </section>
+</div>
+
 <button class="btn ghost" id="voiceBtn" type="button" hidden aria-pressed="false" aria-label="Activer le micro pour parler avec les autres joueurs">
   <span class="micDot" aria-hidden="true"></span><span id="voiceBtnLabel">Activer la voix</span>
 </button>
@@ -708,11 +841,17 @@ const ONLINE = true;
 
 /* ------------------------------ Utilitaires ------------------------------ */
 const $ = id => document.getElementById(id);
-// Per-tab preferences; sandboxed previews do not expose persistent browser storage.
+// Persistent player settings on normal hosting; in-memory fallback for restricted previews.
 const preferenceValues = new Map();
 const preferenceStore = {
-  getItem(key) { return preferenceValues.has(key) ? preferenceValues.get(key) : null; },
-  setItem(key, value) { preferenceValues.set(key, String(value)); }
+  getItem(key) {
+    try { const value = localStorage.getItem(key); if (value !== null) return value; } catch (_) {}
+    return preferenceValues.has(key) ? preferenceValues.get(key) : null;
+  },
+  setItem(key, value) {
+    const text = String(value); preferenceValues.set(key, text);
+    try { localStorage.setItem(key, text); } catch (_) {}
+  }
 };
 const TAU = Math.PI * 2;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -1338,7 +1477,8 @@ function pitWallGap(i, side) {
    --------------------------------------------------------------------- */
 let PIT_TRIG_REL = PIT_ENTRY_REL;       // la voiture doit être là (côté droit) pour prendre la bretelle
 const PIT_ARC_D = 10;                       // la voiture quitte l'axe de la voie 8 m avant l'axe de son box
-const PIT_RAMP_LAT = TRACK_W / 2 + 0.4;    // raccord au bord de piste, sans empiéter inutilement sur l'asphalte
+const PIT_RAMP_TRACK_HALF = KERB + 3.2;   // largeur côté piste : du centre de rampe jusqu'au bord d'asphalte
+const PIT_RAMP_LAT = TRACK_W / 2 + PIT_RAMP_TRACK_HALF; // bord intérieur de la rampe calé sur le bord de piste
 function hermiteSeg(x0, z0, a0, x1, z1, a1, k0, k1) {
   const L = Math.hypot(x1 - x0, z1 - z0) || 1, m0 = L * k0, m1 = L * k1;
   return { x0, z0, x1, z1, m0x: Math.cos(a0) * m0, m0z: Math.sin(a0) * m0, m1x: Math.cos(a1) * m1, m1z: Math.sin(a1) * m1 };
@@ -1434,7 +1574,7 @@ function pitBegin(c, box, cruise, rel) {        // la voiture entre aux stands :
   c.pitBox = Math.max(0, Math.min(box | 0, pitBoxCount - 1));
   c.pitSub = 0; c.pitU = 0; c.pitProgress = 0;
   c.pitSawLine = 0; c.pitCrossFlag = 0;
-  c.pitCruise = cruise || clamp(Math.abs(c.speed), 16, 38); c.pitSpeed = c.pitCruise;
+  c.pitCruise = cruise || clamp(Math.abs(c.speed), 10, PIT_LIMIT); c.pitSpeed = c.pitCruise;
 
   // IMPORTANT : l'ancien code reliait directement la voiture au MILIEU de la voie des stands
   // (g.entry.x1). Elle coupait donc la descente/tunnel visible et traversait les murs/terre.
@@ -1567,8 +1707,8 @@ function buildPitLaneRoad() {
     g.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);scene.add(new THREE.Mesh(g,mat));
   };
   // Bretelles : côté piste étroit à la jonction (ne mord pas sur l'asphalte), pleine largeur côté extérieur
-  addRamp(pitRamps().entry,trackElevationRel(PIT_ENTRY_REL),pitPose(0,0).y,3.2,PIT_HALF_W,PIT_SIDE);
-  addRamp(pitRamps().exit,pitPose(PIT_TOTAL,0).y,trackElevationRel(PIT_EXIT_REL),PIT_HALF_W,3.2,PIT_SIDE_OUT);
+  addRamp(pitRamps().entry,trackElevationRel(PIT_ENTRY_REL),pitPose(0,0).y,PIT_RAMP_TRACK_HALF,PIT_HALF_W,PIT_SIDE);
+  addRamp(pitRamps().exit,pitPose(PIT_TOTAL,0).y,trackElevationRel(PIT_EXIT_REL),PIT_HALF_W,PIT_RAMP_TRACK_HALF,PIT_SIDE_OUT);
   // Assise sous les bretelles : elle comble le vide entre la bretelle et le bord de piste / le talus, pour qu'on ne voie jamais
   // le terrain (herbe) à travers ou à côté de la fin de la voie des stands.
   const addRampBase=(seg,y0,y1,sd)=>{
@@ -1770,23 +1910,24 @@ function stepCar(c, thr, brk, steerIn, h) {
   // Boost de course réservé au joueur lorsque l'autopilote est actif : les bots
   // et la conduite manuelle gardent exactement la physique normale.
   const aiBoost = c === me && autopilotEnabled;
-  const motorAcc = aiBoost ? 25 : ACC;
-  const enginePower = aiBoost ? 2500 : PWR;
-  const aeroDrag = aiBoost ? 0.00042 : DRAG;
+  const tune = c === me && typeof careerTune === "function" ? careerTune() : null;
+  const motorAcc = (aiBoost ? 25 : ACC) * (tune ? tune.engine : 1);
+  const enginePower = (aiBoost ? 2500 : PWR) * (tune ? tune.engine : 1);
+  const aeroDrag = (aiBoost ? 0.00042 : DRAG) * (tune ? tune.drag : 1);
   const rollingDrag = aiBoost ? 0.012 : 0.03;
   const ca = Math.cos(c.a), sa = Math.sin(c.a);
   const sp = c.vx * ca + c.vz * sa, av = Math.abs(sp);
-  const grip = c.tireGrip || 1;
+  const grip = (c.tireGrip || 1) * (tune ? tune.grip : 1);
   const hb = c.hb ? 1 : 0;                                          // frein à main (barre d'espace) : l'arrière décroche
   c.steer += (steerIn - c.steer) * Math.min(1, h * (off ? 6 : 10) * grip);
   const wmax = Math.min(av / 9, (ALAT * grip) / Math.max(av, 1)) * (1 + 0.4 * hb);  // vitesse de rotation max (rad/s) — réduite par l'usure des pneus, augmentée au frein à main
-  c.a += c.steer * wmax * h * (sp >= 0 ? 1 : -1);
+  c.a += c.steer * wmax * h * (tune ? tune.handling : 1) * (sp >= 0 ? 1 : -1);
   const f = Math.cos(c.a), g = Math.sin(c.a), rx = -g, rz = f;
   let vf = c.vx * f + c.vz * g, vl = c.vx * rx + c.vz * rz;
   if (hb) thr *= 0.25;                                              // roues arrière bloquées : le moteur ne pousse presque plus
   if (thr > 0) vf += Math.min(motorAcc, enginePower / Math.max(vf, 1)) * thr * h;
   if (brk > 0) {
-    if (vf > 0.5) { vf -= BRK * brk * h; if (vf < 0) vf = 0; }
+    if (vf > 0.5) { vf -= BRK * brk * h * (tune ? tune.brakes : 1); if (vf < 0) vf = 0; }
     else { vf -= 8 * brk * h; if (vf < -12) vf = -12; }
   }
   vf -= aeroDrag * vf * Math.abs(vf) * h + rollingDrag * vf * h;
@@ -2776,6 +2917,7 @@ function finish(t) {
   setPhase("finished");
   flash("Arrivée !", 1700);
   const fpos = standings().findIndex(e => e.me) + 1;
+  if(typeof careerAwardForPosition === "function")careerAwardForPosition(fpos,String(raceId||cdStart||Date.now()));
   sfxFinish(fpos === 1); if (fpos <= 3) confetti(me.x, me.z, fpos === 1 ? 200 : 90);
   setTimeout(() => { if (phase === "finished") showResults(); }, 1700);
 }
@@ -2810,11 +2952,30 @@ function pitRelativeFromCar(car){
   if (d > N / 2) d -= N;
   return d * (TRACK_LEN / N);
 }
-function startPlayerPit(rel){if(me.pitMode||me.dq)return false;ensurePitPath();me.pitMode=1;pitBegin(me,me.pitSlot||0,undefined,rel);setPitStatus("PIT ENTRY","Entrée des stands — limiteur automatique",true);flash("PIT ENTRY",900);return true;}
+function startPlayerPit(){
+ if(me.pitMode||me.dq)return false;
+ ensurePitPath();
+ me.pitMode=1;
+ // Toujours suivre la rampe visible dans son intégralité, même si le repère est franchi d'une image.
+ pitBegin(me,me.pitSlot||0,undefined,null);
+ setPitStatus("PIT ENTRY","Entrée automatique — limiteur actif",true);
+ flash("PIT ENTRY · AUTOMATIQUE",900);
+ return true;
+}
+function checkAutomaticPitEntry(h){
+ if(phase!=="race"||me.pitMode||me.dq||me.tireLaps<1)return false;
+ // Les pneus sont changés automatiquement à la fin du deuxième tour utile, avant la ligne.
+ // Pas de détour aux stands pendant le dernier tour.
+ if(me.cross<2||me.cross>=laps)return false;
+ const rel=pitRelativeFromCar(me);
+ const windowM=Math.max(9,Math.abs(me.speed||0)*Math.max(h,1/120)*1.6+4);
+ if(Math.abs(rel-PIT_TRIG_REL)>windowM)return false;
+ return startPlayerPit();
+}
 function stepPlayerPit(h){
  if(!me.pitMode)return;
  if(me.pitMode===1){
-   const ev=pitMove(me,h,34);
+   const ev=pitMove(me,h,PIT_LIMIT);
    setPitStatus("PIT LANE",me.pitSub>=3?"Entrée dans le garage":(pitTunnelOn()&&me.pitSub===2&&(me.pitProgress||0)<PIT_LANE_S_A?"Tunnel — descente vers les stands":(me.pitSub===1?"Descente vers les stands":"Limiteur automatique actif")),true);
    if(ev==="service"){me.pitMode=2;me.pitService=0;me.speed=0;me.vx=me.vz=0;}
  }
@@ -2823,28 +2984,27 @@ function stepPlayerPit(h){
    const p=pitBoxFrame(me.pitBox);
    me.x=p.x;me.z=p.z;me.pitY=p.y;
    me.a=p.a;me.speed=0;me.vx=me.vz=0;
-   const co=carObjs[me.id];if(co)co.pitT=Math.max(co.pitT||0,PIT_STOP_DUR-me.pitService);
+   const co=carObjs[me.id];if(co)co.pitT=Math.max(co.pitT||0,pitStopDurationFor(me)-me.pitService);
    if(!me.pitCrewSpawned){spawnPitCrew(me.x,me.z,me.a);me.pitCrewSpawned=1;}
-   const msg=me.pitService<.25?"Mécaniciens en position":me.pitService<.85?"Roues démontées • pistolets pneumatiques":me.pitService<1.45?"Nouveaux pneus montés":me.pitService<2?"Contrôle final • feu vert":"Libération";
+   const stopD=pitStopDurationFor(me),sv=me.pitService;const msg=sv<stopD*.10?"Mécaniciens en position":sv<stopD*.34?"Levage de la monoplace · roues démontées":sv<stopD*.67?"Pistolets pneumatiques · montage des pneus":sv<stopD*.86?"Couple de serrage · contrôle pression":"Feu vert · libération du pilote";
    setPitStatus("PIT-STOP",msg,true);
-   if(me.pitService>=PIT_STOP_DUR){
+   if(me.pitService>=pitStopDurationFor(me)){
      me.tireLaps=me.pitSawLine?0:-1;me.tireGrip=1;me.tireBlown=0;me.pitCompleted=0;me.pitDeadline=0;   // (-1 : la ligne va encore être passée dans la voie des stands, ce tour-là ne compte pas)
      me.pitMode=3;pitLeave(me);me.pitCrewSpawned=0;sfxPit();
      flash("PIT-STOP TERMINÉ — pneus neufs",1200);
    }
  }
  else {
-   const ev=pitMove(me,h,34);
+   const ev=pitMove(me,h,PIT_LIMIT);
    setPitStatus("PIT EXIT",me.pitSub<2?(pitTunnelOn()&&me.pitSub===1&&(me.pitProgress||0)>PIT_LANE_S_B&&(me.pitProgress||0)<PIT_TUN_S_M?"Tunnel — montée vers la surface":"Sortie du garage — retour en piste"):"Ligne de fusion — rejoignez la piste",true);
    if(ev==="done"){me.pitMode=0;setPitStatus("","",false);}
  }
 }
 /* ---------------------------------------------------------------------
-   STANDS EN CONDUITE MANUELLE (joueur)
-   Plus de pit automatique : on prend soi-même la bretelle d'entrée, on roule dans la voie des stands
-   (limiteur de vitesse), on se gare dans SON garage, on attend le changement de pneus, puis on ressort
-   et on rejoint la piste par la bretelle de sortie. Les bots, eux, gardent leur trajet automatique.
-   pitMode : 4 = conduite manuelle dans les stands, 5 = arrêt au stand (pneus en cours de changement)
+   Helpers historiques de collision des stands.
+   Le flux de course utilise maintenant les modes automatiques pitMode 1 à 3 :
+   entrée guidée, arrêt dans le garage du joueur, puis sortie guidée.
+   Les modes 4/5 restent définis comme compatibilité, mais ne sont plus déclenchés.
    --------------------------------------------------------------------- */
 const PIT_LIMIT = 22;              // 80 km/h dans la voie des stands
 const PIT_RAMP_W = 3.6, PIT_LAT_MIN = -3.9, PIT_APRON = 6.2, PIT_BACK = 22.6, PIT_BOX_HW = 3.5;
@@ -2917,11 +3077,11 @@ function stepPlayerPitManual(h, t, thr, brk, steerIn) {
   const S = pitCorridor().S, f = pitBoxFrame(me.pitBox), dBox = Math.hypot(me.x - f.x, me.z - f.z);
   if (me.pitMode === 5) {           // arrêt au stand : la voiture est immobile le temps du changement de pneus
     me.speed = 0; me.vx = me.vz = 0; me.steer = 0; me.pitService += h;
-    const co = carObjs[me.id]; if (co) co.pitT = Math.max(co.pitT || 0, PIT_STOP_DUR - me.pitService);
+    const co = carObjs[me.id]; if (co) co.pitT = Math.max(co.pitT || 0, pitStopDurationFor(me) - me.pitService);
     if (!me.pitCrewSpawned) { spawnPitCrew(me.x, me.z, me.a); me.pitCrewSpawned = 1; }
     const sv = me.pitService;
-    setPitStatus("PIT-STOP", sv < .25 ? "Mécaniciens en position" : sv < .85 ? "Roues démontées • pistolets pneumatiques" : sv < 1.45 ? "Nouveaux pneus montés" : sv < 2 ? "Contrôle final • feu vert" : "Libération", true);
-    if (me.pitService >= PIT_STOP_DUR) {
+    const stopD=pitStopDurationFor(me);const stage=sv<stopD*.10?"Mécaniciens en position":sv<stopD*.34?"Levage de la monoplace · roues démontées":sv<stopD*.67?"Pistolets pneumatiques · montage des pneus":sv<stopD*.86?"Couple de serrage · contrôle pression":"Feu vert · libération du pilote";setPitStatus("PIT-STOP",stage,true);
+    if (me.pitService >= pitStopDurationFor(me)) {
       me.tireLaps = me.pitSawLine ? 0 : -1; me.tireGrip = 1; me.tireBlown = 0; me.pitCompleted = 0; me.pitDeadline = 0;   // (-1 : la ligne sera encore passée dans la voie des stands, ce tour-là ne compte pas)
       me.pitMode = 4; me.pitCrewSpawned = 0; me.pitSvcDone = 1; sfxPit();
       flash("PIT-STOP TERMINÉ — pneus neufs", 1200);
@@ -2957,10 +3117,13 @@ function physics(h, t) {
   const racing = phase === "race" || phase === "finished";
   if (!racing) return;
   const canDrive = phase === "race";
-  const steerIn = canDrive ? ((input("right") ? 1 : 0) - (input("left") ? 1 : 0)) : 0;
-  let thr = canDrive && input("up") ? 1 : 0, brk = canDrive && input("down") ? 1 : 0;
+  // Dès que les pneus arrivent à échéance, le jeu prend automatiquement la bretelle des stands.
+  // Le joueur n'a pas à viser l'entrée ni à conduire dans la pit lane.
+  if (canDrive && !me.pitMode) checkAutomaticPitEntry(h);
+  const steerIn = canDrive && !me.pitMode ? ((input("right") ? 1 : 0) - (input("left") ? 1 : 0)) : 0;
+  let thr = canDrive && !me.pitMode && input("up") ? 1 : 0, brk = canDrive && !me.pitMode && input("down") ? 1 : 0;
   let apSteer = 0;
-  if (canDrive && autopilotEnabled && !me.dq) {
+  if (canDrive && autopilotEnabled && !me.dq && !me.pitMode) {
     const c = autopilotControl(me, others, h);
     thr = c.thr; brk = c.brk; apSteer = c.steer;
   }
@@ -2974,12 +3137,15 @@ function physics(h, t) {
   }
   me.thr = thr; me.brk = brk;
   me.hb = (canDrive && !autopilotEnabled && !me.pitMode && !me.dq && input("hb")) ? 1 : 0;
-  if (canDrive && !me.dq && !autopilotEnabled) updateTires(me, t);
-  if (canDrive && autopilotEnabled) { me.tireGrip = 1.76; me.tireBlown = 0; }
-  if(canDrive&&me.pitMode>=4)stepPlayerPitManual(h,t,thr,brk,steerIn); else stepCar(me,thr,brk,(phase==="finished" || autopilotEnabled)?apSteer:steerIn,h);
+  if (canDrive && !me.dq && !me.pitMode) updateTires(me, t);
+  // L'autopilote garde son bonus d'adhérence, mais l'usure est comptée et ses pit-stops aussi sont automatiques.
+  if (canDrive && autopilotEnabled && !me.pitMode && me.tireLaps < 2) me.tireGrip = 1.76;
+  if (canDrive && me.pitMode >= 1 && me.pitMode <= 3) stepPlayerPit(h);
+  else if(canDrive&&me.pitMode>=4)stepPlayerPitManual(h,t,thr,brk,steerIn);
+  else stepCar(me,thr,brk,(phase==="finished" || autopilotEnabled)?apSteer:steerIn,h);
   if(me.pitCrossFlag){me.pitCrossFlag=0;if(phase==="race")onLap(t);}   // ligne franchie dans la voie des stands = tour compté
   if(!me.pitMode){if(separate(me,others))sfxBump(Math.abs(me.speed));const r=locate(me);if(r.hit){camS.shake=1;sfxCrash(clamp(Math.abs(me.speed)/55,.25,1));sparkBurst(me.x,me.z,16);}if(r.crossed&&phase==="race")onLap(t);}
-  if(canDrive&&!me.pitMode&&!autopilotEnabled)checkPitEntry();   // entrée MANUELLE dans la voie des stands
+  // L’entrée manuelle est remplacée par checkAutomaticPitEntry() au début du pas physique.
   // Après un tête-à-queue ou un accrochage, la voiture du joueur pouvait rester coincée contre un mur
   // pour le reste de la course (les bots, eux, se replaçaient déjà automatiquement au bout de 3 s).
   // On applique maintenant la même sécurité au joueur : après 3 s quasi à l'arrêt hors pit-stop, on la
@@ -2997,10 +3163,10 @@ function physics(h, t) {
       const c = botControl(b, all, botSkill(b));
 
       b.thr = c.thr; b.brk = c.brk;
-      if(!b.pitMode&&b.tireLaps>=2){const rel=pitRelativeFromCar(b);if(rel>PIT_TRIG_REL-9&&rel<PIT_TRIG_REL+9){b.pitMode=1;pitBegin(b,b.pitSlot||0,28);b.pitService=0;}}
-      if(b.pitMode===1){if(pitMove(b,h,32)==="service")b.pitMode=2;if(b.pitCrossFlag){b.pitCrossFlag=0;b.tireLaps++;if(b.cross===laps+1)b.f=raceNow(t);}}
+      if(!b.pitMode&&b.tireLaps>=2){const rel=pitRelativeFromCar(b);if(rel>PIT_TRIG_REL-9&&rel<PIT_TRIG_REL+9){b.pitMode=1;pitBegin(b,b.pitSlot||0,PIT_LIMIT);b.pitService=0;}}
+      if(b.pitMode===1){if(pitMove(b,h,PIT_LIMIT)==="service")b.pitMode=2;if(b.pitCrossFlag){b.pitCrossFlag=0;b.tireLaps++;if(b.cross===laps+1)b.f=raceNow(t);}}
       else if(b.pitMode===2){const pp=pitBoxFrame(b.pitBox);b.x=pp.x;b.z=pp.z;b.pitY=pp.y;b.a=pp.a;b.speed=0;b.vx=b.vz=0;b.pitService+=h;if(b.pitService>=PIT_STOP_DUR){b.tireLaps=b.pitSawLine?1:0;b.pitCompleted=0;b.pitDeadline=0;b.pitMode=3;pitLeave(b);}}
-      else if(b.pitMode===3){if(pitMove(b,h,32)==="done")b.pitMode=0;if(b.pitCrossFlag){b.pitCrossFlag=0;b.tireLaps++;if(b.cross===laps+1)b.f=raceNow(t);}}
+      else if(b.pitMode===3){if(pitMove(b,h,PIT_LIMIT)==="done")b.pitMode=0;if(b.pitCrossFlag){b.pitCrossFlag=0;b.tireLaps++;if(b.cross===laps+1)b.f=raceNow(t);}}
       else stepCar(b,c.thr,c.brk,c.steer,h);
       if(!b.pitMode){
         separate(b,all);
@@ -3233,6 +3399,8 @@ function wallStrip(offset, height, material, tile, gapTest) {
   return new THREE.Mesh(geo, material);
 }
 function buildScene() {
+  // Un changement de circuit remplace la scène : ne garder que les cinq feux de la nouvelle grille.
+  gantryLamps.length = 0;
   scene = new THREE.Scene();
   const HORIZON = 0xcfe3f2;
   scene.fog = new THREE.Fog(HORIZON, 260, 1500);
@@ -3370,7 +3538,9 @@ function buildScene() {
   kerb.magFilter = THREE.NearestFilter;
   const kerbMat = new THREE.MeshBasicMaterial({ map: kerb, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   tintMats.push(kerbMat);
-  const kerbGap = sd => k => { const r = pitRelM(k); return (sd === PIT_SIDE && r > PIT_ENTRY_REL - 2 && r < PIT_ENTRY_REL + 26) || (sd === PIT_SIDE_OUT && r > PIT_EXIT_REL - 26 && r < PIT_EXIT_REL + 2); };
+  // Découpe courte au seul raccord : la rampe recouvre le vibreur jusqu'au bord d'asphalte.
+  // On évite ainsi une longue encoche rouge/blanche qui continuait après la jonction.
+  const kerbGap = sd => k => { const r = pitRelM(k); return (sd === PIT_SIDE && r > PIT_ENTRY_REL - 3 && r < PIT_ENTRY_REL + 18) || (sd === PIT_SIDE_OUT && r > PIT_EXIT_REL - 18 && r < PIT_EXIT_REL + 3); };
   scene.add(ribbon(-(TRACK_W / 2 + KERB), -TRACK_W / 2, 0.14, kerbMat, 6, kerbGap(-1)));
   scene.add(ribbon(TRACK_W / 2, TRACK_W / 2 + KERB, 0.14, kerbMat, 6, kerbGap(1)));
 
@@ -5480,9 +5650,10 @@ function makeCar(color, name, mine, num) {
 
 function getCarObj(id, color, name, mine, num) {
   let o = carObjs[id];
-  const key = color + "|" + (num || 0) + "|" + name;
-  if (o && o.key !== key) { scene.remove(o.root); delete carObjs[id]; o = null; }   // couleur, numéro ou pseudo changé : on refait la voiture
-  if (!o) { o = carObjs[id] = makeCar(color, name, mine, num); o.key = key; scene.add(o.root); }
+  const logoKey = mine && typeof careerActiveLogo === "function" ? careerActiveLogo() : "none";
+  const key = color + "|" + (num || 0) + "|" + name + "|" + logoKey;
+  if (o && o.key !== key) { scene.remove(o.root); delete carObjs[id]; o = null; }   // couleur, numéro, pseudo ou livrée modifié : reconstruire
+  if (!o) { o = carObjs[id] = makeCar(color, name, mine, num); o.key = key; if(mine && typeof careerApplyLogoToCar === "function")careerApplyLogoToCar(o); scene.add(o.root); }
   return o;
 }
 function placeCar(o, x, z, a, speed, steer, braking, dt, mine, entity) {
@@ -5689,7 +5860,7 @@ function render3d(t, dt) {
       const o3 = getCarObj(b.id, colorOf(b.id), nameOf(b.id), false, numOf(b.id));
       placeCar(o3, b.x, b.z, b.a, b.speed, b.steer, b.brk > 0.3, dt, false, b);
     }
-    const lit = phase === "countdown" ? clamp(Math.floor((t - cdStart) / 600), 0, 5) : 0;
+    const lit = phase === "countdown" ? clamp(Math.floor((t - cdStart) / 600) + 1, 0, 5) : 0;
     gantryLamps.forEach((m, i) => m.material.color.setHex(i < lit ? 0xff2b1f : 0x2a0a08));
   } else {
     Object.keys(people).sort().forEach((id, slot) => {
@@ -6066,7 +6237,7 @@ let garageLabelState = null;
 let startGridGroup = null;
 let paddockGroup = null;
 let paddockCars = [];   // voitures exposées dans les boxes (masquées quand la vraie voiture y entre)
-const PIT_STOP_DUR = 3.0;   // durée totale d'un arrêt : bien assez longue pour voir l'action
+const PIT_STOP_DUR = 4.2;   // arrêt plus lisible : approche, levage, roues, contrôle et libération
 function pitCrewGY(x,z){ return pitTunnelOn() ? (GROUND_Y + 0.42) : trackElevation(x,z,0); }   // sol de la voie des stands (Yas Marina : en contrebas de la piste)
 function spawnPitCrew(x,z,a){
   const cols=[0xe10600,0x1a1c22,0x00a3e0,0xffcf00];
@@ -6075,7 +6246,7 @@ function spawnPitCrew(x,z,a){
   const add=(grp,fw,lat,rot,role,tool)=>{
     const end=door(fw,lat), start=door(-7.2,lat*3.4);            // départ : porte du garage, côté voie des stands
     grp.position.set(start.x,pitCrewGY(start.x,start.z)+.18,start.z); grp.rotation.y=rot; scene.add(grp);
-    pitCrewPool.push({g:grp,toolGrp:tool||null,t:0,sx:start.x,sz:start.z,bx:end.x,bz:end.z,rot:rot,role:role});
+    pitCrewPool.push({g:grp,toolGrp:tool||null,t:0,duration:(me.pitMode===2&&typeof pitStopDurationFor==="function")?pitStopDurationFor(me):PIT_STOP_DUR,sx:start.x,sz:start.z,bx:end.x,bz:end.z,rot:rot,role:role});
   };
   const roles=[[-1.75,.95,"pneu avant gauche"],[1.75,.95,"pneu avant droit"],[-1.75,-.95,"pneu arrière gauche"],[1.75,-.95,"pneu arrière droit"]];
   roles.forEach((o,i)=>{
@@ -6086,46 +6257,77 @@ function spawnPitCrew(x,z,a){
     const head=new THREE.Mesh(new THREE.BoxGeometry(.16,.10,.12),new THREE.MeshStandardMaterial({color:0x8c949d,metalness:.75,roughness:.22})); head.position.x=.24; tool.add(head);
     tool.position.set(.18,.55,.22); grp.add(tool);
     const wheel=new THREE.Mesh(new THREE.TorusGeometry(.34,.105,10,20),new THREE.MeshStandardMaterial({color:0x090a0c,roughness:.92})); wheel.rotation.y=Math.PI/2; wheel.position.set(o[0]>0?-.35:.35,.43,0); grp.add(wheel);
+    grp.userData.pitWheel=wheel;
     add(grp,o[0],o[1],-a+Math.PI*.5,i,tool);
   });
   // jackman central + lollipop operator: deux personnes supplémentaires rendent le pit-stop lisible.
   const jack=makeHuman3D(0x222831,"jackman"); add(jack,-2.9,0,-a,4);
   const lol=makeHuman3D(0xffcf00,"lollipop");
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,2.2,8),new THREE.MeshStandardMaterial({color:0x11151b,metalness:.4})); pole.position.y=1.1; lol.add(pole);
-  const board=new THREE.Mesh(new THREE.BoxGeometry(.55,.36,.08),new THREE.MeshStandardMaterial({color:0xffcf00,roughness:.45})); board.position.y=2.05; lol.add(board);
+  const signalMat=new THREE.MeshStandardMaterial({color:0xe10600,emissive:0xe10600,emissiveIntensity:.7,roughness:.34});
+  const board=new THREE.Mesh(new THREE.BoxGeometry(.55,.36,.08),signalMat); board.position.y=2.05; lol.add(board);
+  const signalGlow=new THREE.PointLight(0xe10600,.35,5); signalGlow.position.set(0,2.05,.22); lol.add(signalGlow);
+  lol.userData.signalMat=signalMat; lol.userData.signalGlow=signalGlow;
   add(lol,2.9,0,-a,5);
 }
 function stepPitCrew(dt){
-  const D=PIT_STOP_DUR, WIN_T=.7, WOUT_T=.6;      // marche d'arrivée, travail, marche de retour
-  const ease=u=>u*u*(3-2*u);
+  const ease = u => u*u*(3-2*u);
+  const co = carObjs[me.id];
   for(let i=pitCrewPool.length-1;i>=0;i--){
-    const p=pitCrewPool[i]; p.t+=dt;
+    const p=pitCrewPool[i], D=p.duration||PIT_STOP_DUR;
+    const WIN_T=Math.min(.62,D*.16),WOUT_T=Math.min(.48,D*.13),serviceSpan=Math.max(.5,D-WIN_T-WOUT_T);
+    p.t+=dt;
     let x,z,working=false,walkT=0,dirx=0,dirz=0;
     if(p.t<WIN_T){walkT=ease(p.t/WIN_T);x=p.sx+(p.bx-p.sx)*walkT;z=p.sz+(p.bz-p.sz)*walkT;dirx=p.bx-p.sx;dirz=p.bz-p.sz;}
     else if(p.t>D-WOUT_T){walkT=ease((p.t-(D-WOUT_T))/WOUT_T);x=p.bx+(p.sx-p.bx)*walkT;z=p.bz+(p.sz-p.bz)*walkT;dirx=p.sx-p.bx;dirz=p.sz-p.bz;}
     else{x=p.bx;z=p.bz;working=true;}
     p.g.position.x=x; p.g.position.z=z;
-    const gy=pitCrewGY(x,z);   // altitude réelle du sol des stands à cet endroit (la voie des stands n'est pas partout à la même hauteur)
+    const gy=pitCrewGY(x,z), u=clamp((p.t-WIN_T)/serviceSpan,0,1), gait=Math.sin((p.t/WIN_T)*Math.PI*4);
     if(working){
       p.g.rotation.y=p.rot;
-      const u=clamp((p.t-WIN_T)/(D-WOUT_T-WIN_T),0,1);
       if(p.role<4){
-        const crouch=Math.sin(u*Math.PI)*.42;
-        p.g.position.y=gy+.18-crouch*.1;
-        p.g.userData.armL.rotation.z=-.55-Math.sin(u*Math.PI*8)*.35;
-        p.g.userData.armR.rotation.z=.55+Math.sin(u*Math.PI*8)*.35;
-        if(p.toolGrp)p.toolGrp.rotation.z+=dt*42;
+        // Knees and torso dip; the wheel gun oscillates rapidly, with pauses for wheel handling.
+        const fitPhase = u < .28 ? u/.28 : u < .68 ? 1 : u < .84 ? (1-(u-.68)/.16) : 0;
+        const crouch = .20 + .17*Math.sin(Math.PI*Math.min(1,u/.8));
+        p.g.position.y=gy+.18-crouch;
+        p.g.userData.torso.rotation.x = .13 + .10*Math.sin(p.t*8+p.role);
+        p.g.userData.armL.rotation.z=-.55-Math.sin(p.t*16+p.role)*.24;
+        p.g.userData.armR.rotation.z=.55+Math.sin(p.t*18+p.role)*.27;
+        p.g.userData.legL.rotation.x=.18+Math.sin(p.t*5+p.role)*.06;
+        p.g.userData.legR.rotation.x=-.12-Math.sin(p.t*5+p.role)*.05;
+        if(p.toolGrp){p.toolGrp.rotation.z+=dt*(fitPhase>.2?62:5);p.toolGrp.rotation.x=.10*Math.sin(p.t*13);}
+        if(p.g.userData.pitWheel){
+          p.g.userData.pitWheel.rotation.z=.22*Math.sin(p.t*7+p.role);
+          p.g.userData.pitWheel.position.y=.43+.08*Math.max(0,Math.sin(p.t*5+p.role));
+        }
       }else if(p.role===4){
-        p.g.position.y=gy+.18+Math.sin(u*Math.PI)*.08; p.g.rotation.z=Math.sin(u*Math.PI)*.08;
+        // Front jack operator: lever pump, then release the car before the green signal.
+        const lift = u<.20 ? .11*ease(u/.20) : u<.75 ? .11 : .11*(1-ease((u-.75)/.25));
+        p.g.position.y=gy+.18+Math.sin(p.t*11)*.025;
+        p.g.rotation.z=.08*Math.sin(p.t*10);
+        p.g.userData.armR.rotation.z=.45+Math.sin(p.t*13)*.38;
+        if(co&&co.body)co.body.position.y=lift;
       }else{
-        p.g.rotation.z=Math.sin(u*Math.PI)*.10;
+        // Release light: red while the car is being serviced, green in the final phase.
+        p.g.position.y=gy+.18+Math.sin(p.t*8)*.025;
+        p.g.rotation.z=.04*Math.sin(p.t*3);
+        const go = u>.86;
+        if(p.g.userData.signalMat) p.g.userData.signalMat.color.setHex(go?0x21e66b:(u>.72?0xffcf00:0xe10600));
+        if(p.g.userData.signalGlow) p.g.userData.signalGlow.intensity=go?2.8:.35;
+        p.g.userData.armR.rotation.z=go?-.85:.35+.12*Math.sin(p.t*7);
       }
     }else{
-      p.g.position.y=gy+.18+Math.abs(Math.sin(p.t*11))*.05;      // petit rebond de la marche, pieds toujours au sol
+      p.g.position.y=gy+.18+Math.abs(Math.sin(p.t*11))*.035;
       p.g.rotation.z=0; p.g.rotation.y=-Math.atan2(dirz,dirx);
+      p.g.userData.legL.rotation.x=.62*gait;
+      p.g.userData.legR.rotation.x=-.62*gait;
+      p.g.userData.armL.rotation.z=-.18-.22*gait;
+      p.g.userData.armR.rotation.z=.18+.22*gait;
+      p.g.userData.torso.rotation.x=.035*Math.sin(p.t*10);
     }
     if(p.t>D){scene.remove(p.g);pitCrewPool.splice(i,1);}
   }
+  if(me.pitMode!==2 && co&&co.body)co.body.position.y=0;
 }
 function sfxPit() {                                    // petit impact-impact-impact d'une visseuse pneumatique
   for (let i = 0; i < 4; i++) { burst("bandpass", 0.05, 0.22, 2600, 3); tone(1400, 0.04, "square", 0.06, i * 0.11); }
@@ -6181,7 +6383,7 @@ function updateAudio(dt, t) {
 
   // Feux de départ : clic mécanique par feu, sans tonalité électronique
   if (phase === "countdown") {
-    const lit = clamp(Math.floor((t - cdStart) / 600), 0, 5);
+    const lit = clamp(Math.floor((t - cdStart) / 600) + 1, 0, 5);
     if (lit > A.lit) { A.lit = lit; sfxBeep(false); }
   } else if (A.prevPhase === "countdown" && phase === "race") { sfxBeep(true); A.cheer = Math.max(A.cheer, 0.5); }
   A.prevPhase = phase;
@@ -6338,7 +6540,7 @@ function refreshResults() {
   const list = standings();
   const myPos = list.findIndex(e => e.me) + 1;
   $("resTitle").textContent = me.dq ? "Disqualifié" : (me.f ? (myPos === 1 ? "Victoire !" : "Position " + myPos) : "Course en cours");
-  $("resMine").textContent = me.dq ? "Pneus non changés dans le délai obligatoire." : "Ton temps : " + fmt(me.f) + (me.best ? ". Meilleur tour : " + fmt(me.best) : ".");
+  $("resMine").textContent = me.dq ? "Pneus non changés dans le délai obligatoire." : "Ton temps : " + fmt(me.f) + (me.best ? ". Meilleur tour : " + fmt(me.best) : ".") + (typeof careerRewardText === "function" ? careerRewardText() : "");
   updateBackBtn();
   const ol = $("resList"); ol.textContent = "";
   list.forEach((e, i) => {
@@ -6529,7 +6731,7 @@ function frame(t) {
   pollSpeaking(t);
 
   if (phase === "countdown") {
-    const lit = clamp(Math.floor((t - cdStart) / 600), 0, 5);
+    const lit = clamp(Math.floor((t - cdStart) / 600) + 1, 0, 5);
     lamps.forEach((l, i) => l.classList.toggle("on", i < lit));
     if (t >= raceStart) { setPhase("race"); flash("GO !", 900); }
   }
@@ -6573,6 +6775,313 @@ sizeHud();
 setPhase("menu");
 if (!GL_OK) joinStatus(GL_ERR);
 requestAnimationFrame(frame);
+
+/* PAULOGAMES F1 — compte, boutique et récompenses via API sécurisée */
+const CAREER_API_BASE = String(window.PAULOGAMES_API_URL || "https://paulogames-server.onrender.com").replace(/\/+$/, "");
+const CAREER_TOKEN_KEY = "paulogames_server_session_v1";
+let careerDB = { accounts: {} }; // Cache admin list only; never used as account storage.
+let careerAccountName = null;
+let careerAccount = null;
+let careerToken = null;
+let careerIsAdmin = false;
+let careerLastReward = null;
+let careerSelectedStoreId = null;
+let careerPendingPurchaseId = null;
+let careerShopFilter = "all";
+let careerAdminAccountsCache = [];
+let careerSaveProfileTimer = 0;
+let careerShopRenderer = null, careerShopScene = null, careerShopCamera = null, careerShopCar = null, careerShopRAF = 0, careerShopClock = 0;
+const CAREER_LOGOS = {
+  none: {name:"Sans logo", price:0, mark:""},
+  pg: {name:"Paulogames Racing", price:50000, mark:"PG"},
+  bolt: {name:"Lightning Works", price:80000, mark:"⚡"},
+  crown: {name:"Crown Motorsport", price:125000, mark:"CROWN"},
+  apex: {name:"Apex Performance", price:175000, mark:"APEX"}
+};
+const CAREER_STORE = [
+  {id:"pit1",category:"performance",icon:"🧑‍🔧",name:"Équipe pit premium I",description:"Mécaniciens plus rapides · arrêt réduit d'environ 0,55 s",price:250000,type:"upgrade",key:"pit",level:1},
+  {id:"pit2",category:"performance",icon:"⚡",name:"Équipe pit élite II",description:"Gestes optimisés · arrêt réduit d'environ 1,15 s au total",price:750000,type:"upgrade",key:"pit",level:2,requires:1},
+  {id:"tires1",category:"performance",icon:"◉",name:"Pneus compétition I",description:"Adhérence améliorée pour les virages et la motricité",price:150000,type:"upgrade",key:"tires",level:1},
+  {id:"tires2",category:"performance",icon:"◉",name:"Pneus slick ultra II",description:"Encore plus d'adhérence sur le sec",price:450000,type:"upgrade",key:"tires",level:2,requires:1},
+  {id:"brakes1",category:"performance",icon:"▰",name:"Freinage carbone I",description:"Freinage environ 12 % plus puissant",price:200000,type:"upgrade",key:"brakes",level:1},
+  {id:"brakes2",category:"performance",icon:"▰",name:"Freins carbone Pro II",description:"Freins carbone Pro II · freinage renforcé",price:500000,type:"upgrade",key:"brakes",level:2,requires:1},
+  {id:"handling1",category:"performance",icon:"↗",name:"Direction précise I",description:"Réponse de direction et stabilité améliorées",price:200000,type:"upgrade",key:"handling",level:1},
+  {id:"handling2",category:"performance",icon:"↗",name:"Pack maniabilité II",description:"Direction plus incisive dans les enchaînements",price:450000,type:"upgrade",key:"handling",level:2,requires:1},
+  {id:"engine1",category:"performance",icon:"⌁",name:"Cartographie moteur I",description:"Accélération améliorée d'environ 5,5 %",price:300000,type:"upgrade",key:"engine",level:1},
+  {id:"engine2",category:"performance",icon:"⌁",name:"Groupe propulseur II",description:"Puissance moteur améliorée d'environ 11 % au total",price:800000,type:"upgrade",key:"engine",level:2,requires:1},
+  {id:"aero1",category:"performance",icon:"◈",name:"Pack aérodynamique",description:"Traînée réduite, meilleure vitesse de pointe",price:550000,type:"upgrade",key:"aero",level:1},
+  ...Object.entries(CAREER_LOGOS).filter(([id])=>id!=="none").map(([id,l])=>({id:"logo_"+id,category:"livery",icon:"✦",name:l.name,description:"Logo premium posé sur le nez de ta monoplace",price:l.price,type:"logo",logo:id}))
+];
+function careerMoney(n){ return Math.max(0,Math.floor(Number(n)||0)).toLocaleString("fr-FR")+" €"; }
+function careerApiUrl(path){return CAREER_API_BASE+path;}
+async function careerApi(path, options={}){
+  const headers={"Accept":"application/json",...(options.body?{"Content-Type":"application/json"}:{}),...(careerToken?{"Authorization":"Bearer "+careerToken}:{}),...(options.headers||{})};
+  let response;
+  try{response=await fetch(careerApiUrl(path),{...options,headers,cache:"no-store"});}
+  catch(_){throw new Error("Le serveur des comptes est injoignable. Vérifie que le service Render est en ligne.");}
+  let data={};try{data=await response.json();}catch(_){}
+  if(!response.ok){if(response.status===401&&careerToken){careerToken=null;careerAccount=null;careerAccountName=null;careerIsAdmin=false;try{localStorage.removeItem(CAREER_TOKEN_KEY);}catch(_){}}throw new Error(data.error||("Erreur serveur ("+response.status+")."));}
+  return data;
+}
+async function careerCheckApiHealth(){const el=$("careerServerStatus");if(!el)return;el.textContent="Vérification du serveur de comptes…";try{const status=await careerApi("/api/health",{method:"GET"});if(status.databaseReady){careerSetStatus("careerServerStatus","Serveur connecté · base de données opérationnelle.","success");}else{careerSetStatus("careerServerStatus",status.databaseMessage||"Base de données pas encore configurée dans le serveur.","error");}}catch(e){careerSetStatus("careerServerStatus",e.message,"error");}}
+function careerSetStatus(id,text,kind=""){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle("success",kind==="success");el.classList.toggle("error",kind==="error");}
+function careerShowModal(which){
+  const overlay=$("careerOverlay");overlay.hidden=false;
+  ["accountModal","shopModal","adminModal"].forEach(id=>$(id).hidden=id!==which);
+  if(which==="accountModal"){careerRenderAccountPanel();void careerCheckApiHealth();}
+  if(which==="shopModal"){careerRenderShop();careerShopStart3D();void careerCheckApiHealth();}
+  if(which==="adminModal")void careerRenderAdmin();
+  const focus=which==="accountModal"?($("careerAuthForm").hidden?$("careerLogoutBtn") : $("careerUsername")):which==="shopModal"?$("careerShopItems") : $("careerAdminUser");
+  if(focus&&focus.focus)focus.focus({preventScroll:true});
+}
+function careerCloseModal(){ $("careerOverlay").hidden=true; careerShopStop3D(); }
+function careerActiveAccount(){return careerIsAdmin?null:careerAccount;}
+function careerWallet(){const a=careerActiveAccount();return a?Math.max(0,Number(a.cash)||0):0;}
+function careerUpgradeLevel(key){const a=careerActiveAccount(),u=a&&a.upgrades||{};return Math.max(0,Math.min(2,Number(u[key])||0));}
+function careerTune(){
+  const a=careerActiveAccount(),u=a&&a.upgrades||{},tires=Number(u.tires)||0,handling=Number(u.handling)||0,engine=Number(u.engine)||0,brakes=Number(u.brakes)||0,aero=Number(u.aero)||0;
+  return {pitReduction:[0,.55,1.15][Math.min(2,Number(u.pit)||0)],grip:1+tires*.065+handling*.035,handling:1+handling*.075,engine:1+engine*.055,brakes:1+brakes*.12,drag:Math.max(.82,1-aero*.08)};
+}
+function pitStopDurationFor(car){const reduction=car===me?careerTune().pitReduction:0;return Math.max(2.45,PIT_STOP_DUR-reduction);}
+function careerActiveLogo(){const a=careerActiveAccount();return a&&a.logo&&CAREER_LOGOS[a.logo]?a.logo:"none";}
+function careerSavedDriver(){const a=careerActiveAccount();return a?{name:a.name,color:a.color,num:a.num}:null;}
+function careerPersistDriver(){
+  const name=((($("nameInput")&&$("nameInput").value)||me.name||"Pilote").trim().slice(0,14)||"Pilote");
+  const num=clamp(parseInt(($('numInput')&&$('numInput').value)||me.num||0,10)||0,0,99);
+  me.name=name;me.num=num;
+  try{preferenceStore.setItem("gp_name",name);preferenceStore.setItem("gp_color",me.color);preferenceStore.setItem("gp_num",String(num));}catch(_){}
+  const a=careerActiveAccount();if(a){a.name=name;a.color=me.color;a.num=num;clearTimeout(careerSaveProfileTimer);careerSaveProfileTimer=setTimeout(()=>void careerSaveAccountProfile(true),320);}
+  careerUpdateHud();
+}
+function careerRefreshSwatches(){
+  const sw=$("swatches");if(!sw)return;
+  [...sw.children].forEach(el=>{const input=el.querySelector&&el.querySelector('input[type="color"]');if(input){el.setAttribute("aria-pressed",String(input.value.toLowerCase()===String(me.color).toLowerCase()));return;}const color=(el.style.backgroundColor||"").toLowerCase();let match=false;try{match=new THREE.Color(color).getHexString()===String(me.color).replace("#","").toLowerCase();}catch(_){}el.setAttribute("aria-pressed",String(match));});
+}
+function careerApplyDriverProfile(profile){
+  if(!profile)return;
+  me.name=String(profile.name||"Pilote").slice(0,14);me.color=isHexColor(profile.color)?profile.color:COLORS[0];me.num=clamp(Number(profile.num)||0,0,99);
+  if($("nameInput"))$("nameInput").value=me.name;if($("numInput"))$("numInput").value=me.num?String(me.num):"";
+  try{preferenceStore.setItem("gp_name",me.name);preferenceStore.setItem("gp_color",me.color);preferenceStore.setItem("gp_num",String(me.num));}catch(_){}
+  careerRefreshSwatches();syncDriverPreview();careerRebuildOwnCar();careerUpdateHud();
+}
+function careerRebuildOwnCar(){if(!scene||!renderer)return;if(carObjs[me.id]){scene.remove(carObjs[me.id].root);delete carObjs[me.id];}try{render3d(performance.now(),.016);}catch(e){console.debug("Reconstruction déco voiture reportée",e);}}
+function careerUpdateHud(){
+  const cash=careerWallet();if($("careerBalance"))$("careerBalance").textContent=careerMoney(cash);if($("careerShopBalance"))$("careerShopBalance").textContent=careerMoney(cash);
+  if($("careerShopAccountNote"))$("careerShopAccountNote").textContent=careerActiveAccount()?"Achats et portefeuille synchronisés au serveur.":"Connecte-toi pour enregistrer achats et récompenses.";
+  const a=careerActiveAccount();if($("accountBtn"))$("accountBtn").textContent=careerIsAdmin?"Admin":a?(a.username.slice(0,11)):"Compte";
+  if($("careerProfileChip")){$("careerProfileChip").style.background=isHexColor(me.color)?me.color:"#ff373c";$("careerProfileChip").textContent=me.num?String(me.num).padStart(2,"0"):"PG";}
+  if($("careerDetailsCash"))$("careerDetailsCash").textContent=careerMoney(cash);if($("careerProfileName"))$("careerProfileName").textContent=me.name||"Pilote";if($("careerProfileMeta"))$("careerProfileMeta").textContent=careerIsAdmin?"Administrateur serveur":a?"@"+a.username:"Non connecté";
+  if($("adminBtn"))$("adminBtn").hidden=!(careerIsAdmin||((($("nameInput")&&$("nameInput").value)||"").trim().toLowerCase()==="admin"));
+}
+async function careerRenderAccountPanel(){
+  const a=careerActiveAccount();$("careerAuthForm").hidden=!!a||careerIsAdmin;$("careerAccountDetails").hidden=!a;
+  careerSetStatus("careerAuthStatus","");careerSetStatus("careerProfileStatus","");
+  if(a)$("careerAccountHint").textContent="Compte relié au serveur. Le même identifiant et mot de passe fonctionnent sur tes autres appareils.";
+  if(careerIsAdmin){$("careerAuthForm").hidden=true;$("careerAccountDetails").hidden=true;careerSetStatus("careerAuthStatus","Session administrateur active.","success");}
+  careerUpdateHud();
+}
+async function careerRegister(){
+  const username=($("careerUsername").value||"").trim().toLowerCase(),password=$("careerPassword").value||"";
+  if(!/^[a-z0-9_.-]{3,20}$/.test(username)){careerSetStatus("careerAuthStatus","Identifiant : 3 à 20 caractères (lettres, chiffres, point, tiret).","error");return;}
+  if(username==="admin"){careerSetStatus("careerAuthStatus","Cet identifiant est réservé à l’administrateur du serveur.","error");return;}
+  if(password.length<8){careerSetStatus("careerAuthStatus","Le mot de passe doit contenir au moins 8 caractères.","error");return;}
+  const btn=$("careerRegisterBtn");btn.disabled=true;btn.textContent="Création…";
+  try{
+    const result=await careerApi("/api/register",{method:"POST",body:JSON.stringify({username,password,name:((($("nameInput").value)||"Pilote").trim().slice(0,14)||"Pilote"),color:isHexColor(me.color)?me.color:COLORS[0],num:clamp(parseInt($("numInput").value,10)||0,0,99)})});
+    careerAcceptSession(result);careerApplyDriverProfile(careerAccount);careerRenderAccountPanel();careerRenderShop();careerSetStatus("careerProfileStatus","Compte créé et enregistré sur le serveur.","success");await careerContinuePendingPurchase();
+  }catch(e){careerSetStatus("careerAuthStatus",e.message,"error");}
+  finally{btn.disabled=false;btn.textContent="Créer un compte";}
+}
+async function careerLogin(){
+  const username=($("careerUsername").value||"").trim().toLowerCase(),password=$("careerPassword").value||"";
+  if(!username||!password){careerSetStatus("careerAuthStatus","Saisis ton identifiant et ton mot de passe.","error");return;}
+  const btn=$("careerLoginBtn");btn.disabled=true;btn.textContent="Connexion…";
+  try{
+    const result=await careerApi("/api/login",{method:"POST",body:JSON.stringify({username,password})});careerAcceptSession(result);
+    if(careerIsAdmin){careerSetStatus("careerAuthStatus","Connexion admin vérifiée par le serveur.","success");careerShowModal("adminModal");return;}
+    careerApplyDriverProfile(careerAccount);await careerRenderAccountPanel();careerRenderShop();careerSetStatus("careerProfileStatus","Connexion réussie : profil, portefeuille et achats chargés depuis le serveur.","success");await careerContinuePendingPurchase();
+  }catch(e){careerSetStatus("careerAuthStatus",e.message,"error");}
+  finally{btn.disabled=false;btn.textContent="Se connecter";}
+}
+function careerAcceptSession(result){
+  careerToken=result.token;try{localStorage.setItem(CAREER_TOKEN_KEY,careerToken);}catch(_){}
+  careerIsAdmin=!!(result.user&&result.user.isAdmin);careerAccount=careerIsAdmin?null:result.user;careerAccountName=careerAccount?careerAccount.username:null;careerUpdateHud();
+}
+async function careerRestoreSession(){
+  try{const token=localStorage.getItem(CAREER_TOKEN_KEY);if(!token)return;careerToken=token;const result=await careerApi("/api/me");careerIsAdmin=!!(result.user&&result.user.isAdmin);careerAccount=careerIsAdmin?null:result.user;careerAccountName=careerAccount?careerAccount.username:null;if(careerAccount)careerApplyDriverProfile(careerAccount);careerUpdateHud();}
+  catch(_){careerToken=null;careerAccount=null;careerAccountName=null;careerIsAdmin=false;try{localStorage.removeItem(CAREER_TOKEN_KEY);}catch(_){}careerUpdateHud();}
+}
+async function careerSaveAccountProfile(silent=false){
+  const a=careerActiveAccount();if(!a)return;
+  const payload={name:((($("nameInput").value)||me.name||"Pilote").trim().slice(0,14)||"Pilote"),color:isHexColor(me.color)?me.color:COLORS[0],num:clamp(parseInt($("numInput").value||me.num||0,10)||0,0,99)};
+  try{const result=await careerApi("/api/profile",{method:"PUT",body:JSON.stringify(payload)});careerAccount=result.user;careerAccountName=careerAccount.username;careerApplyDriverProfile(careerAccount);if(!silent)careerSetStatus("careerProfileStatus","Profil sauvegardé sur le serveur.","success");careerRenderShop();}
+  catch(e){if(!silent)careerSetStatus("careerProfileStatus",e.message,"error");}
+}
+async function careerLogout(){try{if(careerToken)await careerApi("/api/logout",{method:"POST",body:JSON.stringify({})});}catch(_){}careerToken=null;careerAccount=null;careerAccountName=null;careerIsAdmin=false;try{localStorage.removeItem(CAREER_TOKEN_KEY);}catch(_){}careerRenderAccountPanel();careerUpdateHud();careerRenderShop();careerRenderAdmin();}
+function careerCheckAdminVisibility(){const val=(( $("nameInput")&&$("nameInput").value)||"").trim().toLowerCase();if($("adminBtn"))$("adminBtn").hidden=!(careerIsAdmin||val==="admin");}
+function careerStoreOwned(item){const a=careerActiveAccount();if(!a)return false;if(item.type==="logo")return Array.isArray(a.ownedLogos)&&a.ownedLogos.includes(item.logo);return careerUpgradeLevel(item.key)>=item.level;}
+function careerLogoEquipped(id){const a=careerActiveAccount();return !!(a&&a.logo===id);}
+function careerRenderShop(){
+  const items=$("careerShopItems");if(!items)return;items.replaceChildren();careerUpdateHud();
+  const visible=CAREER_STORE.filter(x=>careerShopFilter==="all"||x.category===careerShopFilter);
+  for(const item of visible){
+    const owned=careerStoreOwned(item),level=item.type==="upgrade"?careerUpgradeLevel(item.key):0;
+    const card=document.createElement("div");card.className="career-shop-item"+(owned?" owned":"")+(careerSelectedStoreId===item.id?" selected":"");card.dataset.storeId=item.id;card.tabIndex=0;card.setAttribute("role","group");card.setAttribute("aria-label",item.name);
+    const icon=document.createElement("span");icon.className="store-icon";icon.textContent=item.icon;
+    const name=document.createElement("strong");name.textContent=item.name;
+    const desc=document.createElement("small");desc.textContent=owned?(item.type==="logo"?(careerLogoEquipped(item.logo)?"Logo équipé":"Logo possédé · équipable gratuitement"):"Niveau "+level+" / 2 — acquis"):item.description;
+    const price=document.createElement("span");price.className="store-price";const val=document.createElement("span");val.textContent=owned?"ACQUIS":careerMoney(item.price);price.append(val);
+    const status=document.createElement("em");status.textContent=owned?(item.type==="logo"&&!careerLogoEquipped(item.logo)?"À ÉQUIPER":"✓ ÉQUIPÉ"):"PRIX FIXE";price.append(status);
+    const buy=document.createElement("button");buy.type="button";buy.className="career-inline-buy";buy.dataset.storeBuy=item.id;
+    const blocked=!!(item.requires&&careerUpgradeLevel(item.key)<item.requires);const alreadyEquipped=owned&&item.type==="logo"&&careerLogoEquipped(item.logo);
+    buy.disabled=blocked||(owned&&item.type!=="logo")||alreadyEquipped;
+    buy.textContent=alreadyEquipped?"DÉJÀ ÉQUIPÉ":owned&&item.type==="logo"?"ÉQUIPER GRATUITEMENT":blocked?"PRÉREQUIS NIVEAU "+item.requires:owned?"DÉJÀ ACHETÉ":"ACHETER · "+careerMoney(item.price);
+    card.append(icon,name,desc,price,buy);items.append(card);
+  }
+  if(!visible.length){const p=document.createElement("p");p.textContent="Aucun article dans cette catégorie.";items.append(p);}
+  const a=careerActiveAccount();$("careerCarCaption").textContent=a&&a.logo&&CAREER_LOGOS[a.logo]?CAREER_LOGOS[a.logo].name.toUpperCase():"TEAM EDITION";$("careerCarNumber").textContent=me.num?String(me.num).padStart(2,"0"):"00";
+  $("careerCarSpecs").textContent=`Pneus niv. ${careerUpgradeLevel("tires")} · Freins niv. ${careerUpgradeLevel("brakes")} · Équipe pit niv. ${careerUpgradeLevel("pit")}`;
+  const buy=$("careerBuySelected"),sel=CAREER_STORE.find(x=>x.id===careerSelectedStoreId);
+  if(buy){if(!sel){buy.disabled=true;buy.textContent="Sélectionne un article";}else{const ownedNow=careerStoreOwned(sel),blocked=!!(sel.requires&&careerUpgradeLevel(sel.key)<sel.requires),equipped=ownedNow&&sel.type==="logo"&&careerLogoEquipped(sel.logo);buy.disabled=blocked||(ownedNow&&sel.type!=="logo")||equipped;buy.textContent=equipped?"LOGO DÉJÀ ÉQUIPÉ":ownedNow&&sel.type==="logo"?"ÉQUIPER CE LOGO GRATUITEMENT":ownedNow?"DÉJÀ ACHETÉ":"ACHETER · "+careerMoney(sel.price);}}
+}
+function careerSelectStoreItem(item){
+  careerSelectedStoreId=item.id;careerRenderShop();
+  const owned=careerStoreOwned(item),a=careerActiveAccount();let msg=item.description;
+  if(owned)msg=item.type==="logo"?(careerLogoEquipped(item.logo)?"Logo actuellement équipé.":"Logo possédé : équipe-le gratuitement."):"Amélioration déjà achetée.";
+  else if(item.requires&&careerUpgradeLevel(item.key)<item.requires)msg="Prérequis : achète d'abord le niveau "+item.requires+".";
+  else msg+=(a?" · Prix : "+careerMoney(item.price)+".":" · Connecte-toi à ton compte pour acheter.");
+  careerSetStatus("careerShopMessage",msg,owned?"success":"");
+}
+async function careerPurchase(item){
+  if(!careerActiveAccount()){
+    careerPendingPurchaseId=item.id;careerSelectedStoreId=item.id;careerRenderShop();
+    careerSetStatus("careerAuthStatus","Connecte-toi ou crée un compte : ton achat reprendra automatiquement après la connexion.","error");careerShowModal("accountModal");return;
+  }
+  careerSelectedStoreId=item.id;const buy=$("careerBuySelected"),inline=document.querySelector(`[data-store-buy="${item.id}"]`);if(buy){buy.disabled=true;buy.textContent="ACHAT EN COURS…";}if(inline){inline.disabled=true;inline.textContent="ACHAT EN COURS…";}
+  try{
+    const already=careerStoreOwned(item);let result;
+    if(already&&item.type==="logo")result=await careerApi("/api/shop/equip-logo",{method:"POST",body:JSON.stringify({logo:item.logo})});
+    else result=await careerApi("/api/shop/purchase",{method:"POST",body:JSON.stringify({itemId:item.id})});
+    careerAccount=result.user;careerAccountName=careerAccount.username;careerUpdateHud();careerRenderShop();careerRebuildOwnCar();careerShopRebuildCar();
+    careerSetStatus("careerShopMessage",result.message||("Achat confirmé : "+item.name+". Effet appliqué à ta monoplace."),"success");
+  }catch(e){careerSetStatus("careerShopMessage",e.message||"L’achat n’a pas pu aboutir.","error");careerRenderShop();}
+  finally{careerRenderShop();}
+}
+async function careerContinuePendingPurchase(){
+  const id=careerPendingPurchaseId;if(!id||!careerActiveAccount())return;
+  careerPendingPurchaseId=null;const item=CAREER_STORE.find(x=>x.id===id);if(!item)return;
+  careerCloseModal();careerShowModal("shopModal");await careerPurchase(item);
+}
+async function careerRenderAdmin(){
+  const gate=$("careerAdminGate"),content=$("careerAdminContent");if(!careerIsAdmin){if(gate)gate.hidden=false;if(content)content.hidden=true;return;}
+  if(gate)gate.hidden=true;if(content)content.hidden=false;
+  const list=$("careerAdminAccounts"),sel=$("careerAdminUser");if(!list||!sel)return;list.replaceChildren();sel.replaceChildren();
+  try{
+    const result=await careerApi("/api/admin/accounts");careerAdminAccountsCache=result.accounts||[];careerDB.accounts={};
+    for(const a of careerAdminAccountsCache){careerDB.accounts[a.username]=a;const card=document.createElement("div");card.className="career-admin-account";const u=document.createElement("strong");u.textContent="@"+a.username;const nm=document.createElement("small");nm.textContent=a.name||"Pilote";const cash=document.createElement("b");cash.textContent=careerMoney(a.cash);card.append(u,nm,cash);list.append(card);const opt=document.createElement("option");opt.value=a.username;opt.textContent="@"+a.username+" · "+(a.name||"Pilote");sel.append(opt);}
+    if(!careerAdminAccountsCache.length){const e=document.createElement("p");e.className="career-muted";e.textContent="Aucun compte créé pour le moment.";list.append(e);}
+    if(careerAdminAccountsCache.length){sel.value=careerAdminAccountsCache[0].username;$("careerAdminCash").value=String(careerAdminAccountsCache[0].cash||0);}careerSetStatus("careerAdminStatus",careerAdminAccountsCache.length+" compte(s) chargé(s) depuis le serveur.","success");
+  }catch(e){careerSetStatus("careerAdminStatus",e.message,"error");}
+}
+async function careerApplyAdminCash(){
+  if(!careerIsAdmin){careerSetStatus("careerAdminStatus","Connexion administrateur requise.","error");return;}
+  const username=$("careerAdminUser").value,value=Number($("careerAdminCash").value);if(!username||!Number.isSafeInteger(value)||value<0){careerSetStatus("careerAdminStatus","Compte ou montant invalide. Saisis un montant entier positif.","error");return;}
+  const btn=$("careerAdminSetCash");btn.disabled=true;try{const result=await careerApi("/api/admin/accounts/"+encodeURIComponent(username)+"/cash",{method:"PATCH",body:JSON.stringify({cash:value})});await careerRenderAdmin();careerSetStatus("careerAdminStatus","Solde serveur de @"+username+" modifié : "+careerMoney(result.user.cash)+".","success");}catch(e){careerSetStatus("careerAdminStatus",e.message,"error");}finally{btn.disabled=false;}
+}
+async function careerAwardForPosition(position,runId){
+  if(me.dq||!position||careerLastReward&&careerLastReward.runId===String(runId))return;
+  const prize=position===1?1000000:position===2?500000:position===3?100000:0;careerLastReward={runId:String(runId),position,amount:0};
+  if(!careerActiveAccount()){careerLastReward.amount=0;careerLastReward.message=" Connecte-toi pour conserver les récompenses de course sur le serveur.";careerUpdateHud();return;}
+  try{const result=await careerApi("/api/rewards",{method:"POST",body:JSON.stringify({runId:String(runId),position,disqualified:!!me.dq})});careerAccount=result.user;careerAccountName=careerAccount.username;careerLastReward.amount=Number(result.reward)||0;careerLastReward.message=result.message||"";careerUpdateHud();if(!$("results").hidden)refreshResults();}
+  catch(e){careerLastReward.message=" Récompense non enregistrée : "+e.message;careerUpdateHud();if(!$("results").hidden)refreshResults();}
+}
+function careerRewardText(){if(!careerLastReward)return"";const r=careerLastReward;return r.amount>0?` Récompense P${r.position} : +${careerMoney(r.amount)}.`:(r.message|| (r.position<=3?" Récompense déjà enregistrée ou compte non connecté.":" Pas de récompense financière pour cette place."));}
+function careerCheckPayoutAlreadyRun(runId){const a=careerActiveAccount();return !!(a&&Array.isArray(a.racesPaid)&&a.racesPaid.includes(String(runId)));}
+function careerLogoTexture(logoKey,color){
+  const logo=CAREER_LOGOS[logoKey];if(!logo||logoKey==="none")return null;
+  const cv=document.createElement("canvas");cv.width=256;cv.height=96;const g=cv.getContext("2d");
+  g.clearRect(0,0,cv.width,cv.height);g.fillStyle="rgba(6,9,14,.88)";g.beginPath();g.roundRect(6,6,244,84,14);g.fill();
+  g.strokeStyle=color;g.lineWidth=5;g.beginPath();g.roundRect(8,8,240,80,13);g.stroke();
+  g.fillStyle="#ffffff";g.textAlign="center";g.textBaseline="middle";g.font=`900 ${logo.mark.length>4?29:54}px Arial`;g.fillText(logo.mark,128,49,220);
+  return new THREE.CanvasTexture(cv);
+}
+function careerApplyLogoToCar(car){
+  const key=careerActiveLogo();if(!car||!car.body||key==="none")return;
+  try{const tex=careerLogoTexture(key,me.color);if(!tex)return;const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-8,polygonOffsetUnits:-8});const decal=new THREE.Mesh(new THREE.PlaneGeometry(.76,.28),mat);decal.rotation.x=-Math.PI/2;decal.position.set(1.32,.625,0);decal.renderOrder=8;decal.userData.careerLogo=true;car.body.add(decal);car.careerLogo=decal;}catch(e){console.warn("Logo de carrosserie non appliqué",e);}
+}
+function careerShopStart3D(){
+  const cv=$("shopCarCanvas");if(!cv||!window.THREE)return;
+  if(!careerShopRenderer){
+    try{
+      careerShopRenderer=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true,powerPreference:"low-power"});careerShopRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+      careerShopRenderer.outputEncoding=THREE.sRGBEncoding;careerShopScene=new THREE.Scene();careerShopScene.background=null;
+      careerShopCamera=new THREE.PerspectiveCamera(34,1,.1,100);careerShopCamera.position.set(5.3,4.2,7.3);careerShopCamera.lookAt(0,.45,0);
+      careerShopScene.add(new THREE.HemisphereLight(0xdce9ff,0x242630,2.0));
+      const keyLight=new THREE.DirectionalLight(0xffffff,2.7);keyLight.position.set(4,8,5);careerShopScene.add(keyLight);
+      const rimLight=new THREE.DirectionalLight(0xff373c,1.5);rimLight.position.set(-4,3,-5);careerShopScene.add(rimLight);
+      const fillLight=new THREE.DirectionalLight(0x7caaff,.8);fillLight.position.set(1,2,-6);careerShopScene.add(fillLight);
+      const floor=new THREE.Mesh(new THREE.CircleGeometry(4.6,48),new THREE.MeshStandardMaterial({color:0x191c23,metalness:.34,roughness:.66}));floor.rotation.x=-Math.PI/2;floor.position.y=-.035;careerShopScene.add(floor);
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(3.05,.016,6,80),new THREE.MeshBasicMaterial({color:0xff373c,transparent:true,opacity:.55}));ring.rotation.x=Math.PI/2;ring.position.y=.005;careerShopScene.add(ring);
+    }catch(e){careerSetStatus("careerShopMessage","Aperçu 3D non disponible sur ce navigateur.","error");return;}
+  }
+  careerShopRebuildCar();careerShopResize3D();careerShopStop3D();careerShopRAF=requestAnimationFrame(careerShopLoop);
+}
+function careerShopResize3D(){if(!careerShopRenderer||!careerShopCamera)return;const cv=$("shopCarCanvas"),rect=cv.getBoundingClientRect();const w=Math.max(1,Math.round(rect.width)),h=Math.max(1,Math.round(rect.height));const ratio=Math.min(window.devicePixelRatio||1,1.5);if(cv.width!==Math.round(w*ratio)||cv.height!==Math.round(h*ratio))careerShopRenderer.setSize(w,h,false);if(Math.abs(careerShopCamera.aspect-w/h)>.001){careerShopCamera.aspect=w/h;careerShopCamera.updateProjectionMatrix();}}
+function careerShopRebuildCar(){
+  if(!careerShopScene||!window.THREE)return;
+  if(careerShopCar){careerShopScene.remove(careerShopCar.root);careerShopCar=null;} // Les géométries de roues sont mutualisées avec la voiture de course : ne pas les disposer ici.
+  try{careerShopCar=makeCar(me.color||"#e10600",me.name||"PILOTE",true,me.num||0);if(careerActiveLogo()!=="none")careerApplyLogoToCar(careerShopCar);careerShopCar.root.position.y=.05;careerShopScene.add(careerShopCar.root);}catch(e){console.warn("Aperçu monoplace non construit",e);}
+}
+function careerShopLoop(now){
+  if($("careerOverlay").hidden||$("shopModal").hidden||!careerShopRenderer)return;
+  const dt=Math.min(.05,Math.max(.001,(now-careerShopClock)/1000||.016));careerShopClock=now;
+  if(careerShopCar){careerShopCar.root.rotation.y+=dt*.42;const lift=Math.sin(now*.0014)*.035;careerShopCar.root.position.y=.06+lift;if(careerShopCar.body)careerShopCar.body.rotation.z=Math.sin(now*.0007)*.012;}
+  careerShopResize3D();careerShopRenderer.render(careerShopScene,careerShopCamera);careerShopRAF=requestAnimationFrame(careerShopLoop);
+}
+function careerShopStop3D(){if(careerShopRAF){cancelAnimationFrame(careerShopRAF);careerShopRAF=0;}}
+function careerShopRefreshDescription(){
+  const levels=["Standard","Sport","Pro"];
+  $("careerCarSpecs").textContent=`Pneus ${levels[careerUpgradeLevel("tires")]} · Freins ${levels[careerUpgradeLevel("brakes")]} · Pit ${levels[careerUpgradeLevel("pit")]}`;
+}
+
+careerUpdateHud();careerCheckAdminVisibility();
+void careerRestoreSession();
+$("accountBtn").addEventListener("click",()=>careerShowModal("accountModal"));
+$("shopBtn").addEventListener("click",()=>careerShowModal("shopModal"));
+$("adminBtn").addEventListener("click",()=>careerShowModal("adminModal"));
+$("careerScrim").addEventListener("click",careerCloseModal);
+document.querySelectorAll("[data-career-close]").forEach(b=>b.addEventListener("click",careerCloseModal));
+let careerAdminKeyBuffer="",careerAdminKeyAt=0;
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&!$("careerOverlay").hidden){careerCloseModal();return;}
+  if(!document.body.classList.contains("menu-mode")||!$("careerOverlay").hidden||e.ctrlKey||e.altKey||e.metaKey)return;
+  const tag=(document.activeElement&&document.activeElement.tagName||"").toLowerCase();if(["input","textarea","select"].includes(tag))return;
+  const now=performance.now();if(now-careerAdminKeyAt>1500)careerAdminKeyBuffer="";careerAdminKeyAt=now;
+  if(e.key.length===1&&/[a-z]/i.test(e.key)){careerAdminKeyBuffer=(careerAdminKeyBuffer+e.key.toLowerCase()).slice(-5);if(careerAdminKeyBuffer==="admin")careerShowModal("adminModal");}
+});
+$("careerRegisterBtn").addEventListener("click",careerRegister);
+$("careerLoginBtn").addEventListener("click",careerLogin);
+$("careerLogoutBtn").addEventListener("click",careerLogout);
+$("careerSaveProfileBtn").addEventListener("click",careerSaveAccountProfile);
+$("careerAdminSetCash").addEventListener("click",careerApplyAdminCash);
+$("careerAdminUser").addEventListener("change",()=>{const a=careerAdminAccountsCache.find(x=>x.username===$("careerAdminUser").value);if(a)$("careerAdminCash").value=String(a.cash||0);});
+$("careerAdminLoginOpen").addEventListener("click",()=>careerShowModal("accountModal"));
+$("careerAdminLogout").addEventListener("click",()=>void careerLogout());
+$("nameInput").addEventListener("input",()=>{careerCheckAdminVisibility();careerUpdateHud();});
+$("nameInput").addEventListener("change",careerPersistDriver);
+$("numInput").addEventListener("input",()=>{careerPersistDriver();careerShopRebuildCar();});
+$("swatches").addEventListener("click",()=>{setTimeout(()=>{careerPersistDriver();careerShopRebuildCar();},0);});
+$("swatches").addEventListener("input",()=>{careerPersistDriver();careerShopRebuildCar();});
+$("numInput").addEventListener("change",careerPersistDriver);
+$("nameInput").addEventListener("blur",()=>{if(careerActiveAccount()&&$("nameInput").value.trim().toLowerCase()!=="admin")careerPersistDriver();});
+document.querySelectorAll("[data-shop-filter]").forEach(b=>b.addEventListener("click",()=>{careerShopFilter=b.dataset.shopFilter;document.querySelectorAll("[data-shop-filter]").forEach(x=>x.classList.toggle("active",x===b));careerRenderShop();}));
+$("careerShopItems").addEventListener("click",e=>{const buy=e.target.closest("[data-store-buy]");if(buy){e.preventDefault();e.stopPropagation();const item=CAREER_STORE.find(x=>x.id===buy.dataset.storeBuy);if(item)void careerPurchase(item);return;}const card=e.target.closest("[data-store-id]");if(!card)return;const item=CAREER_STORE.find(x=>x.id===card.dataset.storeId);if(item)careerSelectStoreItem(item);});
+$("careerShopItems").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-store-id]")&&!e.target.matches("button")){e.preventDefault();const item=CAREER_STORE.find(x=>x.id===e.target.dataset.storeId);if(item)careerSelectStoreItem(item);}});
+$("careerBuySelected").addEventListener("click",()=>{const item=CAREER_STORE.find(x=>x.id===careerSelectedStoreId);if(item)careerPurchase(item);});
+window.addEventListener("resize",()=>{if(!$("careerOverlay").hidden&&!$("shopModal").hidden)careerShopResize3D();});
+// Reward at the finish is paid once per race, with the exact requested podium amounts.
+// If there is no account, the guest wallet persists only in this browser.
+
 </script>
 <script src="paddock.js"></script>
 <script data-pplx-inline-edit>

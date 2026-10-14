@@ -1,12 +1,15 @@
 {
   "name": "paulogames-server",
-  "version": "1.0.0",
-  "description": "Serveur multijoueur Paulogames",
+  "version": "2.0.0",
+  "description": "Serveur multijoueur Paulogames avec API sécurisée pour comptes et boutique",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check": "node --check server.js"
   },
+  "engines": { "node": ">=20" },
   "dependencies": {
+    "pg": "^8.16.3",
     "ws": "^8.18.0"
   }
 }
