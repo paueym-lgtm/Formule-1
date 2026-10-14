@@ -91,13 +91,13 @@ function tokenHash(token){return sha256(token);}
 async function hashPassword(password,salt){const derived=await scryptAsync(password,salt,64,{N:65536,r:8,p:1,maxmem:128*1024*1024});return derived.toString("hex");}
 function safeEqualHex(a,b){try{const aa=Buffer.from(String(a),"hex"),bb=Buffer.from(String(b),"hex");return aa.length===bb.length&&aa.length>0&&crypto.timingSafeEqual(aa,bb);}catch(_){return false;}}
 function cleanUser(row){if(!row)return null;return {id:row.id,username:row.username,name:row.name||"Pilote",color:row.color||"#e10600",num:Number(row.num)||0,cash:Number(row.credits)||0,upgrades:row.upgrades||{},logo:row.logo||"none",ownedLogos:row.owned_logos||[],createdAt:row.created_at,isAdmin:false};}
-function bearer(req){const m=String(req.headers.authorization||"").match(/^Bearer\\s+([A-Za-z0-9._~-]{20,4096})$/);return m?m[1]:null;}
+function bearer(req){const m=String(req.headers.authorization||"").match(/^Bearer\s+([A-Za-z0-9._~-]{20,4096})$/);return m?m[1]:null;}
 const adminSessions=new Set();
 async function supabaseAuth(path,method,body,token){
   const headers={"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"};
   if(token)headers.Authorization="Bearer "+token;
   let response;
-  try{response=await fetch(SUPABASE_URL.replace(/\\/$/,"")+"/auth/v1/"+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});}
+  try{response=await fetch(SUPABASE_URL.replace(/\/$/,"")+"/auth/v1/"+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});}
   catch(_){throw new ApiError(503,"Supabase Auth est momentanément inaccessible.");}
   let data={};try{data=await response.json();}catch(_){}
   if(!response.ok){const msg=String(data.msg||data.message||data.error_description||data.error||"");if(response.status===409||/already registered|already exists/i.test(msg))throw new ApiError(409,"Cet identifiant existe déjà. Choisis-en un autre.");if(response.status===400&&/password/i.test(msg))throw new ApiError(400,"Le mot de passe doit contenir au moins 8 caractères.");if(response.status===400||response.status===422)throw new ApiError(401,"Identifiant ou mot de passe invalide. Vérifie aussi la configuration Auth de Supabase.");throw new ApiError(response.status>=500?503:401,"Supabase Auth : "+(msg||"requête refusée."));}
@@ -188,7 +188,7 @@ async function routeApi(req,res,path){
   if(path==="/api/admin/accounts"&&req.method==="GET"){
     await auth(req,true);const {rows}=await pool.query("SELECT username,name,color,num,credits,upgrades,logo,owned_logos,created_at FROM public.profiles ORDER BY created_at DESC");return json(res,200,{accounts:rows.map(cleanUser)});
   }
-  const cashMatch=path.match(/^\\/api\\/admin\\/accounts\\/([a-z0-9_.-]{3,20})\\/cash$/);
+  const cashMatch=path.match(/^\/api\/admin\/accounts\/([a-z0-9_.-]{3,20})\/cash$/);
   if(cashMatch&&req.method==="PATCH"){
     await auth(req,true);const body=await readBody(req),cash=Number(body.cash);if(!Number.isSafeInteger(cash)||cash<0||cash>9000000000000000)throw new ApiError(400,"Le solde doit être un nombre entier positif valide.");const {rows}=await pool.query("UPDATE public.profiles SET credits=$2 WHERE username=$1 RETURNING *",[cashMatch[1],cash]);if(!rows[0])throw new ApiError(404,"Compte introuvable.");return json(res,200,{user:cleanUser(rows[0]),message:"Solde administrateur mis à jour dans Supabase."});
   }
