@@ -783,7 +783,7 @@ body:not(.menu-mode) #careerNav{display:none}
     <div class="career-shop-layout"><div class="career-shop-list"><div class="career-shop-filters"><button type="button" data-shop-filter="all" class="active">Tout</button><button type="button" data-shop-filter="performance">Performance</button><button type="button" data-shop-filter="livery">Logos</button></div><div id="careerShopItems"></div><button id="careerBuySelected" class="career-buy-selected" type="button" disabled>Sélectionne un article</button></div>
       <aside class="career-car-display"><div class="career-car-stage"><span class="career-stage-tag">LIVE CONFIGURATION</span><canvas id="shopCarCanvas" aria-label="Monoplace 3D en rotation"></canvas><div class="career-stage-floor"></div><span class="career-stage-shadow"></span></div><div class="career-car-caption"><div><small>TA MONOPlace</small><strong id="careerCarCaption">TEAM EDITION</strong><span id="careerCarSpecs">Pneus standard · Freins standard</span></div><span class="career-car-num" id="careerCarNumber">00</span></div><div id="careerShopMessage" class="career-shop-message" role="status">Sélectionne un article pour voir son effet.</div></aside>
     </div>
-    <p class="career-local-note"><b>Récompenses de course :</b> 1er · 1 000 000 € &nbsp; / &nbsp; 2e · 500 000 € &nbsp; / &nbsp; 3e · 100 000 €. Les autres places ne rapportent rien.</p>
+    <p class="career-local-note"><b>Récompenses de course :</b> 1er · 1 000 € &nbsp; / &nbsp; 2e · 500 € &nbsp; / &nbsp; 3e · 100 €. Les autres places ne rapportent rien.</p>
   </section>
   <section class="career-modal" id="adminModal" role="dialog" aria-modal="true" aria-labelledby="careerAdminTitle" hidden>
     <header class="career-modal-head"><div><span class="career-eyebrow">ADMINISTRATION SERVEUR</span><h2 id="careerAdminTitle">Administration</h2></div><button class="career-close" data-career-close type="button" aria-label="Fermer">×</button></header>
@@ -2962,14 +2962,25 @@ function startPlayerPit(){
  flash("PIT ENTRY · AUTOMATIQUE",900);
  return true;
 }
+// Vérifie la vraie zone d'entrée des stands : repère du circuit + position physique
+// près de la bretelle. Cela évite un déclenchement parasite sur un autre tronçon proche.
+function pitEntryApproachReady(car,windowM){
+ const rel=pitRelativeFromCar(car);
+ if(Math.abs(rel-PIT_TRIG_REL)>windowM)return false;
+ const nr=nearest(car.x,car.z,Number.isFinite(car.idx)?car.idx:0);
+ const sideLat=((car.x-TX[nr.i])*RGX[nr.i]+(car.z-TZ[nr.i])*RGZ[nr.i])*PIT_SIDE;
+ if(sideLat<-(TRACK_W/2+KERB+1.2)||sideLat>PIT_LAT+PIT_HALF_W+3)return false;
+ const entry=pitGeo().entry;
+ const distanceToRamp=Math.hypot(car.x-entry.x0,car.z-entry.z0);
+ if(distanceToRamp>TRACK_W/2+KERB+PIT_RAMP_TRACK_HALF+9)return false;
+ return true;
+}
 function checkAutomaticPitEntry(h){
  if(phase!=="race"||me.pitMode||me.dq||me.tireLaps<1)return false;
- // Les pneus sont changés automatiquement à la fin du deuxième tour utile, avant la ligne.
- // Pas de détour aux stands pendant le dernier tour.
+ // Changement auto à la fin du 2e tour utile ; aucune entrée pendant le dernier tour.
  if(me.cross<2||me.cross>=laps)return false;
- const rel=pitRelativeFromCar(me);
- const windowM=Math.max(9,Math.abs(me.speed||0)*Math.max(h,1/120)*1.6+4);
- if(Math.abs(rel-PIT_TRIG_REL)>windowM)return false;
+ const windowM=Math.max(12,Math.abs(me.speed||0)*Math.max(h,1/120)*1.8+5);
+ if(!pitEntryApproachReady(me,windowM))return false;
  return startPlayerPit();
 }
 function stepPlayerPit(h){
@@ -3163,7 +3174,7 @@ function physics(h, t) {
       const c = botControl(b, all, botSkill(b));
 
       b.thr = c.thr; b.brk = c.brk;
-      if(!b.pitMode&&b.tireLaps>=2){const rel=pitRelativeFromCar(b);if(rel>PIT_TRIG_REL-9&&rel<PIT_TRIG_REL+9){b.pitMode=1;pitBegin(b,b.pitSlot||0,PIT_LIMIT);b.pitService=0;}}
+      if(!b.pitMode&&b.tireLaps>=2&&pitEntryApproachReady(b,14)){b.pitMode=1;pitBegin(b,b.pitSlot||0,PIT_LIMIT);b.pitService=0;}
       if(b.pitMode===1){if(pitMove(b,h,PIT_LIMIT)==="service")b.pitMode=2;if(b.pitCrossFlag){b.pitCrossFlag=0;b.tireLaps++;if(b.cross===laps+1)b.f=raceNow(t);}}
       else if(b.pitMode===2){const pp=pitBoxFrame(b.pitBox);b.x=pp.x;b.z=pp.z;b.pitY=pp.y;b.a=pp.a;b.speed=0;b.vx=b.vz=0;b.pitService+=h;if(b.pitService>=PIT_STOP_DUR){b.tireLaps=b.pitSawLine?1:0;b.pitCompleted=0;b.pitDeadline=0;b.pitMode=3;pitLeave(b);}}
       else if(b.pitMode===3){if(pitMove(b,h,PIT_LIMIT)==="done")b.pitMode=0;if(b.pitCrossFlag){b.pitCrossFlag=0;b.tireLaps++;if(b.cross===laps+1)b.f=raceNow(t);}}
@@ -7064,7 +7075,7 @@ async function careerApplyAdminCash(){
 }
 async function careerAwardForPosition(position,runId){
   if(me.dq||!position||careerLastReward&&careerLastReward.runId===String(runId))return;
-  const prize=position===1?1000000:position===2?500000:position===3?100000:0;careerLastReward={runId:String(runId),position,amount:0};
+  const prize=position===1?1000:position===2?500:position===3?100:0;careerLastReward={runId:String(runId),position,amount:0};
   if(!careerActiveAccount()){careerLastReward.amount=0;careerLastReward.message=" Connecte-toi pour conserver les récompenses de course sur le serveur.";careerUpdateHud();return;}
   try{const result=await careerApi("/api/rewards",{method:"POST",body:JSON.stringify({runId:String(runId),position,disqualified:!!me.dq})});careerAccount=result.user;careerAccountName=careerAccount.username;careerLastReward.amount=Number(result.reward)||0;careerLastReward.message=result.message||"";careerUpdateHud();if(!$("results").hidden)refreshResults();}
   catch(e){careerLastReward.message=" Récompense non enregistrée : "+e.message;careerUpdateHud();if(!$("results").hidden)refreshResults();}
