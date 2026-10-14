@@ -11,7 +11,7 @@ const SNAPSHOT_MS = 150;
 const SESSION_DAYS = 30;
 const rooms = new Map();
 const scryptAsync = promisify(crypto.scrypt);
-const DATABASE_URL = process.env.DATABASE_URL || "";
+const DATABASE_URL = process.env.DATABASE_URL || "";\nconst SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();\nconst SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || "").trim();
 const ADMIN_USERNAME = (process.env.ADMIN_USERNAME || "admin").trim().toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const CORS_ORIGINS = (process.env.CORS_ORIGINS || "*").split(",").map(x => x.trim()).filter(Boolean);
@@ -76,42 +76,12 @@ function handleMessage(ws,raw){
 }
 
 async function ensureDb(){
-  if(!pool)throw new ApiError(503,"La base de données du serveur n’est pas configurée. Ajoute DATABASE_URL dans les variables Render, puis redémarre le service.");
+  if(!pool) throw new ApiError(503,"La base PostgreSQL Supabase n’est pas configurée : ajoute DATABASE_URL dans Render.");
+  if(!SUPABASE_URL||!SUPABASE_ANON_KEY) throw new ApiError(503,"La connexion Supabase Auth n’est pas configurée : ajoute SUPABASE_URL et SUPABASE_ANON_KEY dans Render.");
   if(schemaReady)return;
-  if(!schemaPromise){schemaPromise=(async()=>{
-    await pool.query(`CREATE TABLE IF NOT EXISTS career_users (
-      id BIGSERIAL PRIMARY KEY,
-      username VARCHAR(20) NOT NULL UNIQUE,
-      password_salt TEXT NOT NULL,
-      password_hash TEXT NOT NULL,
-      name VARCHAR(14) NOT NULL DEFAULT 'Pilote',
-      color CHAR(7) NOT NULL DEFAULT '#e10600',
-      num SMALLINT NOT NULL DEFAULT 0 CHECK (num BETWEEN 0 AND 99),
-      cash BIGINT NOT NULL DEFAULT 0 CHECK (cash >= 0),
-      upgrades JSONB NOT NULL DEFAULT '{}'::jsonb,
-      logo TEXT NOT NULL DEFAULT 'none',
-      owned_logos JSONB NOT NULL DEFAULT '[]'::jsonb,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )`);
-    await pool.query(`CREATE TABLE IF NOT EXISTS career_sessions (
-      token_hash CHAR(64) PRIMARY KEY,
-      user_id BIGINT NULL REFERENCES career_users(id) ON DELETE CASCADE,
-      is_admin BOOLEAN NOT NULL DEFAULT FALSE,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      expires_at TIMESTAMPTZ NOT NULL
-    )`);
-    await pool.query("CREATE INDEX IF NOT EXISTS career_sessions_expiry_idx ON career_sessions(expires_at)");
-    await pool.query(`CREATE TABLE IF NOT EXISTS career_race_rewards (
-      user_id BIGINT NOT NULL REFERENCES career_users(id) ON DELETE CASCADE,
-      run_id VARCHAR(120) NOT NULL,
-      position SMALLINT NOT NULL,
-      amount BIGINT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      PRIMARY KEY (user_id, run_id)
-    )`);
-    schemaReady=true;
-  })().catch(e=>{schemaReady=false;throw e;}).finally(()=>{schemaPromise=null;});}
-  await schemaPromise;
+  await pool.query("SELECT id, username, credits FROM public.profiles LIMIT 0");
+  await pool.query("SELECT player_id, run_id, amount FROM public.player_race_rewards LIMIT 0");
+  schemaReady=true;
 }
 function json(res,status,data){const body=JSON.stringify(data);res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Content-Length":Buffer.byteLength(body)});res.end(body);}
 function setCors(req,res){const origin=req.headers.origin;const allowed=CORS_ORIGINS.includes("*")||(origin&&CORS_ORIGINS.includes(origin));if(allowed)res.setHeader("Access-Control-Allow-Origin",CORS_ORIGINS.includes("*")?"*":origin);res.setHeader("Vary","Origin");res.setHeader("Access-Control-Allow-Headers","Content-Type, Authorization");res.setHeader("Access-Control-Allow-Methods","GET, POST, PUT, PATCH, OPTIONS");res.setHeader("Access-Control-Max-Age","86400");return !!allowed;}
@@ -120,82 +90,111 @@ function sha256(text){return crypto.createHash("sha256").update(String(text)).di
 function tokenHash(token){return sha256(token);}
 async function hashPassword(password,salt){const derived=await scryptAsync(password,salt,64,{N:65536,r:8,p:1,maxmem:128*1024*1024});return derived.toString("hex");}
 function safeEqualHex(a,b){try{const aa=Buffer.from(String(a),"hex"),bb=Buffer.from(String(b),"hex");return aa.length===bb.length&&aa.length>0&&crypto.timingSafeEqual(aa,bb);}catch(_){return false;}}
-function cleanUser(row){if(!row)return null;return {username:row.username,name:row.name,color:row.color,num:Number(row.num)||0,cash:Number(row.cash)||0,upgrades:row.upgrades||{},logo:row.logo||"none",ownedLogos:row.owned_logos||[],createdAt:row.created_at,isAdmin:false};}
-function bearer(req){const m=String(req.headers.authorization||"").match(/^Bearer\s+([a-f0-9]{64})$/i);return m?m[1]:null;}
-async function auth(req,adminRequired=false,allowAdmin=false){await ensureDb();const token=bearer(req);if(!token)throw new ApiError(401,"Connecte-toi pour continuer.");const {rows}=await pool.query(`SELECT s.user_id,s.is_admin,s.expires_at,u.id,u.username,u.name,u.color,u.num,u.cash,u.upgrades,u.logo,u.owned_logos,u.created_at FROM career_sessions s LEFT JOIN career_users u ON u.id=s.user_id WHERE s.token_hash=$1 AND s.expires_at>NOW()`,[tokenHash(token)]);const row=rows[0];if(!row)throw new ApiError(401,"Session expirée. Reconnecte-toi.");if(adminRequired&&!row.is_admin)throw new ApiError(403,"Accès administrateur refusé.");if(!adminRequired&&!allowAdmin&&row.is_admin)throw new ApiError(403,"Connecte-toi avec un compte pilote pour cet achat.");return {tokenHash:tokenHash(token),isAdmin:!!row.is_admin,userId:row.user_id?Number(row.user_id):null,user:row.is_admin?{username:ADMIN_USERNAME,isAdmin:true}:cleanUser(row)};}
-async function issueSession(userId,isAdmin=false){const token=crypto.randomBytes(32).toString("hex");await pool.query("INSERT INTO career_sessions(token_hash,user_id,is_admin,expires_at) VALUES($1,$2,$3,NOW()+($4 || ' days')::interval)",[tokenHash(token),userId,isAdmin,String(SESSION_DAYS)]);return token;}
+function cleanUser(row){if(!row)return null;return {id:row.id,username:row.username,name:row.name||"Pilote",color:row.color||"#e10600",num:Number(row.num)||0,cash:Number(row.credits)||0,upgrades:row.upgrades||{},logo:row.logo||"none",ownedLogos:row.owned_logos||[],createdAt:row.created_at,isAdmin:false};}
+function bearer(req){const m=String(req.headers.authorization||"").match(/^Bearer\\s+([A-Za-z0-9._~-]{20,4096})$/);return m?m[1]:null;}
+const adminSessions=new Set();
+async function supabaseAuth(path,method,body,token){
+  const headers={"apikey":SUPABASE_ANON_KEY,"Content-Type":"application/json"};
+  if(token)headers.Authorization="Bearer "+token;
+  let response;
+  try{response=await fetch(SUPABASE_URL.replace(/\\/$/,"")+"/auth/v1/"+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});}
+  catch(_){throw new ApiError(503,"Supabase Auth est momentanément inaccessible.");}
+  let data={};try{data=await response.json();}catch(_){}
+  if(!response.ok){const msg=String(data.msg||data.message||data.error_description||data.error||"");if(response.status===409||/already registered|already exists/i.test(msg))throw new ApiError(409,"Cet identifiant existe déjà. Choisis-en un autre.");if(response.status===400&&/password/i.test(msg))throw new ApiError(400,"Le mot de passe doit contenir au moins 8 caractères.");if(response.status===400||response.status===422)throw new ApiError(401,"Identifiant ou mot de passe invalide. Vérifie aussi la configuration Auth de Supabase.");throw new ApiError(response.status>=500?503:401,"Supabase Auth : "+(msg||"requête refusée."));}
+  return data;
+}
+async function profileById(id){const {rows}=await pool.query("SELECT * FROM public.profiles WHERE id=$1",[id]);return rows[0]||null;}
+async function auth(req,adminRequired=false,allowAdmin=false){
+  await ensureDb();const token=bearer(req);if(!token)throw new ApiError(401,"Connecte-toi pour continuer.");
+  if(adminSessions.has(token)){if(!adminRequired&&!allowAdmin)throw new ApiError(403,"Connecte-toi avec un compte pilote pour cet achat.");return {tokenHash:token,isAdmin:true,userId:null,user:{username:ADMIN_USERNAME,isAdmin:true}};}
+  if(adminRequired)throw new ApiError(403,"Accès administrateur refusé.");
+  const data=await supabaseAuth("user","GET",undefined,token);const row=await profileById(data.id);
+  if(!row)throw new ApiError(401,"Profil Supabase introuvable. Vérifie le déclencheur de création de profil.");
+  return {tokenHash:token,isAdmin:false,userId:data.id,user:cleanUser(row)};
+}
+async function userById(id){return cleanUser(await profileById(id));}
 function limitRequest(req,path){const ip=String(req.headers["x-forwarded-for"]||req.socket.remoteAddress||"unknown").split(",")[0].trim();const key=ip+"|"+path;const now=Date.now();let b=requestBuckets.get(key);if(!b||now-b.start>10*60*1000)b={start:now,count:0};b.count++;requestBuckets.set(key,b);for(const [k,v] of requestBuckets)if(now-v.start>20*60*1000)requestBuckets.delete(k);if(b.count>12)throw new ApiError(429,"Trop de tentatives. Attends quelques minutes avant de réessayer.");}
-async function userById(id){const {rows}=await pool.query("SELECT * FROM career_users WHERE id=$1",[id]);return cleanUser(rows[0]);}
 async function routeApi(req,res,path){
   if(path==="/api/health"&&req.method==="GET"){
     let ready=false,error=null;try{await ensureDb();ready=true;}catch(e){error=e.message;}
-    return json(res,200,{ok:true,service:"paulogames-server",databaseConfigured:!!pool,databaseReady:ready,databaseMessage:error});
+    return json(res,200,{ok:true,service:"paulogames-server",databaseConfigured:!!pool,databaseReady:ready,databaseMessage:error,supabaseAuthConfigured:!!(SUPABASE_URL&&SUPABASE_ANON_KEY)});
   }
   if(path==="/api/register"&&req.method==="POST"){
     limitRequest(req,path);await ensureDb();const body=await readBody(req);const username=String(body.username||"").trim().toLowerCase(),password=String(body.password||"");
     if(!/^[a-z0-9_.-]{3,20}$/.test(username))throw new ApiError(400,"Identifiant invalide : 3 à 20 caractères alphanumériques, point, tiret ou souligné.");
-    if(username===ADMIN_USERNAME||username==="admin")throw new ApiError(400,"Cet identifiant est réservé à l’administrateur du serveur.");
+    if(username===ADMIN_USERNAME||username==="admin")throw new ApiError(400,"Cet identifiant est réservé à l’administrateur.");
     if(password.length<8||Buffer.byteLength(password,"utf8")>128)throw new ApiError(400,"Le mot de passe doit contenir 8 à 128 caractères.");
-    const salt=crypto.randomBytes(16).toString("hex"),passwordHash=await hashPassword(password,salt),name=cleanName(body.name),color=cleanColor(body.color),num=Math.max(0,Math.min(99,Math.floor(Number(body.num)||0)));
-    let row;try{const result=await pool.query("INSERT INTO career_users(username,password_salt,password_hash,name,color,num) VALUES($1,$2,$3,$4,$5,$6) RETURNING *",[username,salt,passwordHash,name,color,num]);row=result.rows[0];}catch(e){if(e.code==="23505")throw new ApiError(409,"Cet identifiant est déjà utilisé. Choisis-en un autre.");throw e;}
-    const token=await issueSession(row.id,false);return json(res,201,{token,user:cleanUser(row)});
+    const name=cleanName(body.name),color=cleanColor(body.color),num=Math.max(0,Math.min(99,Math.floor(Number(body.num)||0)));
+    // L'interface historique ne demande qu'un pseudo. On utilise un alias technique ;
+    // les confirmations d'e-mail doivent être désactivées dans Supabase Auth pour ce mode.
+    const email=username+"@accounts.paulogames.invalid";
+    const data=await supabaseAuth("signup","POST",{email,password,data:{username,name,color,num}});
+    const token=data.access_token;
+    if(!token)throw new ApiError(403,"Supabase n’a pas renvoyé de session. Dans Supabase Auth, désactive la confirmation d’e-mail pour les comptes à pseudo.");
+    let row=null;for(let i=0;i<3&&!row;i++){row=await profileById(data.user?.id);if(!row)await new Promise(resolve=>setTimeout(resolve,150));}
+    if(!row)throw new ApiError(503,"Le compte Auth est créé, mais son profil ne s’est pas créé. Vérifie le déclencheur on_auth_user_created dans Supabase.");
+    await pool.query("UPDATE public.profiles SET name=$2,color=$3,num=$4 WHERE id=$1",[row.id,name,color,num]);
+    return json(res,201,{token,user:await userById(row.id)});
   }
   if(path==="/api/login"&&req.method==="POST"){
     limitRequest(req,path);await ensureDb();const body=await readBody(req);const username=String(body.username||"").trim().toLowerCase(),password=String(body.password||"");
     if(username===ADMIN_USERNAME||username==="admin"){
       if(!ADMIN_PASSWORD)throw new ApiError(503,"Le mot de passe administrateur n’est pas configuré. Définis ADMIN_PASSWORD dans Render.");
-      const ok=safeEqualHex(sha256(password),sha256(ADMIN_PASSWORD));if(!ok)throw new ApiError(401,"Identifiant ou mot de passe incorrect.");
-      const token=await issueSession(null,true);return json(res,200,{token,user:{username:ADMIN_USERNAME,isAdmin:true}});
+      if(!safeEqualHex(sha256(password),sha256(ADMIN_PASSWORD)))throw new ApiError(401,"Identifiant ou mot de passe incorrect.");
+      const token=crypto.randomBytes(32).toString("hex");adminSessions.add(token);return json(res,200,{token,user:{username:ADMIN_USERNAME,isAdmin:true}});
     }
-    const {rows}=await pool.query("SELECT * FROM career_users WHERE username=$1",[username]);const row=rows[0];if(!row)throw new ApiError(401,"Identifiant ou mot de passe incorrect.");
-    const check=await hashPassword(password,row.password_salt);if(!safeEqualHex(check,row.password_hash))throw new ApiError(401,"Identifiant ou mot de passe incorrect.");
-    const token=await issueSession(row.id,false);return json(res,200,{token,user:cleanUser(row)});
+    if(!/^[a-z0-9_.-]{3,20}$/.test(username))throw new ApiError(401,"Identifiant ou mot de passe incorrect.");
+    const data=await supabaseAuth("token?grant_type=password","POST",{email:username+"@accounts.paulogames.invalid",password});
+    if(!data.access_token||!data.user?.id)throw new ApiError(401,"Identifiant ou mot de passe incorrect.");
+    const row=await profileById(data.user.id);if(!row)throw new ApiError(401,"Profil Supabase introuvable. Vérifie le déclencheur de création de profil.");
+    return json(res,200,{token:data.access_token,user:cleanUser(row)});
   }
   if(path==="/api/me"&&req.method==="GET"){
     const session=await auth(req,false,true);if(session.isAdmin)return json(res,200,{user:{username:ADMIN_USERNAME,isAdmin:true}});return json(res,200,{user:await userById(session.userId)});
   }
   if(path==="/api/logout"&&req.method==="POST"){
-    const token=bearer(req);if(token&&pool){try{await ensureDb();await pool.query("DELETE FROM career_sessions WHERE token_hash=$1",[tokenHash(token)]);}catch(_){}}return json(res,200,{ok:true});
+    const token=bearer(req);if(token){adminSessions.delete(token);if(SUPABASE_URL&&SUPABASE_ANON_KEY&&!/^[a-f0-9]{64}$/i.test(token)){try{await supabaseAuth("logout","POST",{},token);}catch(_){}}}return json(res,200,{ok:true});
   }
   if(path==="/api/profile"&&req.method==="PUT"){
     const session=await auth(req,false),body=await readBody(req),name=cleanName(body.name),color=cleanColor(body.color),num=Math.max(0,Math.min(99,Math.floor(Number(body.num)||0)));
-    const {rows}=await pool.query("UPDATE career_users SET name=$2,color=$3,num=$4 WHERE id=$1 RETURNING *",[session.userId,name,color,num]);return json(res,200,{user:cleanUser(rows[0]),message:"Profil enregistré sur le serveur."});
+    const {rows}=await pool.query("UPDATE public.profiles SET name=$2,color=$3,num=$4 WHERE id=$1 RETURNING *",[session.userId,name,color,num]);return json(res,200,{user:cleanUser(rows[0]),message:"Profil enregistré sur Supabase."});
   }
   if(path==="/api/shop/purchase"&&req.method==="POST"){
     const session=await auth(req,false),body=await readBody(req),item=STORE[String(body.itemId||"")];if(!item)throw new ApiError(400,"Article inconnu.");
     const client=await pool.connect();try{
-      await client.query("BEGIN");const selected=await client.query("SELECT * FROM career_users WHERE id=$1 FOR UPDATE",[session.userId]);const row=selected.rows[0];if(!row)throw new ApiError(401,"Compte introuvable.");
-      const upgrades=row.upgrades||{},ownedLogos=Array.isArray(row.owned_logos)?row.owned_logos:[];let cash=Number(row.cash)||0,logo=row.logo||"none",message="";
-      if(item.type==="upgrade"){
-        if((Number(upgrades[item.key])||0)>=item.level)throw new ApiError(409,"Cette amélioration est déjà achetée.");
-        if(item.requires&&(Number(upgrades[item.key])||0)<item.requires)throw new ApiError(400,"Prérequis manquant : achète d’abord le niveau précédent.");
-      }else if(item.type==="logo"&&ownedLogos.includes(item.logo)){
-        logo=item.logo;await client.query("UPDATE career_users SET logo=$2 WHERE id=$1",[session.userId,logo]);await client.query("COMMIT");return json(res,200,{user:await userById(session.userId),message:"Logo équipé gratuitement : il est maintenant appliqué à ta monoplace."});
-      }
-      if(cash<item.price)throw new ApiError(400,"Fonds insuffisants : il te manque "+(item.price-cash).toLocaleString("fr-FR")+" €.");cash-=item.price;
+      await client.query("BEGIN");const selected=await client.query("SELECT * FROM public.profiles WHERE id=$1 FOR UPDATE",[session.userId]);const row=selected.rows[0];if(!row)throw new ApiError(401,"Compte introuvable.");
+      const upgrades=row.upgrades||{},ownedLogos=Array.isArray(row.owned_logos)?row.owned_logos:[];let cash=Number(row.credits)||0,logo=row.logo||"none",message="";
+      if(item.type==="upgrade"){if((Number(upgrades[item.key])||0)>=item.level)throw new ApiError(409,"Cette amélioration est déjà achetée.");if(item.requires&&(Number(upgrades[item.key])||0)<item.requires)throw new ApiError(400,"Prérequis manquant : achète d’abord le niveau précédent.");}
+      else if(item.type==="logo"&&ownedLogos.includes(item.logo)){logo=item.logo;await client.query("UPDATE public.profiles SET logo=$2 WHERE id=$1",[session.userId,logo]);await client.query("COMMIT");return json(res,200,{user:await userById(session.userId),message:"Logo équipé gratuitement : il est maintenant appliqué à ta monoplace."});}
+      if(cash<item.price)throw new ApiError(400,"Fonds insuffisants : il te manque "+(item.price-cash).toLocaleString("fr-FR")+" crédits.");cash-=item.price;
       if(item.type==="upgrade")upgrades[item.key]=item.level;if(item.type==="logo"){logo=item.logo;if(!ownedLogos.includes(item.logo))ownedLogos.push(item.logo);}
-      await client.query("UPDATE career_users SET cash=$2,upgrades=$3::jsonb,logo=$4,owned_logos=$5::jsonb WHERE id=$1",[session.userId,cash,JSON.stringify(upgrades),logo,JSON.stringify(ownedLogos)]);
-      await client.query("COMMIT");message="Achat confirmé : l’argent a été débité et l’amélioration est sauvegardée sur le serveur.";return json(res,200,{user:await userById(session.userId),message});
+      const updated=await client.query("UPDATE public.profiles SET credits=$2,upgrades=$3::jsonb,logo=$4,owned_logos=$5::jsonb WHERE id=$1 RETURNING *",[session.userId,cash,JSON.stringify(upgrades),logo,JSON.stringify(ownedLogos)]);
+      await client.query("COMMIT");message="Achat confirmé : les crédits et l’article sont sauvegardés dans Supabase.";return json(res,200,{user:cleanUser(updated.rows[0]),message});
     }catch(e){try{await client.query("ROLLBACK");}catch(_){}throw e;}finally{client.release();}
   }
   if(path==="/api/shop/equip-logo"&&req.method==="POST"){
     const session=await auth(req,false),body=await readBody(req),logo=String(body.logo||"");if(!["pg","bolt","crown","apex"].includes(logo))throw new ApiError(400,"Logo inconnu.");
-    const {rows}=await pool.query("UPDATE career_users SET logo=$2 WHERE id=$1 AND owned_logos ? $2 RETURNING *",[session.userId,logo]);if(!rows[0])throw new ApiError(403,"Tu ne possèdes pas ce logo.");return json(res,200,{user:cleanUser(rows[0]),message:"Logo équipé gratuitement et sauvegardé sur le serveur."});
+    const {rows}=await pool.query("UPDATE public.profiles SET logo=$2 WHERE id=$1 AND owned_logos ? $2 RETURNING *",[session.userId,logo]);if(!rows[0])throw new ApiError(403,"Tu ne possèdes pas ce logo.");return json(res,200,{user:cleanUser(rows[0]),message:"Logo équipé et sauvegardé sur Supabase."});
   }
   if(path==="/api/rewards"&&req.method==="POST"){
     const session=await auth(req,false),body=await readBody(req),runId=String(body.runId||"").slice(0,120),position=Math.floor(Number(body.position)||0),dq=body.disqualified===true;
     if(!runId)throw new ApiError(400,"Identifiant de course manquant.");if(position<1||position>99)throw new ApiError(400,"Position de course invalide.");
-    const amount=dq?0:(position===1?1000000:position===2?500000:position===3?100000:0);const client=await pool.connect();try{await client.query("BEGIN");const inserted=await client.query("INSERT INTO career_race_rewards(user_id,run_id,position,amount) VALUES($1,$2,$3,$4) ON CONFLICT(user_id,run_id) DO NOTHING RETURNING amount",[session.userId,runId,position,amount]);let reward=0,message;if(inserted.rows.length){if(amount>0)await client.query("UPDATE career_users SET cash=cash+$2 WHERE id=$1",[session.userId,amount]);reward=amount;message=amount>0?"Récompense de podium créditée et sauvegardée sur le serveur.":"Course enregistrée : aucune récompense financière pour cette position.";}else{message="Cette course a déjà été enregistrée pour ce compte.";}await client.query("COMMIT");return json(res,200,{user:await userById(session.userId),reward,message});}catch(e){try{await client.query("ROLLBACK");}catch(_){}throw e;}finally{client.release();}
+    const amount=dq?0:(position===1?1000000:position===2?500000:position===3?100000:0);const client=await pool.connect();try{
+      await client.query("BEGIN");const inserted=await client.query("INSERT INTO public.player_race_rewards(player_id,run_id,position,amount) VALUES($1,$2,$3,$4) ON CONFLICT(player_id,run_id) DO NOTHING RETURNING amount",[session.userId,runId,position,amount]);let reward=0,message;
+      if(inserted.rows.length){if(amount>0)await client.query("UPDATE public.profiles SET credits=credits+$2 WHERE id=$1",[session.userId,amount]);reward=amount;message=amount>0?"Récompense de podium créditée et sauvegardée dans Supabase.":"Course enregistrée : aucune récompense financière pour cette position.";}else{message="Cette course a déjà été enregistrée pour ce compte.";}
+      await client.query("COMMIT");return json(res,200,{user:await userById(session.userId),reward,message});
+    }catch(e){try{await client.query("ROLLBACK");}catch(_){}throw e;}finally{client.release();}
   }
   if(path==="/api/admin/accounts"&&req.method==="GET"){
-    await auth(req,true);const {rows}=await pool.query("SELECT username,name,color,num,cash,upgrades,logo,owned_logos,created_at FROM career_users ORDER BY created_at DESC");return json(res,200,{accounts:rows.map(r=>({...cleanUser(r),createdAt:r.created_at}))});
+    await auth(req,true);const {rows}=await pool.query("SELECT username,name,color,num,credits,upgrades,logo,owned_logos,created_at FROM public.profiles ORDER BY created_at DESC");return json(res,200,{accounts:rows.map(cleanUser)});
   }
-  const cashMatch=path.match(/^\/api\/admin\/accounts\/([a-z0-9_.-]{3,20})\/cash$/);
+  const cashMatch=path.match(/^\\/api\\/admin\\/accounts\\/([a-z0-9_.-]{3,20})\\/cash$/);
   if(cashMatch&&req.method==="PATCH"){
-    await auth(req,true);const body=await readBody(req),cash=Number(body.cash);if(!Number.isSafeInteger(cash)||cash<0||cash>9000000000000000)throw new ApiError(400,"Le solde doit être un nombre entier positif valide.");const {rows}=await pool.query("UPDATE career_users SET cash=$2 WHERE username=$1 RETURNING *",[cashMatch[1],cash]);if(!rows[0])throw new ApiError(404,"Compte introuvable.");return json(res,200,{user:cleanUser(rows[0]),message:"Solde administrateur mis à jour."});
+    await auth(req,true);const body=await readBody(req),cash=Number(body.cash);if(!Number.isSafeInteger(cash)||cash<0||cash>9000000000000000)throw new ApiError(400,"Le solde doit être un nombre entier positif valide.");const {rows}=await pool.query("UPDATE public.profiles SET credits=$2 WHERE username=$1 RETURNING *",[cashMatch[1],cash]);if(!rows[0])throw new ApiError(404,"Compte introuvable.");return json(res,200,{user:cleanUser(rows[0]),message:"Solde administrateur mis à jour dans Supabase."});
   }
   throw new ApiError(404,"Route API introuvable.");
 }
+
 async function handleHttp(req,res){
   const url=new URL(req.url,"http://localhost"),path=url.pathname;
   if(path.startsWith("/api/")){
