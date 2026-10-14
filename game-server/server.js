@@ -179,7 +179,7 @@ async function routeApi(req,res,path){
   if(path==="/api/rewards"&&req.method==="POST"){
     const session=await auth(req,false),body=await readBody(req),runId=String(body.runId||"").slice(0,120),position=Math.floor(Number(body.position)||0),dq=body.disqualified===true;
     if(!runId)throw new ApiError(400,"Identifiant de course manquant.");if(position<1||position>99)throw new ApiError(400,"Position de course invalide.");
-    const amount=dq?0:(position===1?1000000:position===2?500000:position===3?100000:0);const client=await pool.connect();try{
+    const amount=dq?0:(position===1?1000:position===2?500:position===3?100:0);const client=await pool.connect();try{
       await client.query("BEGIN");const inserted=await client.query("INSERT INTO public.player_race_rewards(player_id,run_id,position,amount) VALUES($1,$2,$3,$4) ON CONFLICT(player_id,run_id) DO NOTHING RETURNING amount",[session.userId,runId,position,amount]);let reward=0,message;
       if(inserted.rows.length){if(amount>0)await client.query("UPDATE public.profiles SET credits=credits+$2 WHERE id=$1",[session.userId,amount]);reward=amount;message=amount>0?"Récompense de podium créditée et sauvegardée dans Supabase.":"Course enregistrée : aucune récompense financière pour cette position.";}else{message="Cette course a déjà été enregistrée pour ce compte.";}
       await client.query("COMMIT");return json(res,200,{user:await userById(session.userId),reward,message});
