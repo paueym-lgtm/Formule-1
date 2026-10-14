@@ -6776,7 +6776,13 @@ setPhase("menu");
 if (!GL_OK) joinStatus(GL_ERR);
 requestAnimationFrame(frame);
 
-/* PAULOGAMES F1 — compte, boutique et récompenses via API sécurisée */
+/* PAULOGAMES F1 — Supabase direct pour les comptes et la carrière */
+const CAREER_SUPABASE_URL = "https://cxpvxkjxcyoahktclqya.supabase.co";
+const CAREER_SUPABASE_PUBLIC_KEY = "sb_publishable_Wq0Igm4Y18kzDBlvNCAaVw_-E-42PyG";
+const careerSupabase = window.supabase.createClient(CAREER_SUPABASE_URL, CAREER_SUPABASE_PUBLIC_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+});
+
 const CAREER_API_BASE = String(window.PAULOGAMES_API_URL || "https://paulogames-server.onrender.com").replace(/\/+$/, "");
 const CAREER_TOKEN_KEY = "paulogames_server_session_v1";
 let careerDB = { accounts: {} }; // Cache admin list only; never used as account storage.
@@ -6815,13 +6821,61 @@ const CAREER_STORE = [
 function careerMoney(n){ return Math.max(0,Math.floor(Number(n)||0)).toLocaleString("fr-FR")+" €"; }
 function careerApiUrl(path){return CAREER_API_BASE+path;}
 async function careerApi(path, options={}){
+  const method=String(options.method||"GET").toUpperCase();
+  let body={};try{body=options.body?JSON.parse(options.body):{};}catch(_){}
+  const fail=(e)=>{throw new Error(e?.message||"Erreur Supabase. Réessaie dans un instant.");};
+  const readProfile=async(userId)=>{
+    const {data,error}=await careerSupabase.from("profiles").select("*").eq("id",userId).maybeSingle();
+    if(error)fail(error);if(!data)throw new Error("Profil introuvable dans Supabase. Vérifie le déclencheur de création de profil.");
+    return {id:data.id,username:data.username,name:data.name||"Pilote",color:data.color||"#e10600",num:Number(data.num)||0,cash:Number(data.credits)||0,upgrades:data.upgrades||{},logo:data.logo||"none",ownedLogos:data.owned_logos||[],createdAt:data.created_at,isAdmin:false};
+  };
+  const currentUser=async()=>{
+    const {data,error}=await careerSupabase.auth.getUser();if(error||!data.user)throw new Error("Connecte-toi pour continuer.");return data.user;
+  };
+  if(path==="/api/health"&&method==="GET")return {ok:true,service:"supabase-direct",databaseConfigured:true,databaseReady:true,supabaseAuthConfigured:true};
+  if(path==="/api/register"&&method==="POST"){
+    const username=String(body.username||"").trim().toLowerCase(),password=String(body.password||"");
+    const email=username+"@accounts.paulogames.invalid";
+    const {data,error}=await careerSupabase.auth.signUp({email,password,options:{data:{username,name:body.name||"Pilote",color:body.color||"#e10600",num:Number(body.num)||0}}});
+    if(error)fail(error);if(!data.session||!data.user)throw new Error("Supabase n’a pas ouvert de session. Dans Supabase > Authentication, désactive la confirmation d’e-mail pour les comptes à pseudo.");
+    careerToken=data.session.access_token;
+    return {token:careerToken,user:await readProfile(data.user.id)};
+  }
+  if(path==="/api/login"&&method==="POST"){
+    const username=String(body.username||"").trim().toLowerCase(),password=String(body.password||"");
+    const {data,error}=await careerSupabase.auth.signInWithPassword({email:username+"@accounts.paulogames.invalid",password});
+    if(error)fail(error);if(!data.session||!data.user)throw new Error("Connexion Supabase impossible.");
+    careerToken=data.session.access_token;return {token:careerToken,user:await readProfile(data.user.id)};
+  }
+  if(path==="/api/me"&&method==="GET"){
+    const {data,error}=await careerSupabase.auth.getSession();if(error)fail(error);if(!data.session)throw new Error("Session expirée. Reconnecte-toi.");
+    careerToken=data.session.access_token;return {user:await readProfile(data.session.user.id)};
+  }
+  if(path==="/api/logout"&&method==="POST"){
+    const {error}=await careerSupabase.auth.signOut();if(error)fail(error);return {ok:true};
+  }
+  if(path==="/api/profile"&&method==="PUT"){
+    const user=await currentUser();
+    const {data,error}=await careerSupabase.from("profiles").update({name:String(body.name||"Pilote").slice(0,14),color:isHexColor(body.color)?body.color:"#e10600",num:clamp(Number(body.num)||0,0,99)}).eq("id",user.id).select("*").single();
+    if(error)fail(error);return {user:{id:data.id,username:data.username,name:data.name,color:data.color,num:Number(data.num)||0,cash:Number(data.credits)||0,upgrades:data.upgrades||{},logo:data.logo||"none",ownedLogos:data.owned_logos||[],createdAt:data.created_at,isAdmin:false},message:"Profil sauvegardé dans Supabase."};
+  }
+  if(path==="/api/shop/purchase"&&method==="POST"){
+    const {data,error}=await careerSupabase.rpc("career_purchase_item",{p_item_id:String(body.itemId||"")});
+    if(error)fail(error);return data;
+  }
+  if(path==="/api/shop/equip-logo"&&method==="POST"){
+    const {data,error}=await careerSupabase.rpc("career_equip_logo",{p_logo:String(body.logo||"")});
+    if(error)fail(error);return data;
+  }
+  if(path==="/api/rewards"&&method==="POST"){
+    const {data,error}=await careerSupabase.rpc("career_award_reward",{p_run_id:String(body.runId||"").slice(0,120),p_position:Number(body.position)||0,p_disqualified:body.disqualified===true});
+    if(error)fail(error);return data;
+  }
+  // Les fonctions d’administration restent derrière le serveur.
   const headers={"Accept":"application/json",...(options.body?{"Content-Type":"application/json"}:{}),...(careerToken?{"Authorization":"Bearer "+careerToken}:{}),...(options.headers||{})};
-  let response;
-  try{response=await fetch(careerApiUrl(path),{...options,headers,cache:"no-store"});}
-  catch(_){throw new Error("Le serveur des comptes est injoignable. Vérifie que le service Render est en ligne.");}
+  let response;try{response=await fetch(careerApiUrl(path),{...options,headers,cache:"no-store"});}catch(_){throw new Error("Fonction d’administration indisponible. Les comptes, profils et achats utilisent directement Supabase.");}
   let data={};try{data=await response.json();}catch(_){}
-  if(!response.ok){if(response.status===401&&careerToken){careerToken=null;careerAccount=null;careerAccountName=null;careerIsAdmin=false;try{localStorage.removeItem(CAREER_TOKEN_KEY);}catch(_){}}throw new Error(data.error||("Erreur serveur ("+response.status+")."));}
-  return data;
+  if(!response.ok)throw new Error(data.error||("Erreur serveur ("+response.status+")."));return data;
 }
 async function careerCheckApiHealth(){const el=$("careerServerStatus");if(!el)return;el.textContent="Vérification du serveur de comptes…";try{const status=await careerApi("/api/health",{method:"GET"});if(status.databaseReady){careerSetStatus("careerServerStatus","Serveur connecté · base de données opérationnelle.","success");}else{careerSetStatus("careerServerStatus",status.databaseMessage||"Base de données pas encore configurée dans le serveur.","error");}}catch(e){careerSetStatus("careerServerStatus",e.message,"error");}}
 function careerSetStatus(id,text,kind=""){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle("success",kind==="success");el.classList.toggle("error",kind==="error");}
@@ -6908,8 +6962,13 @@ function careerAcceptSession(result){
   careerIsAdmin=!!(result.user&&result.user.isAdmin);careerAccount=careerIsAdmin?null:result.user;careerAccountName=careerAccount?careerAccount.username:null;careerUpdateHud();
 }
 async function careerRestoreSession(){
-  try{const token=localStorage.getItem(CAREER_TOKEN_KEY);if(!token)return;careerToken=token;const result=await careerApi("/api/me");careerIsAdmin=!!(result.user&&result.user.isAdmin);careerAccount=careerIsAdmin?null:result.user;careerAccountName=careerAccount?careerAccount.username:null;if(careerAccount)careerApplyDriverProfile(careerAccount);careerUpdateHud();}
-  catch(_){careerToken=null;careerAccount=null;careerAccountName=null;careerIsAdmin=false;try{localStorage.removeItem(CAREER_TOKEN_KEY);}catch(_){}careerUpdateHud();}
+  try{
+    const {data,error}=await careerSupabase.auth.getSession();if(error)throw error;
+    const session=data.session;if(!session){careerToken=null;careerAccount=null;careerAccountName=null;careerIsAdmin=false;careerUpdateHud();return;}
+    careerToken=session.access_token;
+    const result=await careerApi("/api/me");careerIsAdmin=false;careerAccount=result.user;careerAccountName=careerAccount.username;
+    try{localStorage.setItem(CAREER_TOKEN_KEY,careerToken);}catch(_){}careerApplyDriverProfile(careerAccount);careerUpdateHud();
+  }catch(e){careerToken=null;careerAccount=null;careerAccountName=null;careerIsAdmin=false;try{localStorage.removeItem(CAREER_TOKEN_KEY);}catch(_){}careerUpdateHud();}
 }
 async function careerSaveAccountProfile(silent=false){
   const a=careerActiveAccount();if(!a)return;
