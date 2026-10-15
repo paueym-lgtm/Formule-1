@@ -1,0 +1,1 @@
+Place ici assets/egypt-horizon.png (ton panorama) et garde assets/paddock.png
