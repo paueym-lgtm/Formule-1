@@ -708,6 +708,7 @@ body:not(.menu-mode) #careerNav{display:none}
           <option value="japan">Japon — Suzuka</option>
           <option value="uk">Royaume-Uni — Silverstone</option>
           <option value="malaysia">Malaisie — Sepang</option>
+          <option value="egypt">Égypte — Soliman Le Magnifique</option>
         </select>
 
         <div class="two">
@@ -1010,6 +1011,7 @@ const TRACKS = {
   },
 };
 Object.assign(TRACKS, window.EXTRA_TRACKS || {});
+TRACKS.egypt = {"name": "Égypte — Soliman Le Magnifique", "country": "Égypte", "circuit": "Soliman Le Magnifique", "category": "other", "city": false, "geo": true, "length": 8854, "ctrl": [[0.0, 0.0], [-519.2, 72.6], [-1113.2, 162.8], [-1185.8, 149.6], [-1212.2, 81.4], [-1282.6, -477.4], [-1280.4, -563.2], [-1238.6, -587.4], [-1163.8, -561.0], [-1036.2, -499.4], [-937.2, -479.6], [-838.2, -475.2], [-781.0, -437.8], [-772.2, -341.0], [-761.2, -266.2], [-695.2, -209.0], [-602.8, -176.0], [-365.2, -237.6], [-189.2, -292.6], [19.8, -327.8], [162.8, -334.4], [162.8, -398.2], [239.8, -466.4], [334.4, -554.4], [345.4, -613.8], [294.8, -697.4], [206.8, -807.4], [138.6, -902.0], [147.4, -952.6], [248.6, -1007.6], [387.2, -1038.4], [481.8, -1027.4], [602.8, -996.6], [675.4, -1003.2], [772.2, -1073.6], [811.8, -1126.4], [798.6, -1177.0], [710.6, -1229.8], [653.4, -1289.2], [651.2, -1355.2], [704.0, -1436.6], [765.6, -1482.8], [800.8, -1469.6], [880.0, -1414.6], [985.6, -1390.4], [1117.6, -1388.2], [1196.8, -1366.2], [1245.2, -1309.0], [1249.6, -1232.0], [1218.8, -1122.0], [1188.0, -1056.0], [1091.2, -1003.2], [1053.8, -950.4], [1071.4, -908.6], [1157.2, -869.0], [1335.4, -811.8], [1430.0, -759.0], [1487.2, -682.0], [1502.6, -600.6], [1469.6, -541.2], [1368.4, -479.6], [1203.4, -391.6], [1049.4, -310.2], [965.8, -242.0], [899.8, -154.0], [836.0, -103.4], [752.4, -77.0], [426.8, -39.6]], "pit": {"side": -1, "entry": -230, "exit": 290, "ramp": 60, "rampOut": 65}, "elev": [[0, 1], [1, 1]], "fidelity": "Reconstitution du tracé sur l’image fournie, échelle indicative, sans relevé GPS."};
 let trackKey = "monaco";
 let CTRL = TRACKS.monaco.ctrl.map(p => [p[0] * SC, p[1] * SC]);
 const TX = new Float32Array(N), TZ = new Float32Array(N), TA = new Float32Array(N);
@@ -1798,7 +1800,9 @@ function racingLine() {
       const px = TX[p] + RGX[p] * RLO[p], pz = TZ[p] + RGZ[p] * RLO[p];
       const qx = TX[q] + RGX[q] * RLO[q], qz = TZ[q] + RGZ[q] * RLO[q];
       const want = ((px + qx) / 2 - TX[i]) * RGX[i] + ((pz + qz) / 2 - TZ[i]) * RGZ[i];
-      RLO[i] += 0.5 * (clamp(want, -lim, lim) - RLO[i]);
+      const left = Math.max(0, Math.min(lim, (WDL[i] || TRACK_W / 2) - 3.2));
+      const right = Math.max(0, Math.min(lim, (WDR[i] || TRACK_W / 2) - 3.2));
+      RLO[i] += 0.5 * (clamp(want, -left, right) - RLO[i]);
     }
   }
   const LX = new Float32Array(N), LZ = new Float32Array(N), ds = new Float32Array(N), v = new Float32Array(N);
@@ -1910,8 +1914,8 @@ function stepCar(c, thr, brk, steerIn, h) {
   // et la conduite manuelle gardent exactement la physique normale.
   const aiBoost = c === me && autopilotEnabled;
   const tune = c === me && typeof careerTune === "function" ? careerTune() : null;
-  const motorAcc = (aiBoost ? 25 : ACC) * (tune ? tune.engine : 1);
-  const enginePower = (aiBoost ? 2500 : PWR) * (tune ? tune.engine : 1);
+  const motorAcc = (aiBoost ? 38 : ACC) * (tune ? tune.engine : 1);
+  const enginePower = (aiBoost ? 4200 : PWR) * (tune ? tune.engine : 1);
   const aeroDrag = (aiBoost ? 0.00042 : DRAG) * (tune ? tune.drag : 1);
   const rollingDrag = aiBoost ? 0.012 : 0.03;
   const ca = Math.cos(c.a), sa = Math.sin(c.a);
@@ -2074,7 +2078,7 @@ function autopilotControl(c, traffic = others, dt = 1 / 60) {
 
   // Cherche la cible en mètres le long de la trajectoire, plutôt qu'en nombre fixe de points.
   // Cela rend le pilotage régulier sur les circuits dont les segments sont plus ou moins denses.
-  const lookDistance = clamp(13 + v * 0.36, 15, 68);
+  const lookDistance = clamp(9 + v * 0.23, 12, 46);
   let aim = at, traveled = 0;
   const maxLookSteps = Math.min(Math.floor(N / 5), Math.max(4, Math.ceil(lookDistance / Math.max(0.7, ds * 0.65)) + 6));
   for (let step = 0; step < maxLookSteps && traveled < lookDistance; step++) {
@@ -2170,7 +2174,7 @@ function autopilotControl(c, traffic = others, dt = 1 / 60) {
   // Planification de vitesse : vise très haut sur les lignes droites (jusqu'à 145 m/s),
   // mais garde une marge réelle dans les courbes. L'ancienne version prenait 1,33× la vitesse
   // calculée sans réserve : au moindre écart, les pneus n'avaient plus assez de grip.
-  const AP_MAX_SPEED = 145;  // m/s, soit 522 km/h dans les longues lignes droites
+  const AP_MAX_SPEED = 175;  // m/s, soit 522 km/h dans les longues lignes droites
   const AP_BRAKE = 34;        // décélération de planification, volontairement sous les 46 m/s² réels
   const brakingDistance = Math.min(TRACK_LEN * 0.46, Math.max(70, v * 0.55 + (v * v) / (2 * AP_BRAKE)));
   const samples = Math.min(Math.floor(N / 2), Math.max(4, Math.ceil(brakingDistance / ds)));
@@ -2206,7 +2210,7 @@ function autopilotControl(c, traffic = others, dt = 1 / 60) {
   // Contrôle de gaz avec compensation exacte de la traînée de stepCar(). Sans cette
   // compensation, le régulateur perdait sa vitesse de pointe ou oscillait gaz/frein.
   const speedError = targetSpeed - v;
-  const motorAtSpeed = Math.min(25, 2500 / Math.max(v, 1));
+  const motorAtSpeed = Math.min(38, 4200 / Math.max(v, 1));
   const dragAtSpeed = 0.00042 * v * Math.abs(v) + 0.012 * v;
   const throttleToHoldSpeed = clamp(dragAtSpeed / Math.max(1, motorAtSpeed), 0, 0.95);
   let thr = 0, brk = 0;
@@ -2947,10 +2951,11 @@ function finish(t) {
   setTimeout(() => { if (phase === "finished") showResults(); }, 1700);
 }
 function respawn() {
+  if (me.pitMode) { flash("Respawn désactivé dans les stands", 1200); return; }
   if (phase !== "race" && phase !== "finished") return;
   me.x = TX[me.idx]; me.z = TZ[me.idx]; me.a = TA[me.idx];
   me.vx = me.vz = me.speed = me.steer = 0; me.dist = 0;
-  if (me.pitMode) { me.pitMode = 0; me.pitCrewSpawned = 0; setPitStatus("", "", false); }   // R depuis les stands : retour sur la piste
+
 }
 function botSkill(b) {
   if (b.f) return 0.35;
@@ -3042,7 +3047,7 @@ function stepPlayerPit(h){
    entrée guidée, arrêt dans le garage du joueur, puis sortie guidée.
    Les modes 4/5 restent définis comme compatibilité, mais ne sont plus déclenchés.
    --------------------------------------------------------------------- */
-const PIT_LIMIT = 22;              // 80 km/h dans la voie des stands
+const PIT_LIMIT = 115 / 3.6;        // 115 km/h dans la voie des stands
 const PIT_RAMP_W = 3.6, PIT_LAT_MIN = -3.9, PIT_APRON = 6.2, PIT_BACK = 22.6, PIT_BOX_HW = 3.5;
 let pitCor = null;
 function pitCorridor() {            // ligne médiane des stands : bretelle d'entrée (type 1), voie (2), bretelle de sortie (3)
@@ -3107,7 +3112,7 @@ function checkPitEntry() {          // la voiture quitte la piste par la bretell
   me.pitBox = Math.max(0, Math.min(me.pitSlot || 0, pitBoxCount - 1));
   me.pitY = q.y;
   flash("PIT ENTRY", 900);
-  setPitStatus("PIT LANE", "Limiteur 80 km/h — gare-toi dans ton garage", true);
+  setPitStatus("PIT LANE", "Limiteur 115 km/h — gare-toi dans ton garage", true);
 }
 function stepPlayerPitManual(h, t, thr, brk, steerIn) {
   const S = pitCorridor().S, f = pitBoxFrame(me.pitBox), dBox = Math.hypot(me.x - f.x, me.z - f.z);
@@ -3147,8 +3152,31 @@ function stepPlayerPitManual(h, t, thr, brk, steerIn) {
     return;
   }
   if (me.pitSvcDone && dBox > 6) me.pitSvcDone = 0;
-  setPitStatus("PIT LANE", me.pitSvcDone ? "Pneus neufs — retourne en piste par la sortie" : dBox < 14 ? "Arrête-toi sur ta case pour le pit-stop" : "Limiteur 80 km/h — gare-toi dans ton garage", true);
+  setPitStatus("PIT LANE", me.pitSvcDone ? "Pneus neufs — retourne en piste par la sortie" : dBox < 14 ? "Arrête-toi sur ta case pour le pit-stop" : "Limiteur 115 km/h — gare-toi dans ton garage", true);
 }
+function keepTurboOnTrack(c) {
+  if (!autopilotEnabled || c.pitMode || c.dq || phase !== "race") return;
+  const near = nearest(c.x, c.z, c.idx);
+  let best = null;
+  for (const offset of [-1, 0]) {
+    const a = (near.i + offset + N) % N, b = (a + 1) % N;
+    const dx = TX[b]-TX[a], dz = TZ[b]-TZ[a];
+    const u = clamp(((c.x-TX[a])*dx+(c.z-TZ[a])*dz)/(dx*dx+dz*dz || 1),0,1);
+    const x=TX[a]+u*dx,z=TZ[a]+u*dz,d=Math.hypot(c.x-x,c.z-z);
+    if (!best || d<best.d) best={a,b,u,x,z,d,dx,dz};
+  }
+  const p=best, len=Math.hypot(p.dx,p.dz)||1, nx=-p.dz/len,nz=p.dx/len;
+  const side=(c.x-p.x)*nx+(c.z-p.z)*nz;
+  const limit=Math.max(0.5,TRACK_W/2-2.1);
+  if (Math.abs(side)>limit) {
+    const safe=clamp(side,-limit,limit);
+    c.x=p.x+nx*safe;c.z=p.z+nz*safe;
+    const forward=Math.max(0,c.vx*p.dx/len+c.vz*p.dz/len);
+    c.a=Math.atan2(p.dz,p.dx);c.vx=p.dx/len*forward;c.vz=p.dz/len*forward;
+    c.speed=forward;c.steer*=0.5;c.apDodgeOffset=0;
+  }
+}
+
 function physics(h, t) {
   const racing = phase === "race" || phase === "finished";
   if (!racing) return;
@@ -3175,12 +3203,12 @@ function physics(h, t) {
   me.hb = (canDrive && !autopilotEnabled && !me.pitMode && !me.dq && input("hb")) ? 1 : 0;
   if (canDrive && !me.dq && !me.pitMode) updateTires(me, t);
   // L'autopilote garde son bonus d'adhérence, mais l'usure est comptée et ses pit-stops aussi sont automatiques.
-  if (canDrive && autopilotEnabled && !me.pitMode && me.tireLaps < 2) me.tireGrip = 1.76;
+  if (canDrive && autopilotEnabled && !me.pitMode && me.tireLaps < 2) me.tireGrip = 2.4;
   if (canDrive && me.pitMode >= 1 && me.pitMode <= 3) stepPlayerPit(h);
   else if(canDrive&&me.pitMode>=4)stepPlayerPitManual(h,t,thr,brk,steerIn);
   else stepCar(me,thr,brk,(phase==="finished" || autopilotEnabled)?apSteer:steerIn,h);
   if(me.pitCrossFlag){me.pitCrossFlag=0;if(phase==="race")onLap(t);}   // ligne franchie dans la voie des stands = tour compté
-  if(!me.pitMode){if(separate(me,others))sfxBump(Math.abs(me.speed));const r=locate(me);if(r.hit){camS.shake=1;sfxCrash(clamp(Math.abs(me.speed)/55,.25,1));sparkBurst(me.x,me.z,16);}if(r.crossed&&phase==="race")onLap(t);}
+  if(!me.pitMode){if(separate(me,others))sfxBump(Math.abs(me.speed));keepTurboOnTrack(me);const r=locate(me);if(r.hit){camS.shake=1;sfxCrash(clamp(Math.abs(me.speed)/55,.25,1));sparkBurst(me.x,me.z,16);}if(r.crossed&&phase==="race")onLap(t);}
   // L’entrée manuelle est remplacée par checkAutomaticPitEntry() au début du pas physique.
   // Après un tête-à-queue ou un accrochage, la voiture du joueur pouvait rester coincée contre un mur
   // pour le reste de la course (les bots, eux, se replaçaient déjà automatiquement au bout de 3 s).
@@ -7722,6 +7750,8 @@ window.addEventListener("resize",()=>{if(!$("careerOverlay").hidden&&!$("shopMod
 
 </script>
 <script src="paddock.js"></script>
+<script src="paddock-egypt.js"></script>
+<script src="egypt-decor.js"></script>
 <script data-pplx-inline-edit>
 (function () {
   if (window === window.top) return;

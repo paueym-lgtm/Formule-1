@@ -1,0 +1,8 @@
+Mise à jour du circuit Égypte — Paulogames F1
+
+Fichiers inclus : index.html, paddock-egypt.js, egypt-decor.js et assets/egypt-horizon.png.
+Le pays reste « Égypte » et le nom du circuit devient « Soliman Le Magnifique ».
+Le panorama cartoon de la côte, de la mer, du soleil et de Mohamed Salah est chargé comme ciel/horizon uniquement sur le circuit Égypte.
+
+Installation : copie les trois fichiers à la racine du jeu en remplaçant leurs versions actuelles, puis ajoute assets/egypt-horizon.png dans le dossier assets existant. Ne supprime pas assets/paddock.png ni les autres fichiers déjà présents dans assets.
+Aucun changement au serveur, aux comptes, à Supabase ou au tracé du circuit.
