@@ -9,6 +9,10 @@ Inchangés : tracks-data.js, audio.mp3, community-license.txt, package.json, .en
 2. Remplace game-server/server.js sur Render puis redéploie : sans cela les logos ne sont pas vus par les autres joueurs (le jeu continue de fonctionner).
 3. Aucun changement Supabase, aucun service payant.
 
+## Garage
+- Aperçu boutique : garage éclairé par projecteurs avec ombres, porte roulante, armoires, établi, pneus, écrans de télémétrie ; 7 membres du personnel animés (accroupi, marche, assis, tablette, chiffon) et voiture levée sur crics en boucle.
+- En course : box décorés (armoire, couvertures chauffantes, écran), mécaniciens du pit-stop à articulations (coudes, genoux).
+
 ## Limites connues
 - Le serveur ne vérifie pas qu'un joueur possède bien le logo qu'il affiche (cosmétique uniquement, valeurs limitées à pg/bolt/crown/apex/none).
 - Halo masqué en vue cockpit (son montant central cache la piste).

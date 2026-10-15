@@ -4523,54 +4523,89 @@ function humanMats(teamColor) {
     band: std(0xf2f4f7, .7), accent: std(teamColor, .5, .05)
   };
 }
-// Mécanicien / membre d'équipe : combinaison ignifugée, genouillères, gants, bottes, casque intégral (ou casquette + oreillette au garage).
+// Mécanicien articulé : bassin, buste, tête, épaules/coudes, hanches/genoux. Taille ≈ 1,66 m, pieds à y ≈ -0,16 (même repère que l'ancien modèle).
+const HUMAN_HIP = 0.75;
 function makeHuman3D(teamColor=0xe10600, role="mécano") {
   const g = new THREE.Group(), M = humanMats(teamColor);
   const mesh = (geo, mat, x, y, z, parent) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); (parent || g).add(m); return m; };
+  const cyl = (rt, rb, h, mat, x, y, z, parent, seg) => mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 10), mat, x, y, z, parent);
+  const ball = (r, mat, x, y, z, parent, sx, sy, sz) => { const m = mesh(new THREE.SphereGeometry(r, 12, 9), mat, x, y, z, parent); m.scale.set(sx || 1, sy || 1, sz || 1); return m; };
   const staff = role === "chef" || role === "ingénieur" || role === "tablette";
-  // Buste (groupe : il pivote avec la tête et les épaules quand le mécano se penche)
-  const torso = new THREE.Group(); torso.position.set(0, .92, 0); g.add(torso);
-  const chest = mesh(new THREE.CylinderGeometry(.27, .31, .66, 12), M.suit, 0, .02, 0, torso); chest.scale.z = .72;
-  const stripe = mesh(new THREE.CylinderGeometry(.285, .285, .075, 12, 1, true), M.band, 0, .10, 0, torso); stripe.scale.z = .74;
-  const belt = mesh(new THREE.CylinderGeometry(.30, .30, .07, 12), M.dark, 0, -.30, 0, torso); belt.scale.z = .74;
-  for (const sd of [-1, 1]) mesh(new THREE.SphereGeometry(.105, 10, 8), M.suit, sd * .27, .27, 0, torso);
-  mesh(new THREE.CylinderGeometry(.095, .11, .15, 8), M.skin, 0, .45, 0, torso);                    // cou
-  const head = mesh(new THREE.SphereGeometry(.2, 16, 12), M.skin, 0, .65, 0, torso); head.scale.set(.95, 1.08, 1.0);
+  const hips = new THREE.Group(); hips.position.y = HUMAN_HIP; g.add(hips);
+  const pelvis = mesh(new THREE.CylinderGeometry(.165, .175, .2, 12), M.suit, 0, 0, 0, hips); pelvis.scale.z = .66;
+  // Buste (pivote avec tête et bras)
+  const torso = new THREE.Group(); torso.position.y = .08; hips.add(torso);
+  const chest = cyl(.19, .165, .52, M.suit, 0, .27, 0, torso, 14); chest.scale.z = .62;
+  const band = cyl(.196, .196, .06, M.band, 0, .38, 0, torso, 14); band.scale.z = .64;
+  const belt = cyl(.17, .17, .05, M.dark, 0, .0, 0, torso, 14); belt.scale.z = .66;
+  for (const sd of [-1, 1]) ball(.075, M.suit, sd * .205, .5, 0, torso);
+  cyl(.045, .05, .09, M.skin, 0, .58, 0, torso, 8);
+  const head = new THREE.Group(); head.position.set(0, .66, 0); torso.add(head);
+  ball(.098, M.skin, 0, 0, 0, head, .92, 1.1, 1);
   if (staff) {
-    const cap = mesh(new THREE.SphereGeometry(.215, 16, 8, 0, Math.PI * 2, 0, Math.PI * .5), M.accent, 0, .68, 0, torso);
-    mesh(new THREE.BoxGeometry(.26, .02, .13), M.accent, 0, .70, .2, torso);                         // visière de la casquette
-    const hs = mesh(new THREE.TorusGeometry(.2, .012, 6, 16, Math.PI), M.dark, 0, .70, 0, torso); hs.rotation.set(0, 0, 0);
-    mesh(new THREE.CylinderGeometry(.024, .024, .04, 6), M.dark, .21, .62, .02, torso).rotation.z = Math.PI / 2;
+    ball(.108, M.accent, 0, .03, 0, head, 1, .78, 1.03);
+    mesh(new THREE.BoxGeometry(.17, .014, .09), M.accent, 0, .035, .1, head);
+    mesh(new THREE.CylinderGeometry(.012, .012, .03, 6), M.dark, .1, -.02, .02, head).rotation.z = Math.PI / 2;
   } else {
-    const hm = mesh(new THREE.SphereGeometry(.238, 18, 12), M.helmet, 0, .67, 0, torso); hm.scale.set(1.0, .96, 1.04);
-    mesh(new THREE.BoxGeometry(.25, .085, .022), M.visor, 0, .675, .225, torso);                      // visière fumée
-    mesh(new THREE.BoxGeometry(.12, .05, .06), M.helmet, 0, .56, .2, torso);                          // mentonnière
-    mesh(new THREE.BoxGeometry(.04, .09, .26), M.accent, 0, .86, -.02, torso);                         // crête aux couleurs de l'équipe
+    ball(.125, M.helmet, 0, .02, 0, head, 1, .98, 1.06);
+    mesh(new THREE.BoxGeometry(.17, .052, .02), M.visor, 0, .015, .125, head);
+    mesh(new THREE.BoxGeometry(.075, .04, .05), M.helmet, 0, -.075, .1, head);
+    mesh(new THREE.BoxGeometry(.03, .05, .17), M.accent, 0, .135, -.01, head);
   }
-  // Bras : groupe pivotant à l'épaule (rotation.z animée), main gantée au bout
-  const arm = side => {
-    const a = new THREE.Group(); a.position.set(side * .27, 1.18 - .02, 0); g.add(a);
-    const upper = mesh(new THREE.CylinderGeometry(.072, .09, .36, 8), M.suit, 0, -.13, 0, a); upper.rotation.z = side * .48;
-    const fore = mesh(new THREE.CylinderGeometry(.062, .075, .32, 8), M.suit, side * .09, -.39, .03, a); fore.rotation.z = side * .82;
-    mesh(new THREE.CylinderGeometry(.068, .068, .045, 8), M.dark, side * .14, -.53, .045, a);          // manchette
-    const hand = mesh(new THREE.SphereGeometry(.082, 10, 8), M.glove, side * .165, -.58, .05, a); hand.scale.set(1, 1.15, .95);
-    return a;
+  // Bras à deux segments : épaule (x,z), coude (x négatif = avant-bras vers l'avant)
+  const arm = sd => {
+    const sh = new THREE.Group(); sh.position.set(sd * .215, .5, 0); torso.add(sh);
+    cyl(.05, .042, .3, M.suit, 0, -.15, 0, sh, 8);
+    const el = new THREE.Group(); el.position.y = -.3; sh.add(el);
+    ball(.043, M.suit, 0, 0, 0, el);
+    cyl(.043, .036, .26, M.suit, 0, -.13, 0, el, 8);
+    cyl(.044, .044, .035, M.dark, 0, -.255, 0, el, 8);
+    const hand = ball(.052, M.glove, 0, -.31, .0, el, .9, 1.2, 1);
+    sh.userData.elbow = el; sh.userData.hand = hand;
+    return sh;
   };
   const armL = arm(-1), armR = arm(1);
-  // Jambes : pantalon de combinaison, genouillère, botte
-  const leg = side => {
-    const l = new THREE.Group(); l.position.set(side * .13, .62, 0); g.add(l);
-    mesh(new THREE.CylinderGeometry(.092, .112, .38, 9), M.suit, 0, -.18, 0, l);
-    mesh(new THREE.CylinderGeometry(.078, .09, .38, 9), M.suit, side * .025, -.51, .035, l);
-    mesh(new THREE.BoxGeometry(.13, .09, .06), M.dark, side * .02, -.33, .09, l);                       // genouillère
-    const boot = mesh(new THREE.BoxGeometry(.16, .11, .31), M.boot, side * .045, -.73, .09, l);
-    mesh(new THREE.BoxGeometry(.162, .035, .322), M.band, side * .045, -.775, .09, l);                  // semelle
-    return l;
+  armL.rotation.z = -.1; armR.rotation.z = .1; armL.userData.elbow.rotation.x = -.3; armR.userData.elbow.rotation.x = -.3;
+  // Jambes à deux segments + botte
+  const leg = sd => {
+    const lg = new THREE.Group(); lg.position.set(sd * .088, 0, 0); hips.add(lg);
+    cyl(.078, .06, .44, M.suit, 0, -.22, 0, lg, 9);
+    const kn = new THREE.Group(); kn.position.y = -.44; lg.add(kn);
+    ball(.06, M.suit, 0, 0, 0, kn);
+    mesh(new THREE.BoxGeometry(.1, .08, .05), M.dark, 0, .02, .05, kn);
+    cyl(.06, .05, .4, M.suit, 0, -.2, 0, kn, 9);
+    const an = new THREE.Group(); an.position.y = -.41; kn.add(an);
+    mesh(new THREE.BoxGeometry(.11, .075, .25), M.boot, 0, -.03, .06, an);
+    mesh(new THREE.BoxGeometry(.112, .02, .255), M.band, 0, -.075, .06, an);
+    lg.userData.knee = kn;
+    return lg;
   };
   const legL = leg(-1), legR = leg(1);
-  g.traverse(o => { if (o.isMesh) { o.castShadow = true; } });
-  g.userData = { torso, head, armL, armR, legL, legR, role };
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  g.userData = { hips, torso, head, armL, armR, elbowL: armL.userData.elbow, elbowR: armR.userData.elbow, handL: armL.userData.hand, handR: armR.userData.hand,
+    legL, legR, kneeL: legL.userData.knee, kneeR: legR.userData.knee, role };
   return g;
+}
+// Poses de base (réinitialise puis les scripts d'animation ajoutent leurs gestes)
+function humanIdle(u) {
+  u.hips.position.y = HUMAN_HIP; u.hips.rotation.set(0, 0, 0); u.torso.rotation.set(0, 0, 0); u.head.rotation.set(0, 0, 0);
+  u.armL.rotation.set(0, 0, -.1); u.armR.rotation.set(0, 0, .1); u.elbowL.rotation.set(-.3, 0, 0); u.elbowR.rotation.set(-.3, 0, 0);
+  u.legL.rotation.set(0, 0, 0); u.legR.rotation.set(0, 0, 0); u.kneeL.rotation.set(0, 0, 0); u.kneeR.rotation.set(0, 0, 0);
+}
+function humanWalk(u, ph, amp) {
+  amp = amp === undefined ? 1 : amp;
+  const s = Math.sin(ph), c = Math.cos(ph);
+  u.legL.rotation.x = -s * .62 * amp; u.legR.rotation.x = s * .62 * amp;
+  u.kneeL.rotation.x = Math.max(0, c) * .95 * amp; u.kneeR.rotation.x = Math.max(0, -c) * .95 * amp;
+  u.armL.rotation.x = s * .5 * amp; u.armR.rotation.x = -s * .5 * amp;
+  u.hips.position.y = HUMAN_HIP - .015 * amp + .025 * Math.abs(c) * amp; u.torso.rotation.y = s * .08 * amp;
+}
+function humanCrouch(u, k) {      // k 0..1 : accroupi, pieds au sol
+  u.legL.rotation.x = u.legR.rotation.x = -1.05 * k; u.kneeL.rotation.x = u.kneeR.rotation.x = 1.9 * k;
+  u.hips.position.y = HUMAN_HIP - .36 * k; u.torso.rotation.x = .35 * k;
+}
+function humanSit(u) {
+  u.legL.rotation.x = u.legR.rotation.x = -1.5; u.kneeL.rotation.x = u.kneeR.rotation.x = 1.5; u.hips.position.y = HUMAN_HIP - .34;
 }
 function paddockTeams() {   // nom et couleur de chaque garage : dans l'ordre de la grille (joueurs puis bots)
   const out = [];
@@ -4654,7 +4689,7 @@ function buildPaddock() {
   const glass=new THREE.MeshStandardMaterial({color:0x8ea7b8,transparent:true,opacity:.28,metalness:.15,roughness:.15});
   const trim=new THREE.MeshStandardMaterial({color:0xadb5bf,metalness:.2,roughness:.45});
   const teams = paddockTeams();
-  paddockCars = [];
+  paddockCars = []; paddockStaff.length = 0;
   // Un garage = un bloc posé le long de la voie des stands, orienté comme la voie à cet endroit.
   // Repère local : x le long de la voie, z vers le fond du box ; la voiture arrêtée est en (0, 1.1).
   for (let k = 0; k < n; k++) {
@@ -4684,7 +4719,7 @@ function buildPaddock() {
     if (k === (PIT_SIDE > 0 ? n - 1 : 0)) add(new THREE.BoxGeometry(.28,8.0,depth), teamMat, boxW/2, 4, 0);       // dernière cloison
     add(new THREE.BoxGeometry(boxW-.35,1.15,.42), teamMat, 0, 7.55, -7.35);                  // bandeau
     add(new THREE.BoxGeometry(boxW-.55,5.7,.18), dark, 0, 3.0, 7.45);
-    add(new THREE.BoxGeometry(boxW-.5,0.06,10.5), concrete, 0, .24, -1.2);                   // sol du box
+    add(new THREE.BoxGeometry(boxW-.5,0.06,10.5), new THREE.MeshStandardMaterial({color:0x4a4f58,roughness:.45,metalness:.2}), 0, .24, -1.2);                   // sol du box
     add(new THREE.BoxGeometry(boxW-.5,.018,.16), teamMat, 0, .28, -6.35);
     add(new THREE.BoxGeometry(2.6,.06,.28), new THREE.MeshBasicMaterial({color:0xfff2d0}), 0, 7.65, 0);
     for (let j = 0; j < 3; j++) { const tire = add(new THREE.TorusGeometry(.34,.11,8,16), dark, -2.9+j*.52, .68, 5.95); tire.rotation.y = Math.PI/2; }
@@ -4704,8 +4739,18 @@ function buildPaddock() {
     const board = new THREE.Mesh(new THREE.BoxGeometry(boxW-.9,1.0,.14), [dark,dark,dark,dark,dark,faceMat]);   // face -z = côté voie des stands
     board.position.set(0, 7.55, -7.63); b.add(board);
     // (plus de voiture exposée dans le box : la vraie voiture y entre librement ; mécaniciens sur les côtés)
+    // Décor du box : armoire à outils, couvertures chauffantes sur chariot, écran de télémétrie, jerricans de liquide
+    const cabM = new THREE.MeshStandardMaterial({color:c,roughness:.45,metalness:.2});
+    add(new THREE.BoxGeometry(1.5,1.5,.7), cabM, -boxW/2+1.2, 1.0, 7.0);
+    add(new THREE.BoxGeometry(1.58,.06,.76), trim, -boxW/2+1.2, 1.78, 7.0);
+    for (let q = 0; q < 5; q++) add(new THREE.BoxGeometry(1.36,.012,.02), dark, -boxW/2+1.2, .55+q*.22, 6.64);
+    add(new THREE.BoxGeometry(1.1,.5,.9), dark, boxW/2-1.6, .6, 6.9);                         // couvertures chauffantes
+    add(new THREE.BoxGeometry(1.1,.06,.9), new THREE.MeshStandardMaterial({color:0xff6a00,emissive:0xff4a00,emissiveIntensity:.5}), boxW/2-1.6, .88, 6.9);
+    add(new THREE.PlaneGeometry(2.4,1.3), pitScreenMat(), 0, 3.4, 7.2).rotation.y = Math.PI;   // écran de télémétrie sur le mur du fond
+    for (let q = 0; q < 3; q++) add(new THREE.CylinderGeometry(.16,.16,.42,10), new THREE.MeshStandardMaterial({color:0xd8dde4,roughness:.5}), -boxW/2+2.6+q*.42, .5, 7.0);
     const p1 = makeHuman3D(c.getHex(), "chef"); p1.position.set(-3.7,.25,-6.2); p1.rotation.y = Math.PI; b.add(p1);
-    const p2 = makeHuman3D(c.getHex(), "mécano"); p2.scale.setScalar(.96); p2.position.set(3.7,.25,-6.1); p2.rotation.y = Math.PI; b.add(p2);
+    const p2 = makeHuman3D(c.getHex(), "mécano"); p2.position.set(3.7,.25,-6.1); p2.rotation.y = Math.PI; b.add(p2);
+    paddockStaff.push({h:p1,k:0,ph:k*1.7},{h:p2,k:1,ph:k*2.3+1});
     g.add(b);
   }
   for (let k = 0; k < n; k++) {
@@ -4965,7 +5010,7 @@ function buildFlagman() {
   for (let k = 1; k <= 3; k++) { const b2 = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.3, 2.62), k % 2 ? rail : red); b2.position.y = top - 0.25 - k * 0.9; b2.rotation.y = -a; root.add(b2); }
   const man = makeHuman3D(0xffffff, "commissaire"); man.scale.setScalar(1.7); man.position.y = top + 0.2; man.rotation.y = -a; root.add(man);
   // Drapeau : hampe tenue à la main droite, tissu ondulant
-  const hold = new THREE.Group(); hold.position.set(0.16, -0.56, 0.05); man.userData.armR.add(hold);
+  const hold = new THREE.Group(); hold.position.set(0, -0.31, 0); man.userData.elbowR.add(hold);
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.7, 6), new THREE.MeshLambertMaterial({ color: 0xdadde2 })); pole.position.y = 0.85; hold.add(pole);
   const geo = new THREE.PlaneGeometry(1.25, 0.85, 10, 6); geo.translate(0.625, 0, 0);
   const base0 = Float32Array.from(geo.attributes.position.array);
@@ -6005,7 +6050,7 @@ function updateCamera(dt, t) {
     // Aux stands, la caméra recule dans la voie et monte un peu : elle ne reste plus coincée entre les cloisons du garage.
     camS.pit = (camS.pit || 0) + ((me.pitMode ? 1 : 0) - (camS.pit || 0)) * Math.min(1, dt * 2.5);
     const pk = camS.pit, mix = (a, b) => a + (b - a) * pk;
-    if (camS.mode === 0) { dist = mix(8.5 + v * 0.02, 14.5); hgt = mix(3.2 + v * 0.004, 5.4); look = mix(14, 3); lookY = 1.3; fov = mix(66 + v * 0.16, 62); }
+    if (camS.mode === 0) { dist = mix(8.5 + v * 0.02, 10.5); hgt = mix(3.2 + v * 0.004, 4.6); look = mix(14, 4); lookY = 1.3; fov = mix(66 + v * 0.16, 62); }
     else if (camS.mode === 1) { dist = mix(14, 17); hgt = mix(7.5, 9.5); look = 12; lookY = 1.0; fov = 62 + v * 0.10; }
     else { dist = -0.3; hgt = 1.2; look = 22; lookY = 1.0; fov = 78 + v * 0.10; }
     // Dans les tunnels des stands (Yas Marina) : caméra plus basse et plus proche, sinon elle passe à travers le plafond.
@@ -6071,6 +6116,9 @@ function updateCamera(dt, t) {
   if (sunSprite && sunDir) sunSprite.position.copy(camera.position).addScaledVector(sunDir, 3000);
 }
 function updatePitVisuals(t,dt){
+  for(const o of paddockStaff){const u=o.h.userData,s=t*.001+o.ph;humanIdle(u);
+    if(o.k===0){u.armL.rotation.set(-.8,0,.35);u.armR.rotation.set(-.8,0,-.35);u.elbowL.rotation.x=-1.6;u.elbowR.rotation.x=-1.5;u.head.rotation.y=.5*Math.sin(s*.35);u.torso.rotation.x=.02*Math.sin(s*1.1);}
+    else{u.armL.rotation.set(-.9,0,-.15);u.armR.rotation.set(-.9,0,.15);u.elbowL.rotation.x=-1.2;u.elbowR.rotation.x=-1.2;u.head.rotation.set(.18,.45*Math.sin(s*.4),0);u.torso.rotation.x=.06+.015*Math.sin(s*1.3);}}
   // Public fixe : aucune oscillation ni animation aléatoire.
   // Les noms des garages sont maintenant des objets 3D fixés aux boxes.
   // La voiture exposée dans un box est masquée pendant que la vraie voiture y est (sinon deux voitures superposées).
@@ -6516,6 +6564,13 @@ let crowdPeople = [];
 let garageLabelState = null;
 let startGridGroup = null;
 let paddockGroup = null;
+const paddockStaff = [];
+let _pitScreenMat = null;
+function pitScreenMat() {
+  if (_pitScreenMat) return _pitScreenMat;
+  const t = makeTexture(256, 128, (g, w, h) => { g.fillStyle = "#06101c"; g.fillRect(0, 0, w, h); g.strokeStyle = "rgba(120,180,255,.18)"; for (let i = 1; i < 5; i++) { g.beginPath(); g.moveTo(0, i * 25); g.lineTo(w, i * 25); g.stroke(); } ["#32dc5a", "#ffcf00", "#3c8cff"].forEach((c, j) => { g.strokeStyle = c; g.lineWidth = 3; g.beginPath(); for (let x = 0; x <= w; x += 4) { const y = 64 + 34 * Math.sin(x * .05 + j * 2) * Math.sin(x * .014 + j); x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }); }, true);
+  return _pitScreenMat = new THREE.MeshBasicMaterial({ map: t, side: THREE.DoubleSide });
+}
 let paddockCars = [];   // voitures exposées dans les boxes (masquées quand la vraie voiture y entre)
 const PIT_STOP_DUR = 4.2;   // arrêt plus lisible : approche, levage, roues, contrôle et libération
 function pitCrewGY(x,z){ return pitTunnelOn() ? (GROUND_Y + 0.42) : trackElevation(x,z,0); }   // sol de la voie des stands (Yas Marina : en contrebas de la piste)
@@ -6570,12 +6625,11 @@ function stepPitCrew(dt){
         // Knees and torso dip; the wheel gun oscillates rapidly, with pauses for wheel handling.
         const fitPhase = u < .28 ? u/.28 : u < .68 ? 1 : u < .84 ? (1-(u-.68)/.16) : 0;
         const crouch = .20 + .17*Math.sin(Math.PI*Math.min(1,u/.8));
-        p.g.position.y=gy+.18-crouch;
-        p.g.userData.torso.rotation.x = .13 + .10*Math.sin(p.t*8+p.role);
-        p.g.userData.armL.rotation.z=-.55-Math.sin(p.t*16+p.role)*.24;
-        p.g.userData.armR.rotation.z=.55+Math.sin(p.t*18+p.role)*.27;
-        p.g.userData.legL.rotation.x=.18+Math.sin(p.t*5+p.role)*.06;
-        p.g.userData.legR.rotation.x=-.12-Math.sin(p.t*5+p.role)*.05;
+        p.g.position.y=gy+.18;
+        { const u=p.g.userData; humanIdle(u); humanCrouch(u,Math.min(1,crouch/.37)*.95);
+          u.torso.rotation.x += .10*Math.sin(p.t*8+p.role);
+          u.armL.rotation.set(-.85,0,-.25-Math.sin(p.t*16+p.role)*.08); u.armR.rotation.set(-.85,0,.25+Math.sin(p.t*18+p.role)*.08);
+          u.elbowL.rotation.x=-.8; u.elbowR.rotation.x=-.8; u.head.rotation.x=-.25; }
         if(p.toolGrp){p.toolGrp.rotation.z+=dt*(fitPhase>.2?62:5);p.toolGrp.rotation.x=.10*Math.sin(p.t*13);}
         if(p.g.userData.pitWheel){
           p.g.userData.pitWheel.rotation.z=.22*Math.sin(p.t*7+p.role);
@@ -6586,7 +6640,7 @@ function stepPitCrew(dt){
         const lift = u<.20 ? .11*ease(u/.20) : u<.75 ? .11 : .11*(1-ease((u-.75)/.25));
         p.g.position.y=gy+.18+Math.sin(p.t*11)*.025;
         p.g.rotation.z=.08*Math.sin(p.t*10);
-        p.g.userData.armR.rotation.z=.45+Math.sin(p.t*13)*.38;
+        { const u=p.g.userData; humanIdle(u); humanCrouch(u,.6); u.armL.rotation.set(-.9,0,-.1); u.armR.rotation.set(-.9+Math.sin(p.t*13)*.35,0,.1); u.elbowL.rotation.x=-.7; u.elbowR.rotation.x=-.5-Math.sin(p.t*13)*.3; u.head.rotation.x=-.2; }
         if(p.role===4&&co&&co.body)co.body.position.y=lift;
       }else{
         // Release light: red while the car is being serviced, green in the final phase.
@@ -6595,16 +6649,12 @@ function stepPitCrew(dt){
         const go = u>.86;
         if(p.g.userData.signalMat) p.g.userData.signalMat.color.setHex(go?0x21e66b:(u>.72?0xffcf00:0xe10600));
         if(p.g.userData.signalGlow) p.g.userData.signalGlow.intensity=go?2.8:.35;
-        p.g.userData.armR.rotation.z=go?-.85:.35+.12*Math.sin(p.t*7);
+        { const u=p.g.userData; humanIdle(u); u.armR.rotation.set(go?-1.9:-1.25,0,go?.35:.15); u.elbowR.rotation.x=-.25; u.armL.rotation.set(-.3,0,-.15); u.torso.rotation.x=go?-.12:.05; u.head.rotation.x=.05; }
       }
     }else{
       p.g.position.y=gy+.18+Math.abs(Math.sin(p.t*11))*.035;
       p.g.rotation.z=0; p.g.rotation.y=-Math.atan2(dirz,dirx);
-      p.g.userData.legL.rotation.x=.62*gait;
-      p.g.userData.legR.rotation.x=-.62*gait;
-      p.g.userData.armL.rotation.z=-.18-.22*gait;
-      p.g.userData.armR.rotation.z=.18+.22*gait;
-      p.g.userData.torso.rotation.x=.035*Math.sin(p.t*10);
+      { const u=p.g.userData; humanIdle(u); humanWalk(u,p.t*11,1); u.torso.rotation.x=.12; }
     }
     if(p.t>D){scene.remove(p.g);pitCrewPool.splice(i,1);}
   }
@@ -7407,130 +7457,205 @@ function careerApplyLogoToCar(car,key){
   }catch(e){console.warn("Logo de carrosserie non appliqué",e);}
 }
 const careerLogoMat={};
-/* ---- Garage d'aperçu : sol résine, murs à panneaux, éclairage de plafond, armoires, pneus, télémétrie et mécaniciens animés ---- */
-let careerShopStaff = [], careerShopGarage = null, careerShopGarageKey = "";
+/* ---- Garage d'aperçu : sol poli, murs à panneaux, porte roulante, éclairage au plafond avec ombres, armoires, pneus, télémétrie, personnel animé ---- */
+let careerShopStaff = [], careerShopGarage = null, careerShopGarageKey = "", careerShopScreens = [], careerShopLift = null;
 function careerBuildGarage(sc) {
   const tc = new THREE.Color(me.color || "#e10600"), teamHex = tc.getHex(), teamCss = "#" + tc.getHexString();
-  if (careerShopGarage) { sc.remove(careerShopGarage); careerShopGarage = null; }
-  careerShopStaff = [];
+  if (careerShopGarage) { sc.remove(careerShopGarage); careerShopGarage.traverse(o => { if (o.geometry) o.geometry.dispose(); }); careerShopGarage = null; }
+  careerShopStaff = []; careerShopScreens = [];
   const G = new THREE.Group(); careerShopGarage = G; sc.add(G);
-  const env = typeof getEnv === "function" ? getEnv() : null;
   const std = (c, r, m, o) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: r, metalness: m || 0 }, o || {}));
-  const box = (w, h, d, mat, x, y, z, parent) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); (parent || G).add(m); return m; };
-  // Sol résine grise avec joints de dalles
-  const floorTex = makeTexture(512, 512, (g, w, h) => {
-    g.fillStyle = "#3a3e45"; g.fillRect(0, 0, w, h);
-    noise(g, w, h, 1800, 0.05, 0.07, 3);
-    g.strokeStyle = "rgba(20,22,26,.55)"; g.lineWidth = 3; g.strokeRect(0, 0, w, h);
+  const tex = (w, h, draw, rep) => { const t = makeTexture(w, h, draw); t.encoding = THREE.sRGBEncoding; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); } return t; };
+  const box = (w, h, d, mat, x, y, z, parent) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; (parent || G).add(m); return m; };
+  const F = "'Barlow Condensed','Arial Narrow',Arial,sans-serif";
+  const ROOM = { x0: -10.5, x1: 11, z0: -8.2, H: 6.2 };
+  // --- Éclairage : lumière d'ambiance faible + projecteurs de plafond (un seul projette des ombres)
+  G.add(new THREE.HemisphereLight(0xaebbd0, 0x14161b, .5));
+  const key = new THREE.SpotLight(0xfff3df, 2.6, 30, .72, .55, 1); key.position.set(1.5, ROOM.H - .3, 3.5); key.target.position.set(0, .3, 0); key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024); key.shadow.bias = -.0004; key.shadow.camera.near = 3; key.shadow.camera.far = 20; G.add(key, key.target);
+  const fill1 = new THREE.SpotLight(0xdfe9ff, 1.5, 30, .8, .7, 1); fill1.position.set(-4, ROOM.H - .3, -3); fill1.target.position.set(0, 0, 0); G.add(fill1, fill1.target);
+  const fill2 = new THREE.SpotLight(0xfff0dd, 1.3, 30, .8, .7, 1); fill2.position.set(5, ROOM.H - .3, -2); fill2.target.position.set(1, 0, 0); G.add(fill2, fill2.target);
+  const warm = new THREE.PointLight(0xffd9a0, .9, 14, 1.6); warm.position.set(-8, 3, -4); G.add(warm);
+  // --- Sol : béton poli sombre, mare de lumière sous la voiture, emplacement marqué
+  const floorTex = tex(512, 512, (g, w, h) => {
+    g.fillStyle = "#2a2d33"; g.fillRect(0, 0, w, h); noise(g, w, h, 2600, .045, .08, 3);
+    g.strokeStyle = "rgba(0,0,0,.55)"; g.lineWidth = 3; g.strokeRect(0, 0, w, h);
+    g.strokeStyle = "rgba(255,255,255,.04)"; g.lineWidth = 1; g.strokeRect(5, 5, w - 10, h - 10);
+  }, [8, 8]);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), std(0xffffff, .38, .22, { map: floorTex, envMap: typeof getEnv === "function" ? getEnv() : null, envMapIntensity: .22 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -.035; floor.receiveShadow = true; G.add(floor);
+  const bayTex = tex(1024, 640, (g, w, h) => {
+    g.clearRect(0, 0, w, h); g.strokeStyle = "#f5c400"; g.lineWidth = 12; g.beginPath(); g.roundRect(14, 14, w - 28, h - 28, 34); g.stroke();
+    g.strokeStyle = teamCss; g.lineWidth = 12; for (const [x, y, dx, dy] of [[14, 14, 1, 1], [w - 14, 14, -1, 1], [14, h - 14, 1, -1], [w - 14, h - 14, -1, -1]]) { g.beginPath(); g.moveTo(x, y + dy * 90); g.lineTo(x, y); g.lineTo(x + dx * 90, y); g.stroke(); }
+    g.fillStyle = "rgba(255,255,255,.55)"; g.font = "italic 900 74px " + F; g.textAlign = "center"; g.fillText(String(me.name || "PILOTE").toUpperCase().slice(0, 14), w / 2, h - 46);
   });
-  floorTex.encoding = THREE.sRGBEncoding; floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(7, 7);
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(28, 28), std(0xffffff, .8, 0, { map: floorTex }));
-  floor.rotation.x = -Math.PI / 2; floor.position.y = -.035; G.add(floor);
-  // Marquage jaune de la zone de travail
-  const tapeM = new THREE.MeshBasicMaterial({ color: 0xf5c400 });
-  for (const sg of [-1, 1]) { box(7.6, .01, .09, tapeM, 0, -.028, sg * 2.5); box(.09, .01, 5.1, tapeM, sg * 3.8, -.028, 0); }
-  // Murs : fond graphite avec bandeau aux couleurs de l'équipe, côtés à panneaux
-  const wallTex = (withBrand) => { const T = makeTexture(1024, 256, (g, w, h) => {
-    g.fillStyle = "#171a20"; g.fillRect(0, 0, w, h);
-    for (let x = 0; x < w; x += 128) { g.fillStyle = (x / 128) % 2 ? "#1b1f26" : "#14171c"; g.fillRect(x, 0, 128, h); g.fillStyle = "rgba(255,255,255,.05)"; g.fillRect(x, 0, 2, h); }
-    g.fillStyle = teamCss; g.fillRect(0, h * .56, w, 16); g.fillStyle = "#f2f4f7"; g.fillRect(0, h * .56 + 20, w, 4);
-    if (withBrand) {
-      g.fillStyle = "#ffffff"; g.font = "italic 900 118px 'Barlow Condensed','Arial Narrow',Arial,sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
-      g.fillText(String(me.name || "PILOTE").toUpperCase().slice(0, 14), w / 2, h * .30);
-      g.fillStyle = "#f5c400"; g.fillRect(w / 2 - 190, h * .43, 380, 6);
-    }
-  }, true); T.encoding = THREE.sRGBEncoding; return T; };
-  const back = new THREE.Mesh(new THREE.PlaneGeometry(26, 6.5), std(0xffffff, .7, 0, { map: wallTex(true) })); back.position.set(0, 3.2, -9); G.add(back);
-  for (const sx of [-1, 1]) { const sw = new THREE.Mesh(new THREE.PlaneGeometry(26, 6.5), std(0xffffff, .7, 0, { map: wallTex(false) })); sw.position.set(sx * 13, 3.2, 0); sw.rotation.y = -sx * Math.PI / 2; G.add(sw); }
-  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(28, 28), std(0x0c0e12, .9)); ceil.rotation.x = Math.PI / 2; ceil.position.y = 6.4; G.add(ceil);
-  const lampM = new THREE.MeshBasicMaterial({ color: 0xfff6e2 });
-  for (let i = -2; i <= 2; i++) { box(.5, .06, 15, lampM, i * 4.2, 6.35, -1); box(.62, .02, 15.2, std(0x22262d, .5, .3), i * 4.2, 6.39, -1); }
-  // Armoires à outils (aux couleurs de l'équipe) et établi
-  const cab = (x, z, ry) => {
-    const c = new THREE.Group(); c.position.set(x, 0, z); c.rotation.y = ry || 0; G.add(c);
-    box(1.5, 1.5, .72, std(teamHex, .5, .15), 0, .75, 0, c);
-    for (let k = 0; k < 5; k++) { box(1.4, .014, .02, std(0x0c0d10, .6), 0, .2 + k * .27, .365, c); box(.5, .03, .03, std(0xc9ced6, .3, .8), 0, .31 + k * .27, .385, c); }
-    box(1.56, .06, .78, std(0xaab0ba, .3, .75), 0, 1.53, 0, c);
-    box(.34, .12, .3, std(0xffcf00, .6), -.4, 1.62, 0, c); box(.26, .2, .24, std(0x20252c, .5, .2), .3, 1.66, 0, c);
+  const bay = new THREE.Mesh(new THREE.PlaneGeometry(9, 5.6), new THREE.MeshBasicMaterial({ map: bayTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+  bay.rotation.x = -Math.PI / 2; bay.position.y = -.02; G.add(bay);
+  const poolTex = tex(256, 256, (g, w, h) => { const r = g.createRadialGradient(w / 2, h / 2, 4, w / 2, h / 2, w / 2); r.addColorStop(0, "rgba(255,244,224,.16)"); r.addColorStop(1, "rgba(255,244,224,0)"); g.fillStyle = r; g.fillRect(0, 0, w, h); });
+  const pool = new THREE.Mesh(new THREE.PlaneGeometry(20, 14), new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+  pool.rotation.x = -Math.PI / 2; pool.position.set(0, -.015, 0); G.add(pool);
+  // --- Murs : fond à nervures + grande bannière + porte roulante ; côté gauche : mur d'atelier
+  const ribbed = (hl) => tex(1024, 512, (g, w, h) => {
+    g.fillStyle = "#1a1d23"; g.fillRect(0, 0, w, h);
+    for (let x = 0; x < w; x += 16) { g.fillStyle = (x / 16) % 2 ? "rgba(255,255,255,.05)" : "rgba(0,0,0,.25)"; g.fillRect(x, 0, 8, h); }
+    g.fillStyle = "rgba(0,0,0,.35)"; g.fillRect(0, h * .82, w, h * .18);
+    g.fillStyle = teamCss; g.fillRect(0, h * .60, w, 14); g.fillStyle = "#f2f4f7"; g.fillRect(0, h * .60 + 18, w, 4);
+    if (hl) { g.fillStyle = "#ffffff"; g.font = "italic 900 150px " + F; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(String(me.name || "PILOTE").toUpperCase().slice(0, 14), w / 2, h * .26); g.fillStyle = "#f5c400"; g.fillRect(w / 2 - 230, h * .43, 460, 7); }
+  });
+  const backW = 22, back = new THREE.Mesh(new THREE.PlaneGeometry(backW, ROOM.H), std(0xffffff, .85, .05, { map: ribbed(true) })); back.position.set((ROOM.x0 + ROOM.x1) / 2, ROOM.H / 2, ROOM.z0); back.receiveShadow = true; G.add(back);
+  const leftW = new THREE.Mesh(new THREE.PlaneGeometry(24, ROOM.H), std(0xffffff, .85, .05, { map: ribbed(false) })); leftW.position.set(ROOM.x0, ROOM.H / 2, 0); leftW.rotation.y = Math.PI / 2; leftW.receiveShadow = true; G.add(leftW);
+  const rightW = new THREE.Mesh(new THREE.PlaneGeometry(24, ROOM.H), std(0x20242b, .9)); rightW.position.set(ROOM.x1, ROOM.H / 2, 0); rightW.rotation.y = -Math.PI / 2; G.add(rightW);
+  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), std(0x0b0d11, .95)); ceil.rotation.x = Math.PI / 2; ceil.position.y = ROOM.H; G.add(ceil);
+  for (let i = 0; i < 4; i++) { const lm = new THREE.MeshBasicMaterial({ color: 0xfff6e6 }); box(.45, .05, 16, lm, -6 + i * 4.4, ROOM.H - .04, -1); box(.6, .03, 16.2, std(0x1b1e24, .5, .3), -6 + i * 4.4, ROOM.H - .015, -1); }
+  for (let k = -2; k <= 3; k++) box(24, .22, .22, std(0x16181d, .6, .4), (ROOM.x0 + ROOM.x1) / 2, ROOM.H - .2, k * 3 - 1);  // poutrelles
+  // porte roulante
+  const doorTex = tex(512, 512, (g, w, h) => { for (let y = 0; y < h; y += 22) { g.fillStyle = "#454a53"; g.fillRect(0, y, w, 20); g.fillStyle = "#1b1e23"; g.fillRect(0, y + 20, w, 2); g.fillStyle = "rgba(255,255,255,.06)"; g.fillRect(0, y, w, 3); } g.fillStyle = "#f5c400"; g.fillRect(0, h - 26, w, 12); });
+  box(6.8, 4.3, .12, std(0xffffff, .5, .55, { map: doorTex }), 3.6, 2.15, ROOM.z0 + .08);
+  box(7.1, .2, .26, std(0x14161a, .5, .4), 3.6, 4.4, ROOM.z0 + .12); box(.2, 4.4, .26, std(0x14161a, .5, .4), .1, 2.2, ROOM.z0 + .12); box(.2, 4.4, .26, std(0x14161a, .5, .4), 7.1, 2.2, ROOM.z0 + .12);
+  // colonnes d'acier avec bas jaune/noir
+  for (const [x, z] of [[-6.8, ROOM.z0 + .5], [8.2, ROOM.z0 + .5], [ROOM.x0 + .5, 4.5], [ROOM.x0 + .5, -4.8]]) { box(.5, ROOM.H, .5, std(0x2a2e36, .5, .5), x, ROOM.H / 2, z); box(.54, .9, .54, std(0xf5c400, .6, .1), x, .45, z); box(.55, .22, .55, std(0x101114, .6), x, .66, z); box(.55, .22, .55, std(0x101114, .6), x, .26, z); }
+  // --- Armoires à outils aux couleurs de l'équipe, établi, établi mural
+  const cab = (x, z, ry, w) => {
+    w = w || 1.5; const c = new THREE.Group(); c.position.set(x, 0, z); c.rotation.y = ry || 0; G.add(c);
+    box(w, 1.5, .72, std(teamHex, .45, .2), 0, .75, 0, c);
+    for (let k = 0; k < 6; k++) { box(w - .1, .012, .02, std(0x0a0b0d, .6), 0, .18 + k * .22, .365, c); box(.46, .028, .03, std(0xcfd4dc, .25, .85), 0, .27 + k * .22, .385, c); }
+    box(w + .06, .06, .78, std(0xb2b8c2, .3, .8), 0, 1.53, 0, c);
+    for (const dx of [-.48, .5]) box(.12, .06, .72, std(0x202329, .6, .3), dx * w / 1.5 * 1.0, 1.6, 0, c);
     return c;
   };
-  cab(-6.4, -8.45); cab(-4.8, -8.45); cab(-3.2, -8.45);
-  // Piles de pneus slicks neufs sur étagère
-  const tyreM = std(0x0d0e10, .9), ringM = std(0xffd12e, .6);
-  const rack = box(4.2, .08, 1.3, std(0x2a2f38, .5, .5), 7.4, .55, -8.1);
-  for (let st = 0; st < 4; st++) for (let k = 0; k < 4; k++) {
-    const t = new THREE.Mesh(new THREE.TorusGeometry(.36, .15, 10, 22), tyreM); t.rotation.x = Math.PI / 2; t.position.set(6.1 + st * 1.1, .72 + k * .31, -8.1); G.add(t);
-    const r2 = new THREE.Mesh(new THREE.TorusGeometry(.36, .018, 6, 22), ringM); r2.rotation.x = Math.PI / 2; r2.position.set(6.1 + st * 1.1, .72 + k * .31 + .15, -8.1); G.add(r2);
+  cab(-5.2, ROOM.z0 + .55, 0); cab(-3.6, ROOM.z0 + .55, 0); cab(-2.0, ROOM.z0 + .55, 0); cab(ROOM.x0 + .5, -1.2, Math.PI / 2, 1.5);
+  for (const [x, z] of [[3.8, -3.6], [-3.9, 2.8]]) {     // chariots à outils mobiles
+    const c = new THREE.Group(); c.position.set(x, 0, z); c.rotation.y = x > 0 ? .5 : -.3; G.add(c);
+    box(.9, .78, .5, std(0xc4161c, .45, .25), 0, .55, 0, c); box(.94, .04, .54, std(0xaab0ba, .3, .8), 0, .96, 0, c);
+    for (let k = 0; k < 3; k++) box(.8, .01, .02, std(0x0a0b0d, .6), 0, .42 + k * .2, .255, c);
+    for (const sx of [-.38, .38]) for (const sz of [-.2, .2]) { const wl = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .05, 10), std(0x0c0d10, .8)); wl.rotation.x = Math.PI / 2; wl.position.set(sx, .09, sz); c.add(wl); }
+    box(.32, .08, .22, std(0xffcf00, .55), -.2, 1.02, 0, c);
   }
-  for (let k = 0; k < 4; k++) box(.06, 1.0, .06, std(0x2a2f38, .5, .5), 5.4 + k * 1.1 + 0.55 - 0.0, .55, -7.5);
-  // Poste de télémétrie : bureau + 3 écrans animés
-  const deskG = new THREE.Group(); deskG.position.set(8.6, 0, -2.2); deskG.rotation.y = -Math.PI / 2 + .25; G.add(deskG);
-  box(3.0, .08, .9, std(0xd6dae0, .4, .2), 0, .95, 0, deskG); for (const sx of [-1.35, 1.35]) box(.08, .95, .8, std(0x2a2f38, .5, .4), sx, .47, 0, deskG);
-  const scr = []; for (let k = 0; k < 3; k++) {
-    const cv = document.createElement("canvas"); cv.width = 256; cv.height = 144; const tx = new THREE.CanvasTexture(cv);
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(.86, .5), new THREE.MeshBasicMaterial({ map: tx })); m.position.set(-.95 + k * .95, 1.5, -.1); deskG.add(m);
-    box(.9, .54, .04, std(0x0b0d11, .5, .3), -.95 + k * .95, 1.5, -.13, deskG); box(.06, .3, .06, std(0x2a2f38, .5, .5), -.95 + k * .95, 1.2, -.12, deskG);
-    scr.push({ cv, g: cv.getContext("2d"), tx, k });
+  // mur d'atelier (gauche) : panneau perforé avec outils + étagères
+  const pegTex = tex(1024, 400, (g, w, h) => {
+    g.fillStyle = "#23272e"; g.fillRect(0, 0, w, h); g.fillStyle = "rgba(0,0,0,.45)"; for (let y = 16; y < h; y += 26) for (let x = 16; x < w; x += 26) { g.beginPath(); g.arc(x, y, 3, 0, 7); g.fill(); }
+    g.fillStyle = "#c9ced6"; g.strokeStyle = "#c9ced6";
+    for (let i = 0; i < 16; i++) { const x = 40 + i * 62, k = i % 4; g.save(); g.translate(x, 190); if (k === 0) { g.lineWidth = 10; g.beginPath(); g.moveTo(0, -120); g.lineTo(0, 100); g.stroke(); g.beginPath(); g.arc(0, -130, 22, 0, 7); g.stroke(); } else if (k === 1) { g.fillRect(-7, -110, 14, 190); g.fillStyle = "#d63a2a"; g.fillRect(-12, 40, 24, 70); g.fillStyle = "#c9ced6"; } else if (k === 2) { g.fillRect(-6, -40, 12, 150); g.fillRect(-30, -70, 60, 34); } else { g.lineWidth = 12; g.beginPath(); g.arc(0, -70, 30, 0.5, 5.8); g.stroke(); g.fillRect(-6, -40, 12, 150); } g.restore(); }
+    g.strokeStyle = teamCss; g.lineWidth = 10; g.strokeRect(5, 5, w - 10, h - 10);
+  });
+  const peg = new THREE.Mesh(new THREE.PlaneGeometry(7, 2.7), std(0xffffff, .8, .1, { map: pegTex })); peg.position.set(ROOM.x0 + .03, 2.9, 1.8); peg.rotation.y = Math.PI / 2; G.add(peg);
+  box(.9, .08, 7, std(0x7a5a38, .7), ROOM.x0 + .5, .95, 1.8);                                            // plan de travail
+  for (const z of [-1.4, 1.8, 5]) box(.8, .9, .06, std(0x2a2e36, .5, .5), ROOM.x0 + .5, .5, z);
+  for (let k = 0; k < 3; k++) box(.4, .05, 5, std(0x2a2e36, .5, .5), ROOM.x0 + .25, 1.55 + k * .65 + 1.2, 1.8);   // étagères hautes
+  for (let k = 0; k < 9; k++) box(.3, .26, .4, std([0xc4161c, 0x1f4aa8, 0x222831, 0xf5c400][k % 4], .6), ROOM.x0 + .28, 2.85 + (k % 2) * .65 + .15, -.2 + (k >> 1) * .9);
+  { const vise = box(.2, .16, .22, std(0x3a3f48, .4, .7), ROOM.x0 + .5, 1.06, 3.4); }
+  // extincteur, panneau pit, bidons
+  { const ex = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .5, 12), std(0xc4161c, .4, .3)); ex.position.set(ROOM.x0 + .25, 1.3, 5.9); ex.castShadow = true; G.add(ex); }
+  // --- Pneus neufs sur étagère + couvertures chauffantes
+  const tyreM = std(0x0e0f12, .92), ringM = std(0xffd12e, .6);
+  box(5.2, .08, 1.2, std(0x2b3039, .5, .5), 6.6, .5, ROOM.z0 + .8);
+  for (let k = 0; k < 6; k++) box(.07, 3.2, .07, std(0x2b3039, .5, .5), 4.1 + k * 1.0, 1.6, ROOM.z0 + .25 + (k % 2) * 1.1);
+  for (const lvl of [0, 1]) { box(5.2, .08, 1.2, std(0x2b3039, .5, .5), 6.6, .5 + lvl * 1.5 + 1.5, ROOM.z0 + .8); for (let st = 0; st < 4; st++) for (let k = 0; k < (lvl ? 3 : 4); k++) {
+    const t = new THREE.Mesh(new THREE.TorusGeometry(.36, .15, 10, 24), tyreM); t.rotation.x = Math.PI / 2; t.position.set(4.9 + st * 1.1, .72 + lvl * 1.5 + 1.5 + (lvl ? 0 : 0) + k * .31 - (lvl ? 1.5 : 0), ROOM.z0 + .8); t.castShadow = true; G.add(t);
+    const r2 = new THREE.Mesh(new THREE.TorusGeometry(.36, .02, 6, 24), ringM); r2.rotation.x = Math.PI / 2; r2.position.copy(t.position); r2.position.y += .15; G.add(r2); } }
+  for (let k = 0; k < 4; k++) { const wm = new THREE.Mesh(new THREE.CylinderGeometry(.36, .36, .34, 20), std(0x2a2d33, .7)); wm.position.set(-7.6 + k * .85, .2, ROOM.z0 + 1.3); wm.castShadow = true; G.add(wm); box(.2, .015, .02, std(0xff6a00, .5), -7.6 + k * .85, .385, ROOM.z0 + 1.3); }
+  // --- Poste de télémétrie contre le mur gauche : écrans sur pied + bureau (deux ingénieurs assis)
+  const deskG = new THREE.Group(); deskG.position.set(ROOM.x0 + 1.6, 0, -4.6); deskG.rotation.y = Math.PI / 2; G.add(deskG);
+  box(3.4, .06, .95, std(0xd9dde3, .4, .2), 0, .95, 0, deskG); for (const sx of [-1.6, 1.6]) box(.07, .95, .85, std(0x2a2f38, .5, .4), sx, .47, 0, deskG);
+  for (let k = 0; k < 4; k++) {
+    const cv = document.createElement("canvas"); cv.width = 320; cv.height = 180; const tx = new THREE.CanvasTexture(cv);
+    const sw = k < 2 ? .84 : .84, px = -1.3 + k * .87;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(sw, .5), new THREE.MeshBasicMaterial({ map: tx })); m.position.set(px, 1.5, .18 - .012); m.rotation.y = Math.PI; deskG.add(m);
+    box(.88, .54, .04, std(0x090a0d, .5, .3), px, 1.5, .2, deskG); box(.05, .35, .05, std(0x2a2f38, .5, .5), px, 1.2, .2, deskG);
+    careerShopScreens.push({ cv, g: cv.getContext("2d"), tx, k });
   }
-  // Chariot à roues + pistolet pneumatique posé
-  const trolley = new THREE.Group(); trolley.position.set(-4.4, 0, 3.2); trolley.rotation.y = .35; G.add(trolley);
-  box(1.2, .08, .7, std(0x2a2f38, .5, .5), 0, .28, 0, trolley); for (const x of [-.5, .5]) for (const z of [-.28, .28]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, .05, 8), std(0x0c0d10, .8)); w.rotation.x = Math.PI / 2; w.position.set(x, .06, z); trolley.add(w); }
-  const spare = new THREE.Mesh(new THREE.TorusGeometry(.36, .15, 10, 22), tyreM); spare.rotation.x = Math.PI / 2; spare.position.set(0, .45, 0); trolley.add(spare);
-  // Mécaniciens
-  const staff = (role, x, z, ry, fn) => { const h = makeHuman3D(teamHex, role); h.position.set(x, 0, z); h.rotation.y = ry; G.add(h); careerShopStaff.push({ h, fn, ph: Math.random() * 6 }); return h; };
-  const gun = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(.04, .05, .4, 8), std(0x20252c, .4, .5)); b.rotation.z = Math.PI / 2; gun.add(b); const hd = new THREE.Mesh(new THREE.BoxGeometry(.14, .1, .11), std(0x8c949d, .25, .75)); hd.position.x = .24; gun.add(hd); }
-  const m1 = staff("mécano", 1.9, -1.95, 0, (o, t) => {                      // roue avant droite : pistolet pneumatique par rafales
-    const burst = (Math.sin(t * 1.1 + o.ph) > .35), u = o.h.userData;
-    u.torso.rotation.x = .38 + (burst ? .03 * Math.sin(t * 40) : 0); o.h.position.y = -.1;
-    u.armR.rotation.z = .85 + (burst ? .06 * Math.sin(t * 52) : 0); u.armR.rotation.x = -.8; u.armL.rotation.z = -.6; u.armL.rotation.x = -.6;
-    u.legL.rotation.x = .35; u.legR.rotation.x = -.5; gun.rotation.x = burst ? t * 50 : 0;
+  for (const z of [-5.9, -3.4]) { box(.5, .06, .5, std(0x14161a, .6), ROOM.x0 + 2.8, .5, z); box(.06, .45, .06, std(0x2a2f38, .5, .5), ROOM.x0 + 2.8, .25, z); box(.5, .5, .06, std(0x14161a, .6), ROOM.x0 + 3.05, .8, z); }
+  // --- Câbles, tuyau d'air, cric, pistolets
+  const cable = (pts, r, col) => { const crv = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(p[0], .03, p[1]))); const m = new THREE.Mesh(new THREE.TubeGeometry(crv, 40, r, 6, false), std(col, .6)); G.add(m); };
+  cable([[-8.5, -5.5], [-6, -3.5], [-4, -2.2], [-3, -.8]], .035, 0x0a0a0c); cable([[3.2, -7.5], [3, -5], [3.4, -3.2], [2.4, -1.6]], .028, 0xf5c400); cable([[-9, 1.5], [-6, 3.8], [-4, 3.2]], .03, 0x1b6bff);
+  const jackF = new THREE.Group(); jackF.position.set(2.6, 0, 0); G.add(jackF); box(.5, .12, .5, std(0xf5c400, .5, .3), 0, .06, 0, jackF); box(.12, .2, .12, std(0x8c949d, .3, .8), 0, .22, 0, jackF);
+  const jackR = new THREE.Group(); jackR.position.set(-2.9, 0, 0); G.add(jackR); box(.5, .12, .5, std(0xf5c400, .5, .3), 0, .06, 0, jackR); box(.12, .24, .12, std(0x8c949d, .3, .8), 0, .24, 0, jackR);
+  careerShopLift = { jackF, jackR };
+  // --- Personnel
+  const staff = (role, x, z, ry, fn) => { const h = makeHuman3D(teamHex, role); h.position.set(x, 0, z); h.rotation.y = ry; G.add(h); const o = { h, u: h.userData, fn, ph: Math.random() * 6, x0: x, z0: z, ry0: ry }; careerShopStaff.push(o); return o; };
+  const gunG = new THREE.Group(); { const b = new THREE.Mesh(new THREE.CylinderGeometry(.034, .042, .34, 8), std(0x20252c, .4, .5)); b.rotation.x = Math.PI / 2; gunG.add(b); const hd = new THREE.Mesh(new THREE.BoxGeometry(.1, .08, .08), std(0x8c949d, .25, .75)); hd.position.z = .2; gunG.add(hd); }
+  // 1 : pistolet pneumatique, accroupi à la roue avant (côté opposé à la caméra)
+  const s1 = staff("mécano", 1.9, -2.15, 0, (o, t) => {
+    const u = o.u, burst = Math.sin(t * 1.15 + o.ph) > .3; humanIdle(u); humanCrouch(u, .95);
+    u.armL.rotation.set(-1.0, 0, -.1); u.elbowL.rotation.x = -.5; u.armR.rotation.set(-1.0 + (burst ? .05 * Math.sin(t * 50) : 0), 0, .08); u.elbowR.rotation.x = -.45; u.head.rotation.x = -.3;
+    gunG.rotation.z = burst ? t * 40 : gunG.rotation.z;
   });
-  { const u = m1.userData; gun.position.set(.2, -.45, .22); u.armR.add(gun); }
-  staff("mécano", -1.9, -2.0, -.05, (o, t) => {                           // roue arrière : tient un pneu neuf, balancement lent
-    const u = o.h.userData; u.armL.rotation.x = -.55; u.armR.rotation.x = -.55; u.armL.rotation.z = -.35; u.armR.rotation.z = .35;
-    u.torso.rotation.x = .1 + .02 * Math.sin(t * 1.4 + o.ph); u.head.rotation.y = .25 * Math.sin(t * .5 + o.ph);
+  { gunG.position.set(0, -.31, .05); s1.u.elbowR.add(gunG); }
+  // 2 : coureur de pneus (rack → roue arrière gauche, aller-retour), cycle 26 s
+  const tyreCarry = new THREE.Group(); { const t1 = new THREE.Mesh(new THREE.TorusGeometry(.3, .13, 10, 22), tyreM); const r1 = new THREE.Mesh(new THREE.TorusGeometry(.3, .018, 6, 22), ringM); r1.position.z = .13; tyreCarry.add(t1, r1); tyreCarry.position.set(0, .28, .34); }
+  const RACK = [5.4, -6.2], WHEEL = [-1.8, -2.35]; const lerp = (a, b, k) => a + (b - a) * k, sstep = k => k * k * (3 - 2 * k);
+  const s2 = staff("mécano", RACK[0], RACK[1], 0, (o, t) => {
+    const u = o.u, T = (t + o.ph * 2) % 26; humanIdle(u); let x, z, face, walking = 0, carry = 0, crouch = 0;
+    const toW = Math.atan2(WHEEL[0] - RACK[0], WHEEL[1] - RACK[1]), toR = toW + Math.PI;
+    if (T < 7) { const k = sstep(T / 7); x = lerp(RACK[0], WHEEL[0], k); z = lerp(RACK[1], WHEEL[1], k); face = toW; walking = 1; carry = 1; }
+    else if (T < 11) { x = WHEEL[0]; z = WHEEL[1]; face = Math.atan2(0 - x, 0 - z); crouch = sstep(Math.min(1, (T - 7) / 1.2)) * (T > 10 ? 1 - (T - 10) : 1); carry = T < 9 ? 1 : 0; }
+    else if (T < 14) { x = WHEEL[0]; z = WHEEL[1]; face = Math.atan2(0 - x, 0 - z); }
+    else if (T < 21) { const k = sstep((T - 14) / 7); x = lerp(WHEEL[0], RACK[0], k); z = lerp(WHEEL[1], RACK[1], k); face = toR; walking = 1; }
+    else if (T < 24) { x = RACK[0]; z = RACK[1]; face = 0; crouch = .6 * Math.sin(Math.min(1, (T - 21) / 3) * Math.PI); carry = T > 22.5 ? 1 : 0; }
+    else { x = RACK[0]; z = RACK[1]; face = toW; carry = 1; }
+    o.h.position.x = x; o.h.position.z = z; o.h.rotation.y = face;
+    if (walking) { humanWalk(u, t * 7.5, 1); u.torso.rotation.x = .06; } if (crouch) humanCrouch(u, crouch);
+    if (carry) { u.armL.rotation.set(-1.05, 0, -.5); u.armR.rotation.set(-1.05, 0, .5); u.elbowL.rotation.x = -.55; u.elbowR.rotation.x = -.55; if (!walking) u.torso.rotation.x += .1; }
+    tyreCarry.visible = !!carry;
   });
-  const tab = staff("tablette", 4.6, 1.4, -Math.PI * .5 - .3, (o, t) => {                       // ingénieur avec tablette
-    const u = o.h.userData; u.armL.rotation.x = -1.05; u.armR.rotation.x = -1.05; u.armL.rotation.z = -.15; u.armR.rotation.z = .15;
-    u.head.rotation.y = .35 * Math.sin(t * .35 + o.ph); u.head.rotation.x = .12; u.torso.rotation.x = .04 + .015 * Math.sin(t * 1.3);
+  s2.u.torso.add(tyreCarry);
+  // 3 : ingénieur à la tablette près du nez
+  const tab = staff("tablette", .6, -3.5, .25, (o, t) => {
+    const u = o.u; humanIdle(u); u.armL.rotation.set(-.9, 0, -.15); u.armR.rotation.set(-.9, 0, .15); u.elbowL.rotation.x = -1.2; u.elbowR.rotation.x = -1.2;
+    u.head.rotation.set(.18, .5 * Math.sin(t * .4 + o.ph), 0); u.torso.rotation.x = .06 + .015 * Math.sin(t * 1.3); u.hips.position.y += .006 * Math.sin(t * 1.3);
   });
-  { const tb = new THREE.Mesh(new THREE.BoxGeometry(.34, .24, .02), std(0x0b0d11, .3, .4)); tb.position.set(0, 1.12, .34); tb.rotation.x = -.35; tab.add(tb); const tsc = new THREE.Mesh(new THREE.PlaneGeometry(.3, .2), new THREE.MeshBasicMaterial({ color: 0x1b6bff })); tsc.position.set(0, 0, .012); tb.add(tsc); }
-  staff("chef", -3.4, -3.0, Math.PI * .35, (o, t) => {                               // chef mécanicien : bras croisés, observe la voiture
-    const u = o.h.userData; u.armL.rotation.x = -.7; u.armR.rotation.x = -.7; u.armL.rotation.z = .5; u.armR.rotation.z = -.5;
-    u.head.rotation.y = .5 * Math.sin(t * .25 + o.ph); u.torso.rotation.x = .02 * Math.sin(t * 1.2);
+  { const tb = new THREE.Mesh(new THREE.BoxGeometry(.3, .21, .02), std(0x0b0d11, .3, .4)); tb.position.set(0, .12, .33); tb.rotation.x = -.3; tab.u.torso.add(tb); const tsc = new THREE.Mesh(new THREE.PlaneGeometry(.27, .18), new THREE.MeshBasicMaterial({ color: 0x1b6bff })); tsc.position.z = .012; tb.add(tsc); }
+  // 4 : chef mécanicien, bras croisés, désigne la voiture de temps en temps
+  staff("chef", -3.6, -3.6, Math.PI * .3, (o, t) => {
+    const u = o.u, T = (t + o.ph) % 11, pt = T > 7 && T < 9.5; humanIdle(u);
+    u.armL.rotation.set(-.8, 0, .35); u.armR.rotation.set(pt ? -1.4 : -.8, 0, pt ? -.1 : -.35); u.elbowL.rotation.x = -1.6; u.elbowR.rotation.x = pt ? -.25 : -1.5;
+    u.head.rotation.y = pt ? .25 : .45 * Math.sin(t * .27 + o.ph); u.torso.rotation.x = .02 * Math.sin(t * 1.1);
+    u.legL.rotation.x = -.04; u.legR.rotation.x = .06;
   });
-  staff("ingénieur", 7.6, -3.1, -Math.PI / 2 - .6, (o, t) => {                       // ingénieur devant les écrans
-    const u = o.h.userData; u.armR.rotation.x = -.9; u.armR.rotation.z = .2; u.armL.rotation.z = -.2; u.head.rotation.x = .1 + .04 * Math.sin(t * 2.1 + o.ph); u.head.rotation.y = .3 * Math.sin(t * .4);
+  // 5-6 : deux ingénieurs assis devant les écrans
+  const chairY = .05;
+  for (const [z, ph] of [[-5.9, 0], [-3.4, 1.3]]) { const sOb = staff("ingénieur", ROOM.x0 + 2.65, z, -Math.PI / 2 * -1, (o, t) => {
+    const u = o.u; humanIdle(u); humanSit(u); u.armL.rotation.set(-.95, 0, -.1); u.armR.rotation.set(-.95, 0, .1); u.elbowL.rotation.x = -.9 + .08 * Math.sin(t * 9 + o.ph); u.elbowR.rotation.x = -.9 + .08 * Math.sin(t * 8 + o.ph + 1);
+    u.head.rotation.set(.04, .35 * Math.sin(t * .45 + o.ph), 0); u.torso.rotation.x = .08;
+  }); sOb.h.position.y = -.0; sOb.ph = ph; }
+  // 7 : mécanicien qui polit l'aileron arrière avec un chiffon
+  const s7 = staff("mécano", -4.25, .9, Math.PI / 2, (o, t) => {
+    const u = o.u; humanIdle(u); humanCrouch(u, .3); u.torso.rotation.x = .45;
+    const sw = Math.sin(t * 3.2 + o.ph); u.armR.rotation.set(-1.15 + .2 * sw, 0, .2 + .15 * sw); u.elbowR.rotation.x = -.5 - .3 * sw; u.armL.rotation.set(-.5, 0, -.25); u.elbowL.rotation.x = -.8; u.head.rotation.x = .1;
   });
-  careerShopScreens = scr;
+  { const rag = new THREE.Mesh(new THREE.BoxGeometry(.12, .02, .14), std(0xe9e3d2, .9)); rag.position.set(0, -.34, .02); s7.u.elbowR.add(rag); }
+  careerShopStaff.forEach(o => o.h.traverse(m => { if (m.isMesh) m.castShadow = true; }));
 }
-let careerShopScreens = [];
 function careerAnimateGarage(now) {
   const t = now * .001;
-  for (const o of careerShopStaff) { try { o.fn(o, t); } catch (e) {} }
-  if (Math.floor(now / 250) !== careerAnimateGarage._f) {                           // écrans : télémétrie qui défile (4 images par seconde)
-    careerAnimateGarage._f = Math.floor(now / 250);
+  for (const o of careerShopStaff) { try { o.fn(o, t); } catch (e) { } }
+  // levage de la voiture sur les crics (cycle de 20 s) + roues qui tournent un peu
+  if (careerShopCar && careerShopCar.body) {
+    const T = t % 20, lift = T < 3 ? sstepG(T / 3) : T < 10 ? 1 : T < 13 ? 1 - sstepG((T - 10) / 3) : 0, h = .13 * lift;
+    careerShopCar.body.position.y = h;
+    if (careerShopLift) { careerShopLift.jackF.children[1].scale.y = 1 + h * 4; careerShopLift.jackF.children[1].position.y = .22 + h / 2 - .06 * 0 ; careerShopLift.jackR.children[1].scale.y = 1 + h * 4; careerShopLift.jackR.children[1].position.y = .24 + h / 2; }
+    if (careerShopCar.wheels) for (const w of careerShopCar.wheels) w.spin.rotation.z = lift > 0 && lift < 1 ? w.spin.rotation.z - .02 : w.spin.rotation.z;
+  }
+  if (Math.floor(now / 200) !== careerAnimateGarage._f) {
+    careerAnimateGarage._f = Math.floor(now / 200);
     for (const sc of careerShopScreens) {
-      const g = sc.g; g.fillStyle = "#06101c"; g.fillRect(0, 0, 256, 144);
-      g.strokeStyle = "rgba(120,180,255,.18)"; g.lineWidth = 1; for (let i = 1; i < 6; i++) { g.beginPath(); g.moveTo(0, i * 24); g.lineTo(256, i * 24); g.stroke(); }
-      g.lineWidth = 2.5; g.strokeStyle = ["#32dc5a", "#ffcf00", "#3c8cff"][sc.k]; g.beginPath();
-      for (let x = 0; x <= 256; x += 4) { const y = 72 + 38 * Math.sin((x + t * 90 * (1 + sc.k * .4)) * .045 + sc.k * 2) * Math.sin(x * .013 + t * .6); x ? g.lineTo(x, y) : g.moveTo(x, y); }
-      g.stroke(); g.fillStyle = "#c6cee0"; g.font = "700 15px Arial"; g.fillText(["VITESSE", "RÉGIME", "FREINS"][sc.k], 8, 16);
+      const g = sc.g, W = 320, H = 180; g.fillStyle = "#05101c"; g.fillRect(0, 0, W, H);
+      g.strokeStyle = "rgba(120,180,255,.16)"; g.lineWidth = 1; for (let i = 1; i < 6; i++) { g.beginPath(); g.moveTo(0, i * 30); g.lineTo(W, i * 30); g.stroke(); }
+      if (sc.k === 3) { g.fillStyle = "#c6cee0"; g.font = "700 20px Arial"; ["PNEU AVG  98°", "PNEU AVD  101°", "PNEU ARG  96°", "PNEU ARD  99°"].forEach((s, i) => g.fillText(s, 14, 36 + i * 34)); g.fillStyle = "#32dc5a"; g.fillRect(14, 150, 40 + 40 * Math.abs(Math.sin(t)), 8); }
+      else { g.lineWidth = 3; g.strokeStyle = ["#32dc5a", "#ffcf00", "#3c8cff"][sc.k]; g.beginPath(); for (let x = 0; x <= W; x += 4) { const y = 90 + 46 * Math.sin((x + t * 100 * (1 + sc.k * .4)) * .04 + sc.k * 2) * Math.sin(x * .012 + t * .6); x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); g.fillStyle = "#c6cee0"; g.font = "700 18px Arial"; g.fillText(["VITESSE", "RÉGIME", "FREINS"][sc.k], 10, 22); }
       sc.tx.needsUpdate = true;
     }
   }
 }
+const sstepG = k => k * k * (3 - 2 * k);
 function careerShopStart3D(){
   const cv=$("shopCarCanvas");if(!cv||!window.THREE)return;
   if(!careerShopRenderer){
     try{
       careerShopRenderer=new THREE.WebGLRenderer({canvas:cv,alpha:false,antialias:true,powerPreference:"low-power"});careerShopRenderer.setClearColor(0x0d0f14,1);careerShopRenderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
       careerShopRenderer.outputEncoding=THREE.sRGBEncoding;careerShopScene=new THREE.Scene();careerShopScene.background=null;
-      careerShopCamera=new THREE.PerspectiveCamera(36,1,.1,120);careerShopCamera.position.set(5.3,3.4,7.3);careerShopCamera.lookAt(0,.45,0);
-      careerShopScene.add(new THREE.HemisphereLight(0xdce9ff,0x242630,1.5));
-      const keyLight=new THREE.DirectionalLight(0xffffff,2.7);keyLight.position.set(4,8,5);careerShopScene.add(keyLight);
-      const rimLight=new THREE.DirectionalLight(0xff373c,1.5);rimLight.position.set(-4,3,-5);careerShopScene.add(rimLight);
-      const fillLight=new THREE.DirectionalLight(0x7caaff,.8);fillLight.position.set(1,2,-6);careerShopScene.add(fillLight);
+      careerShopCamera=new THREE.PerspectiveCamera(38,1,.1,120);careerShopCamera.position.set(5.3,3.4,7.3);careerShopCamera.lookAt(0,.45,0);
+      careerShopRenderer.shadowMap.enabled=true;careerShopRenderer.shadowMap.type=THREE.PCFSoftShadowMap;careerShopRenderer.toneMapping=THREE.ACESFilmicToneMapping;careerShopRenderer.toneMappingExposure=1.05;
     }catch(e){careerSetStatus("careerShopMessage","Aperçu 3D non disponible sur ce navigateur.","error");return;}
   }
   try{careerBuildGarage(careerShopScene);}catch(e){console.warn("Garage 3D non construit",e);}
@@ -7541,13 +7666,13 @@ function careerShopRebuildCar(){
   if(!careerShopScene||!window.THREE)return;
   { const gk=(me.color||"")+"|"+(me.name||""); if(careerShopGarageKey!==gk){careerShopGarageKey=gk;try{careerBuildGarage(careerShopScene);}catch(e){console.warn("Garage 3D non construit",e);}} }
   if(careerShopCar){careerShopScene.remove(careerShopCar.root);careerShopCar=null;} // Les géométries de roues sont mutualisées avec la voiture de course : ne pas les disposer ici.
-  try{careerShopCar=makeCar(me.color||"#e10600",me.name||"PILOTE",true,me.num||0);careerShopCar.dash=null;if(careerActiveLogo()!=="none")careerApplyLogoToCar(careerShopCar,careerActiveLogo());careerShopCar.root.position.y=.05;careerShopScene.add(careerShopCar.root);}catch(e){console.warn("Aperçu monoplace non construit",e);}
+  try{careerShopCar=makeCar(me.color||"#e10600",me.name||"PILOTE",true,me.num||0);careerShopCar.dash=null;if(careerActiveLogo()!=="none")careerApplyLogoToCar(careerShopCar,careerActiveLogo());careerShopCar.root.position.y=.05;if(typeof gfxCarShadows==="function")gfxCarShadows(careerShopCar.root);careerShopScene.add(careerShopCar.root);}catch(e){console.warn("Aperçu monoplace non construit",e);}
 }
 function careerShopLoop(now){
   if($("careerOverlay").hidden||$("shopModal").hidden||!careerShopRenderer)return;
   const dt=Math.min(.05,Math.max(.001,(now-careerShopClock)/1000||.016));careerShopClock=now;
   if(careerShopCar){careerShopCar.root.rotation.y=0;careerShopCar.root.position.y=.06;}
-  { const th=.94+Math.sin(now*.00022)*.62; careerShopCamera.position.set(Math.cos(th)*10.2,3.2+.5*Math.sin(now*.00031),Math.sin(th)*10.2); careerShopCamera.lookAt(0,.55,0); }
+  { const th=.95+Math.sin(now*.00022)*.6; careerShopCamera.position.set(Math.cos(th)*9.4,2.5+.45*Math.sin(now*.00031),Math.sin(th)*9.4); careerShopCamera.lookAt(0,.65,-.3); }
   try{careerAnimateGarage(now);}catch(e){}
   careerShopResize3D();careerShopRenderer.render(careerShopScene,careerShopCamera);careerShopRAF=requestAnimationFrame(careerShopLoop);
 }
