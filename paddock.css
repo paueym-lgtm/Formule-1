@@ -155,3 +155,5 @@ body.menu-mode #lobby .lobby-trackline{margin-bottom:14px}
 @media(max-width:600px){.pd-hero .pd-logo{width:min(78vw,340px)}.pd-category strong{font-size:27px}.pd-hero .pd-title{letter-spacing:4px}.pd-category{min-height:116px}.pd-category:after{bottom:12px;right:12px}}
 #careerNav .career-shop-btn{background:#f5c400;border-color:#f5c400;color:#111}
 #careerNav .career-shop-btn:hover{background:#ffd21a}
+
+body.menu-mode #lobby .lobby-toolbar #qualitySel{width:200px;max-width:100%;min-width:0;min-height:39px;padding:9px 10px;background:#242933;color:#f3f5f8;border:1px solid #3a4250;border-radius:3px;font:inherit;font-size:12px}

@@ -50,10 +50,12 @@ const STORE = {
 class ApiError extends Error { constructor(status, message) { super(message); this.status = status; } }
 function cleanRoomCode(value) { return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6); }
 function cleanName(value) { return String(value || "Pilote").trim().slice(0, 14) || "Pilote"; }
+const LOGOS=["pg","bolt","crown","apex"];
+function cleanLogo(value) { return LOGOS.includes(value) ? value : "none"; }
 function cleanColor(value) { const v = String(value || ""); return /^#[0-9a-fA-F]{6}$/.test(v) ? v : "#e10600"; }
 function send(ws, message) { if (!ws || ws.readyState !== WebSocket.OPEN) return; try { ws.send(JSON.stringify(message)); } catch (_) {} }
 function getRoom(ws) { return ws.roomCode ? rooms.get(ws.roomCode) : null; }
-function snapshotPlayers(room) { return [...room.players.values()].map(p => ({ id:p.id,name:p.name,color:p.color,num:p.num||0,joinedAt:p.joinedAt,roomConfig:p.roomConfig||null,voice:!!p.voice })); }
+function snapshotPlayers(room) { return [...room.players.values()].map(p => ({ id:p.id,name:p.name,color:p.color,num:p.num||0,logo:p.logo||"none",joinedAt:p.joinedAt,roomConfig:p.roomConfig||null,voice:!!p.voice })); }
 function broadcastRoom(room, message, except) { for (const p of room.players.values()) if (p.ws !== except) send(p.ws, message); }
 function broadcastPlayers(room) { const message={type:"players",players:snapshotPlayers(room),hostId:room.hostId,config:room.config}; for(const p of room.players.values()) send(p.ws,message); }
 function electHost(room) { const list=[...room.players.values()].sort((a,b)=>a.joinedAt-b.joinedAt); room.hostId=list.length?list[0].id:null; }
@@ -65,12 +67,12 @@ function handleMessage(ws,raw){
     const code=cleanRoomCode(msg.room),id=String(msg.id||"").slice(0,32);if(!code||!id){send(ws,{type:"error",message:"Salle ou identifiant invalide."});return;}
     const room=ensureRoom(code),old=room.players.get(id);if(old&&old.ws!==ws){try{old.ws.close(4001,"reconnexion");}catch(_){}room.players.delete(id);room.states.delete(id);}
     if(!room.players.has(id)&&room.players.size>=MAX_PLAYERS){send(ws,{type:"error",message:"Cette salle est pleine (25 joueurs maximum)."});try{ws.close(4003,"room full");}catch(_){}return;}
-    const p=msg.profile||{};const player={ws,id,name:cleanName(p.name),color:cleanColor(p.color),num:Math.max(0,Math.min(99,Number(p.num)||0)),joinedAt:Number.isFinite(Number(p.joinedAt))?Number(p.joinedAt):Date.now()+Math.random(),roomConfig:p.roomConfig||null,voice:!!p.voice};
+    const p=msg.profile||{};const player={ws,id,name:cleanName(p.name),color:cleanColor(p.color),num:Math.max(0,Math.min(99,Number(p.num)||0)),logo:cleanLogo(p.logo),joinedAt:Number.isFinite(Number(p.joinedAt))?Number(p.joinedAt):Date.now()+Math.random(),roomConfig:p.roomConfig||null,voice:!!p.voice};
     room.players.set(id,player);ws.roomCode=code;ws.playerId=id;if(!room.hostId)room.hostId=id;if(room.hostId===id&&player.roomConfig)room.config={...room.config,...player.roomConfig};
     send(ws,{type:"welcome",room:code,maxPlayers:MAX_PLAYERS,hostId:room.hostId});broadcastPlayers(room);if(room.raceActive&&room.racePayload)send(ws,{type:"start",payload:room.racePayload});return;
   }
   const room=getRoom(ws);if(!room||!ws.playerId)return;const player=room.players.get(ws.playerId);if(!player)return;
-  if(msg.type==="profile"){const p=msg.payload||{};player.name=cleanName(p.name);player.color=cleanColor(p.color);player.num=Math.max(0,Math.min(99,Number(p.num)||0));player.voice=!!p.voice;player.roomConfig=p.roomConfig||player.roomConfig;if(room.hostId===player.id&&player.roomConfig)room.config={...room.config,...player.roomConfig};broadcastPlayers(room);return;}
+  if(msg.type==="profile"){const p=msg.payload||{};player.name=cleanName(p.name);player.color=cleanColor(p.color);player.num=Math.max(0,Math.min(99,Number(p.num)||0));player.logo=cleanLogo(p.logo);player.voice=!!p.voice;player.roomConfig=p.roomConfig||player.roomConfig;if(room.hostId===player.id&&player.roomConfig)room.config={...room.config,...player.roomConfig};broadcastPlayers(room);return;}
   if(msg.type==="state"){const p=msg.payload;if(!p||p.i!==ws.playerId)return;room.states.set(ws.playerId,p);return;}
   if(msg.type==="start"){if(room.hostId!==ws.playerId||room.raceActive)return;const requested=msg.payload||{};const order=Array.isArray(requested.order)?requested.order.filter(id=>room.players.has(id)).slice(0,MAX_PLAYERS):[...room.players.keys()];if(!order.includes(ws.playerId))order.unshift(ws.playerId);const uniqueOrder=[...new Set(order)].slice(0,MAX_PLAYERS);const nb=Math.max(0,Math.min(Number(requested.nb)||0,MAX_PLAYERS-uniqueOrder.length));room.config={trk:requested.trk||room.config.trk,laps:Number(requested.laps)||room.config.laps,bots:nb,lvl:Number(requested.lvl)||room.config.lvl};room.racePayload={order:uniqueOrder,laps:room.config.laps,rid:Number(requested.rid)||Date.now(),host:room.hostId,nb,lvl:room.config.lvl,trk:room.config.trk};room.raceActive=true;room.states.clear();broadcastRoom(room,{type:"start",payload:room.racePayload},ws);send(ws,{type:"start",payload:room.racePayload});broadcastPlayers(room);return;}
   if(msg.type==="lobby"){room.raceActive=false;room.racePayload=null;room.states.clear();broadcastRoom(room,{type:"lobby",payload:msg.payload||{}});broadcastPlayers(room);return;}
